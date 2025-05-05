@@ -264,11 +264,6 @@
             event.stopPropagation();
           }
 
-          if (isOpen.value) {
-            // 確保選項位置正確
-            setTimeout(animateNavOpen, 50);
-          }
-
           setTimeout(() => {
             hasDragged.value = false;
           }, 100);
@@ -277,7 +272,7 @@
 
       const handleTouchEnd = handleMouseUp;
 
-      // 切換導航 - 優化重置邏輯
+      // 修改切換導航函數
       const toggleNavigation = () => {
         if (isAnimating.value) return;
 
@@ -289,15 +284,19 @@
         const oldButtonRight = buttonRect.right;
         const oldButtonBottom = buttonRect.bottom;
 
+        // 判斷是否為收起操作
+        const isClosing = isOpen.value;
+
         // 改變展開狀態
         isOpen.value = !isOpen.value;
 
-        // 根據狀態更新容器類
+        // 先移除所有可能衝突的類別
+        navContainer.value.classList.remove("active", "closing", "animating");
+
+        // 根據新狀態添加對應類別
         if (isOpen.value) {
           navContainer.value.classList.add("active");
-          navContainer.value.classList.remove("closing");
         } else {
-          navContainer.value.classList.remove("active");
           navContainer.value.classList.add("closing");
 
           // 收起時隱藏所有提示
@@ -320,12 +319,14 @@
           positionX.value -= deltaX;
           positionY.value -= deltaY;
 
-          // 根據狀態執行動畫
-          if (isOpen.value) {
-            animateNavOpen();
+          if (isClosing) {
+            setTimeout(() => {
+              animateNavClose();
+            }, 10);
           } else {
-            navContainer.value.classList.add("animating");
-            animateNavClose();
+            setTimeout(() => {
+              animateNavOpen();
+            }, 10);
           }
 
           // 設置足夠的動畫時間
@@ -384,12 +385,15 @@
       };
 
       // 展開動畫 - 確保每次都能正常展開
+      // 展開動畫 - 確保每次都能正常展開
       const animateNavOpen = () => {
-        if (tl) tl.kill();
+        if (tl) {
+          tl.kill();
+          tl = null;
+        }
 
         // 獲取選項元素
         const navOptionElements = document.querySelectorAll(".nav-option");
-        if (!navOptionElements.length) return;
 
         // 確保所有元素的初始狀態正確
         navOptionElements.forEach((elem) => {
@@ -471,81 +475,84 @@
         });
       };
 
-      // 收起動畫 - 終極修正版
+      // 收起動畫
       const animateNavClose = () => {
-        // 清除前一個動畫
-        if (tl) tl.kill();
 
-        // 標記為正在動畫中
+        // 強制清除任何現有動畫
+        if (tl) {
+          tl.kill();
+          tl = null;
+        }
+
+        // 獲取選項元素
+        const navOptionElements = document.querySelectorAll(".nav-option");
+
+        // 標記為動畫中以禁用懸停效果
         navContainer.value.classList.add("animating");
 
-        // 獲取當前所有可見的選項元素
-        const navOptionElements = Array.from(
-          document.querySelectorAll(".nav-option")
-        );
-        if (navOptionElements.length === 0) return;
-
-        // 創建單獨的 GSAP 動畫，不使用時間線
-        // 按照原始數組的倒序處理元素
-        [...navOptionElements].reverse().forEach((elem, index) => {
-          // 使用 GSAP 獲取當前位置
+        // 先記錄每個元素的當前位置
+        const elementsWithPositions = [];
+        navOptionElements.forEach((elem) => {
           const currentX = gsap.getProperty(elem, "x") || 0;
           const currentY = gsap.getProperty(elem, "y") || 0;
+          const currentScale = gsap.getProperty(elem, "scale") || 1;
+          const currentOpacity = gsap.getProperty(elem, "opacity") || 1;
 
-          // 確保元素可見且處於正確的初始位置
-          gsap.set(elem, {
+          elementsWithPositions.push({
+            element: elem,
             x: currentX,
             y: currentY,
-            opacity: 1,
-            scale: 1,
+            scale: currentScale,
+            opacity: currentOpacity,
+          });
+        });
+
+        // 強制設置可見性，以確保動畫可見
+        navOptionElements.forEach((elem, index) => {
+          gsap.set(elem, {
             visibility: "visible",
             display: "flex",
           });
-
-          // 使用延遲創建收起序列
-          const delay = index * 0.07;
-
-          // 單獨創建動畫
-          gsap.to(elem, {
-            x: 0,
-            y: 0,
-            opacity: 0,
-            scale: 0.5,
-            duration: 0.5,
-            delay: delay,
-            ease: "back.in(1.7)",
-            onStart: function () {
-              console.log(
-                `元素 ${navOptionElements.length - 1 - index} 開始收起動畫`
-              );
-            },
-            onComplete: function () {
-              // 動畫結束時隱藏元素
-              elem.style.visibility = "hidden";
-              elem.style.display = "none";
-
-              // 如果是最後一個元素，進行最終清理
-              if (index === navOptionElements.length - 1) {
-                // 確保所有元素都重置到初始狀態
-                navOptionElements.forEach((el) => {
-                  gsap.set(el, {
-                    clearProps: "all",
-                    x: 0,
-                    y: 0,
-                    opacity: 0,
-                    scale: 0.5,
-                    visibility: "hidden",
-                    display: "none",
-                  });
-                });
-
-                // 移除動畫標記
-                navContainer.value.classList.remove("animating");
-                console.log("所有收起動畫完成");
-              }
-            },
-          });
         });
+
+        // 創建新時間線
+        tl = gsap.timeline({
+          onComplete: () => {
+            // 完全隱藏元素
+            navOptionElements.forEach((elem) => {
+              gsap.set(elem, {
+                x: 0,
+                y: 0,
+                scale: 0.5,
+                opacity: 0,
+                visibility: "hidden",
+                display: "none",
+              });
+            });
+            navContainer.value.classList.remove("animating");
+          },
+        });
+
+        // 與展開動畫相反順序：從最後一個元素開始收回
+        [...elementsWithPositions].reverse().forEach((item, index) => {
+          // 為每個元素添加回到原點的動畫
+          tl.to(
+            item.element,
+            {
+              x: 0,
+              y: 0,
+              scale: 0.5,
+              opacity: 0,
+              duration: 0.4,
+              ease: "back.in(1.7)",
+              overwrite: "auto", // 改為auto以確保覆蓋任何現有動畫
+            },
+            index * 0.05 // 調整時間間隔
+          );
+        });
+
+        // 確保時間線執行
+        tl.play();
       };
 
       // 根據屏幕位置調整工具提示的位置
@@ -971,6 +978,7 @@
   /* 處理收起動畫期間的狀態 */
   .closing .nav-options {
     visibility: visible !important;
+    pointer-events: none;
   }
 
   /* 確保動畫中的元素具有更高優先級 */
@@ -988,6 +996,12 @@
     opacity: 0 !important;
     visibility: hidden !important;
     display: none !important;
+  }
+
+  /* 添加這個規則確保收起時的正確狀態 */
+  .circle-navigation-container.closing:not(.active) .nav-option {
+    pointer-events: none !important;
+    will-change: transform, opacity;
   }
 
   @media (max-width: 768px) {
