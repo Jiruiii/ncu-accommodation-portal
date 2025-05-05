@@ -8,8 +8,8 @@
       @mousedown.stop="handleCircleMouseDown"
       @touchstart.stop="handleCircleTouchStart"
     >
-      <!-- 拖動提示 -->
-      <div
+      <!-- 拖動debug -->
+      <!-- <div
         class="drag-handle"
         v-show="isOpen"
         @mousedown.stop="startDragWhenOpen"
@@ -18,7 +18,7 @@
         <span class="drag-icon">⋮⋮</span>
         <span>拖動</span>
         <span class="drag-icon">⋮⋮</span>
-      </div>
+      </div> -->
 
       <!-- 主導航按鈕 -->
       <div
@@ -88,7 +88,9 @@
       // 紀錄拖拉相關變數
       const dragStartTime = ref(0);
       const hasDragged = ref(false);
-      const clickThreshold = 500; // 拖動閾值
+      const clickThreshold = 100; // 拖動閾值
+
+      const isMoving = ref(false); // 是否正在移動
 
       // 屏幕位置
       const screenPosition = ref({
@@ -134,6 +136,10 @@
         });
         document.addEventListener("touchend", handleTouchEnd);
         window.addEventListener("resize", handleResize);
+
+        setTimeout(() => {
+          snapToNearestEdge();
+        }, 500);
       });
 
       onBeforeUnmount(() => {
@@ -247,6 +253,22 @@
           isRight: positionX.value > windowWidth / 2,
           isBottom: positionY.value > windowHeight / 2,
         };
+
+        if (isOpen.value) {
+          // 檢測是否接近邊緣並可能需要調整展開方向
+          const nearLeftEdge = positionX.value < 100;
+          const nearRightEdge = windowWidth - (positionX.value + width) < 100;
+          const nearTopEdge = positionY.value < 100;
+          const nearBottomEdge =
+            windowHeight - (positionY.value + height) < 100;
+
+          if (nearLeftEdge || nearRightEdge || nearTopEdge || nearBottomEdge) {
+            // 視情況重新調整位置
+            requestAnimationFrame(() => {
+              animateNavOpen();
+            });
+          }
+        }
       };
 
       // 拖動結束
@@ -262,6 +284,8 @@
           if (!isClick) {
             event.preventDefault();
             event.stopPropagation();
+
+            snapToNearestEdge();
           }
 
           setTimeout(() => {
@@ -272,17 +296,11 @@
 
       const handleTouchEnd = handleMouseUp;
 
-      // 修改切換導航函數
+      // 修改切換導航函數，移除導致位置變化的代碼
       const toggleNavigation = () => {
-        if (isAnimating.value) return;
+        if (isAnimating.value || isDragging.value || isMoving.value) return;
 
         isAnimating.value = true;
-
-        // 在改變狀態前記錄當前主按鈕位置
-        const mainButton = navContainer.value.querySelector(".main-nav-button");
-        const buttonRect = mainButton.getBoundingClientRect();
-        const oldButtonRight = buttonRect.right;
-        const oldButtonBottom = buttonRect.bottom;
 
         // 判斷是否為收起操作
         const isClosing = isOpen.value;
@@ -307,18 +325,8 @@
           });
         }
 
-        // 狀態變化後需要調整位置以保持主按鈕位置不變
         nextTick(() => {
-          // 重新獲取按鈕位置
-          const newRect = mainButton.getBoundingClientRect();
-          // 計算位置差異
-          const deltaX = newRect.right - oldButtonRight;
-          const deltaY = newRect.bottom - oldButtonBottom;
-
-          // 調整容器位置以保持主按鈕在原位
-          positionX.value -= deltaX;
-          positionY.value -= deltaY;
-
+          // 重要：不調整位置，只執行動畫
           if (isClosing) {
             setTimeout(() => {
               animateNavClose();
@@ -335,7 +343,6 @@
             : navOptions.length * 50 + 300;
 
           setTimeout(() => {
-            // 重要：確保動畫結束後移除所有臨時類
             isAnimating.value = false;
             navContainer.value.classList.remove("closing");
             navContainer.value.classList.remove("animating");
@@ -384,8 +391,7 @@
         dragOffsetY.value = touch.clientY - rect.top;
       };
 
-      // 展開動畫 - 確保每次都能正常展開
-      // 展開動畫 - 確保每次都能正常展開
+      // 完整修改的展開動畫函數
       const animateNavOpen = () => {
         if (tl) {
           tl.kill();
@@ -426,36 +432,110 @@
         const expandRight = buttonCenterX < windowWidth / 2;
         const expandDown = buttonCenterY < windowHeight / 2;
 
+        // 判斷靠近哪個邊緣
+        const nearLeftEdge = buttonRect.left < 100;
+        const nearRightEdge = windowWidth - buttonRect.right < 100;
+        const nearTopEdge = buttonRect.top < 100;
+        const nearBottomEdge = windowHeight - buttonRect.bottom < 100;
+
         // 計算每個選項位置
         navOptionElements.forEach((elem, index) => {
-          // 計算選項位置
           let angle;
           const totalOptions = navOptions.length;
 
-          // 根據位置計算角度範圍
-          let startAngle, endAngle;
+          // 根據位置計算角度範圍和半徑
+          let startAngle,
+            endAngle,
+            radius = 110;
 
-          if (expandRight && expandDown) {
+          // 處理四個角落的情況
+          if (nearLeftEdge && nearTopEdge) {
+            // 左上角 - 展開方向為右下
+            startAngle = 0;
+            endAngle = 90;
+          } else if (nearRightEdge && nearTopEdge) {
+            // 右上角 - 展開方向為左下
+            startAngle = 90;
+            endAngle = 180;
+          } else if (nearLeftEdge && nearBottomEdge) {
+            // 左下角 - 展開方向為右上
+            startAngle = 270;
+            endAngle = 360;
+          } else if (nearRightEdge && nearBottomEdge) {
+            // 右下角 - 展開方向為左上
+            startAngle = 180;
+            endAngle = 270;
+          }
+          // 處理靠近邊緣但不在角落的情況
+          else if (nearLeftEdge) {
+            // 靠左邊 - 向右展開
+            startAngle = 270;
+            endAngle = 450; // 270 + 180 = 450度，覆蓋右半圓
+          } else if (nearRightEdge) {
+            // 靠右邊 - 向左展開
+            startAngle = 90;
+            endAngle = 270;
+          } else if (nearTopEdge) {
+            // 靠上邊 - 向下展開
             startAngle = 0;
             endAngle = 180;
-          } else if (expandRight && !expandDown) {
+          } else if (nearBottomEdge) {
+            // 靠下邊 - 向上展開
             startAngle = 180;
             endAngle = 360;
-          } else if (!expandRight && expandDown) {
-            startAngle = 0;
-            endAngle = 180;
           } else {
-            startAngle = 180;
-            endAngle = 360;
+            // 如果不靠近任何邊緣，根據象限決定展開方向
+            if (expandRight && expandDown) {
+              // 位於左上區域，向右下展開
+              startAngle = 0;
+              endAngle = 180;
+            } else if (expandRight && !expandDown) {
+              // 位於左下區域，向右上展開
+              startAngle = 180;
+              endAngle = 360;
+            } else if (!expandRight && expandDown) {
+              // 位於右上區域，向左下展開
+              startAngle = 90;
+              endAngle = 270;
+            } else {
+              // 位於右下區域，向左上展開
+              startAngle = 180;
+              endAngle = 360;
+            }
           }
 
+          // 計算角度
           angle =
             startAngle + (index / (totalOptions - 1)) * (endAngle - startAngle);
           const radians = (angle * Math.PI) / 180;
 
-          const radius = 110;
-          const x = Math.cos(radians) * radius;
-          const y = Math.sin(radians) * radius;
+          // 計算最終位置
+          let x = Math.cos(radians) * radius;
+          let y = Math.sin(radians) * radius;
+
+          // 避免超出畫面
+          const elemRect = elem.getBoundingClientRect();
+          const elemSize = 45; // 選項大小
+
+          // 檢查並調整 x 坐標以避免超出屏幕
+          const potentialRightEdge = buttonRect.right + x + elemSize / 2;
+          const potentialLeftEdge = buttonRect.left + x - elemSize / 2;
+
+          if (potentialRightEdge > windowWidth) {
+            x -= potentialRightEdge - windowWidth + 10;
+          } else if (potentialLeftEdge < 0) {
+            x -= potentialLeftEdge - 10;
+          }
+
+          // 檢查並調整 y 坐標以避免超出屏幕
+          const potentialBottomEdge = buttonRect.bottom + y + elemSize / 2;
+          const potentialTopEdge = buttonRect.top + y - elemSize / 2;
+
+          if (potentialBottomEdge > windowHeight) {
+            y -= potentialBottomEdge - windowHeight + 10;
+          } else if (potentialTopEdge < 0) {
+            y -= potentialTopEdge - 10;
+          }
 
           // 從原點到最終位置的動畫
           tl.to(
@@ -477,7 +557,6 @@
 
       // 收起動畫
       const animateNavClose = () => {
-
         // 強制清除任何現有動畫
         if (tl) {
           tl.kill();
@@ -591,8 +670,10 @@
       // 處理主按鈕點擊
       const handleMainButtonClick = (event) => {
         event.preventDefault();
+        event.stopPropagation();
+
         // 如果是拖拉結束後，不觸發點擊事件
-        if (hasDragged.value) {
+        if (hasDragged.value || isDragging.value) {
           return;
         }
 
@@ -610,15 +691,18 @@
         dragStartTime.value = new Date().getTime();
         hasDragged.value = false;
 
-        // 獲取當前元素位置
-        const rect = navContainer.value.getBoundingClientRect();
+        // 只有在菜單收起時才允許拖動主按鈕
+        if (!isOpen.value) {
+          // 獲取當前元素位置
+          const rect = navContainer.value.getBoundingClientRect();
 
-        // 計算鼠標在元素內的相對位置
-        dragOffsetX.value = event.clientX - rect.left;
-        dragOffsetY.value = event.clientY - rect.top;
+          // 計算鼠標在元素內的相對位置
+          dragOffsetX.value = event.clientX - rect.left;
+          dragOffsetY.value = event.clientY - rect.top;
 
-        // 立即標記為拖拉狀態
-        isDragging.value = true;
+          // 立即標記為拖拉狀態
+          isDragging.value = true;
+        }
       };
 
       // 處理主按鈕的觸摸開始事件
@@ -641,6 +725,176 @@
         isDragging.value = true;
       };
 
+      // 修改吸附函數，避免吸附到角落
+      const snapToNearestEdge = () => {
+        isMoving.value = true;
+
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        // 考慮元素尺寸
+        const containerWidth = isOpen.value ? 250 : 60;
+        const containerHeight = isOpen.value ? 250 : 60;
+
+        // 安全邊距
+        const safeMargin = 10;
+
+        // 計算到各個邊緣的距離
+        const distToLeft = positionX.value;
+        const distToRight = windowWidth - (positionX.value + 60); // 考慮按鈕寬度
+        const distToTop = positionY.value;
+        const distToBottom = windowHeight - (positionY.value + 60); // 考慮按鈕高度
+
+        // 判斷當前是否靠近角落
+        const nearCorner =
+          (distToLeft < 100 && distToTop < 100) || // 左上角
+          (distToRight < 100 && distToTop < 100) || // 右上角
+          (distToLeft < 100 && distToBottom < 100) || // 左下角
+          (distToRight < 100 && distToBottom < 100); // 右下角
+
+        // 計算中心位置的距離
+        const centerX = windowWidth / 2;
+        const centerY = windowHeight / 2;
+
+        let targetX, targetY;
+
+        // 如果靠近角落，則選擇遠離角落的邊緣
+        if (nearCorner) {
+          // 根據位置選擇最適合的邊緣
+          // 確定位於哪個象限
+          const inTopHalf = positionY.value < centerY;
+          const inLeftHalf = positionX.value < centerX;
+
+          if (inTopHalf && inLeftHalf) {
+            // 左上角 - 優先考慮移動到頂部中間
+            targetX = centerX - 200; // 稍微偏左
+            targetY = 30;
+          } else if (inTopHalf && !inLeftHalf) {
+            // 右上角 - 優先考慮移動到頂部中間
+            targetX = centerX + 200; // 稍微偏右
+            targetY = 30;
+          } else if (!inTopHalf && inLeftHalf) {
+            // 左下角 - 優先考慮移動到底部中間
+            targetX = centerX - 200; // 稍微偏左
+            targetY = windowHeight - 90;
+          } else {
+            // 右下角 - 優先考慮移動到底部中間
+            targetX = centerX + 200; // 稍微偏右
+            targetY = windowHeight - 90;
+          }
+        } else {
+          // 不靠近角落時，找最近的邊緣
+          const edges = [
+            { edge: "left", dist: distToLeft, x: 30, y: positionY.value },
+            {
+              edge: "right",
+              dist: distToRight,
+              x: windowWidth - 90,
+              y: positionY.value,
+            },
+            { edge: "top", dist: distToTop, x: positionX.value, y: 30 },
+            {
+              edge: "bottom",
+              dist: distToBottom,
+              x: positionX.value,
+              y: windowHeight - 90,
+            },
+          ];
+
+          // 排序找出最近的邊緣
+          edges.sort((a, b) => a.dist - b.dist);
+          const closestEdge = edges[0];
+
+          targetX = closestEdge.x;
+          targetY = closestEdge.y;
+
+          // 確保不要太靠近角落
+          if (targetX < 100 && targetY < 100) {
+            // 左上角太近
+            targetY = 120;
+          } else if (targetX > windowWidth - 100 && targetY < 100) {
+            // 右上角太近
+            targetY = 120;
+          } else if (targetX < 100 && targetY > windowHeight - 100) {
+            // 左下角太近
+            targetY = windowHeight - 120;
+          } else if (
+            targetX > windowWidth - 100 &&
+            targetY > windowHeight - 100
+          ) {
+            // 右下角太近
+            targetY = windowHeight - 120;
+          }
+        }
+
+        const safePosition = ensureWithinViewport(
+          targetX,
+          targetY,
+          containerWidth,
+          containerHeight
+        );
+
+        targetX = safePosition.x;
+        targetY = safePosition.y;
+
+        isDragging.value = false;
+        hasDragged.value = false;
+
+        // 先等待一小段時間，然後再平滑移動到指定位置
+        setTimeout(() => {
+          // 使用GSAP製作平滑過渡動畫
+          gsap.to(positionX, {
+            value: targetX,
+            duration: 0.6,
+            ease: "power3.out",
+          });
+
+          gsap.to(positionY, {
+            value: targetY,
+            duration: 0.6,
+            ease: "power3.out",
+            onComplete: () => {
+              // 動畫完成後再次檢查位置確保在視窗內
+              const finalPosition = ensureWithinViewport(
+                positionX.value,
+                positionY.value,
+                containerWidth,
+                containerHeight
+              );
+
+              positionX.value = finalPosition.x;
+              positionY.value = finalPosition.y;
+
+              // 更新屏幕位置標記
+              screenPosition.value = {
+                isRight: positionX.value > windowWidth / 2,
+                isBottom: positionY.value > windowHeight / 2,
+              };
+
+              isMoving.value = false;
+
+              // 動畫完成後如果導航是開的，重新計算展開位置
+              if (isOpen.value) {
+                setTimeout(animateNavOpen, 100);
+              }
+            },
+          });
+        }, 300);
+      };
+
+      const ensureWithinViewport = (x, y, width, height) => {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        // 確保 x 坐標不會使元素超出視窗
+        x = Math.min(Math.max(0, x), windowWidth - width);
+
+        // 確保 y 坐標不會使元素超出視窗
+        y = Math.min(Math.max(0, y), windowHeight - height);
+
+        return { x, y };
+      };
+
       return {
         isOpen,
         navOptions,
@@ -658,6 +912,8 @@
         handleMainButtonClick,
         handleMainButtonMouseDown,
         handleMainButtonTouchStart,
+        snapToNearestEdge,
+        ensureWithinViewport,
       };
     },
   };
@@ -684,6 +940,7 @@
     pointer-events: auto;
     user-select: none;
     touch-action: none;
+    transform-origin: bottom right;
   }
 
   .circle-navigation-container.dragging {
@@ -699,8 +956,8 @@
   }
 
   .circle-navigation-container.active {
-    width: 250px;
-    height: 250px;
+    width: 60px;
+    height: 60px;
   }
 
   .circle-navigation-container:not(.active) .option-tooltip,
@@ -815,8 +1072,8 @@
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 250px;
-    height: 250px;
+    width: 0;
+    height: 0;
     pointer-events: none;
     z-index: 999;
     visibility: hidden;
