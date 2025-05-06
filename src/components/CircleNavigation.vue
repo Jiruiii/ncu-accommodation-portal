@@ -651,7 +651,7 @@
 
       const getOptionStyle = (index) => {
         return {
-          transitionDelay: `${index * 0.05}s`,
+          transitionDelay: "0s",
         };
       };
 
