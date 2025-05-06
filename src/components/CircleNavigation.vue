@@ -677,10 +677,9 @@
           return;
         }
 
-        // 如果滿足點擊條件（時間短且沒有明顯位移），才切換導航
-        if (new Date().getTime() - dragStartTime.value < clickThreshold) {
-          toggleNavigation();
-        }
+        // if (new Date().getTime() - dragStartTime.value < clickThreshold) {
+        toggleNavigation();
+        // }
       };
 
       // 處理主按鈕的鼠標按下事件
@@ -1057,7 +1056,7 @@
   }
 
   .button-icon.is-open span:nth-child(1) {
-    transform: rotate(45deg) translate(5px, 8px);
+    transform: rotate(45deg) translate(7px, 7px); /* 微調旋轉和位移 */
   }
 
   .button-icon.is-open span:nth-child(2) {
@@ -1065,7 +1064,7 @@
   }
 
   .button-icon.is-open span:nth-child(3) {
-    transform: rotate(-45deg) translate(5px, -8px);
+    transform: rotate(-45deg) translate(7px, -7px); /* 微調旋轉和位移 */
   }
 
   .nav-options {
@@ -1091,6 +1090,7 @@
     width: 45px;
     height: 45px;
     border-radius: 50%;
+    border: 2px solid #007bff;
     background-color: white;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     display: flex;
