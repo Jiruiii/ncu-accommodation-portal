@@ -40,7 +40,7 @@ export default createStore({
       state.navigationOpen = !state.navigationOpen;
     },
     
-    SET_ROUTE(state, route) {
+    SET_CURRENTROUTE(state, route) {
       state.currentRoute = route;
     },
     

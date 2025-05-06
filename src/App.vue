@@ -1,26 +1,16 @@
 <template>
   <div class="app-container">
-    <PageTransition>
-      <component :is="currentView" />
-    </PageTransition>
+    <PageTransition />
     
     <CircleNavigation />
   </div>
 </template>
 
 <script>
-import { computed, defineAsyncComponent, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { useStore } from 'vuex';
 import CircleNavigation from '@/components/CircleNavigation.vue';
 import PageTransition from '@/components/PageTransition.vue';
-
-// 非同步載入頁面組件
-const HomePage = defineAsyncComponent(() => import('@/views/HomePage.vue'));
-const AccommodationList = defineAsyncComponent(() => import('@/views/AccommodationList.vue'));
-const MapSearch = defineAsyncComponent(() => import('@/views/MapSearch.vue'));
-const ProfilePage = defineAsyncComponent(() => import('@/views/ProfilePage.vue'));
-const FavoritesPage = defineAsyncComponent(() => import('@/views/FavoritesPage.vue'));
-const SubletPage = defineAsyncComponent(() => import('@/views/SubletPage.vue'));
 
 export default {
   name: 'App',
@@ -31,35 +21,10 @@ export default {
   setup() {
     const store = useStore();
     
-    const currentView = computed(() => {
-      const route = store.state.currentRoute;
-      
-      switch(route) {
-        case 'home':
-          return HomePage;
-        case 'accommodation-list':
-          return AccommodationList;
-        case 'map-search':
-          return MapSearch;
-        case 'profile':
-          return ProfilePage;
-        case 'favorites':
-          return FavoritesPage;
-        case 'sublet':
-          return SubletPage;
-        default:
-          return HomePage;
-      }
-    });
-    
     // 初始化數據
     onMounted(() => {
       store.dispatch('fetchAccommodations');
     });
-    
-    return {
-      currentView
-    };
   },
 }
 </script>
