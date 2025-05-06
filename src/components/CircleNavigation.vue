@@ -939,13 +939,11 @@
 
   .circle-navigation-container.dragging {
     opacity: 0.95;
-    box-shadow: 0 8px 30px rgba(0, 123, 255, 0.6);
     cursor: move !important;
   }
 
   .circle-navigation-container.dragging .main-nav-button {
     cursor: move;
-    box-shadow: 0 4px 25px rgba(0, 123, 255, 0.7);
     transform: scale(1.05);
   }
 
