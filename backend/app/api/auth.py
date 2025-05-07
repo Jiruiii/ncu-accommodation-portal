@@ -13,7 +13,6 @@ from app.api import api_bp
 from app.models.user import User, StudentVerification
 from app.extensions import db
 
-
 # 從環境變數或配置文件獲取
 CLIENT_ID = os.environ.get('NCU_OAUTH_CLIENT_ID')
 CLIENT_SECRET = os.environ.get('NCU_OAUTH_CLIENT_SECRET')
@@ -87,7 +86,7 @@ def login():
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
-            'role': user.user_role,
+            'user_role': user.user_role,
             'is_verified': user.is_verified
         }
     }), 200
@@ -208,7 +207,7 @@ def portal_callback():
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-                "role": user.user_role,
+                "user_role": user.user_role,
                 "is_verified": user.is_verified,
                 "student_id": student_id
             }

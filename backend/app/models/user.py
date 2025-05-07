@@ -14,7 +14,7 @@ class User(db.Model):
     last_name = db.Column(db.String(50))
     phone = db.Column(db.String(20))
     profile_image = db.Column(db.String(255))
-    user_role = db.Column(db.Enum('student', 'landlord', 'admin', name='user_role_enum'), 
+    user_role = db.Column(db.Enum('student', 'landlord', 'admin', 'superuser',name='user_role_enum'), 
                           default='student', nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -41,6 +41,12 @@ class User(db.Model):
         
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    def is_admin(self):
+        return self.user_role in ['admin', 'superuser']
+    
+    def is_superuser(self):
+        return self.user_role == 'superuser'
     
     def __repr__(self):
         return f'<User {self.username}>'
