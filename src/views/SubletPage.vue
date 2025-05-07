@@ -650,6 +650,8 @@
     min-height: 100vh;
     background-color: var(--light-gray);
     padding-bottom: 50px;
+    overflow-y: auto;
+    position: relative;
   }
   
   /* 頂部橫幅 */
@@ -970,6 +972,7 @@
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    overflow-y: auto;
   }
   
   .modal-backdrop {
@@ -1033,6 +1036,7 @@
   
   .modal-body {
     padding: 20px;
+    overflow-y: auto;
   }
   
   /* 表單樣式 */
