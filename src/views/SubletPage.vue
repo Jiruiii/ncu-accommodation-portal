@@ -765,6 +765,14 @@
     border-radius: 8px;
     background-color: white;
     font-size: 14px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .filter-item select:hover{
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
   }
   
   .post-sublet-btn {
