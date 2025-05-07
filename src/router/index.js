@@ -1,24 +1,25 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { defineAsyncComponent } from "vue";
 
-const HomePage = defineAsyncComponent(() => import("@/views/HomePage.vue"));
-const AccommodationList = defineAsyncComponent(() =>
-  import("@/views/AccommodationList.vue")
-);
-const MapSearch = defineAsyncComponent(() => import("@/views/MapSearch.vue"));
-const ProfilePage = defineAsyncComponent(() =>
-  import("@/views/ProfilePage.vue")
-);
-const FavoritesPage = defineAsyncComponent(() =>
-  import("@/views/FavoritesPage.vue")
-);
-const SubletPage = defineAsyncComponent(() => import("@/views/SubletPage.vue"));
+const HomePage = () => import("@/views/HomePage.vue");
+const AccommodationList = () => import("@/views/AccommodationList.vue");
+const MapSearch = () => import("@/views/MapSearch.vue");
+const ProfilePage = () => import("@/views/ProfilePage.vue");
+const FavoritesPage = () => import("@/views/FavoritesPage.vue");
+const SubletPage = () => import("@/views/SubletPage.vue");
+const LoginPage = () => import("@/views/LoginPage.vue");
+const AuthCallback = () => import("@/views/AuthCallback.vue");
 
 const routes = [
   {
     path: "/",
     name: "home",
     component: HomePage,
+    meta: { transition: "fade" },
+  },
+  {
+    path: "/login",
+    name: "login",
+    component: LoginPage,
     meta: { transition: "fade" },
   },
   {
@@ -50,6 +51,14 @@ const routes = [
     name: "sublet",
     component: SubletPage,
     meta: { transition: "fade" },
+  },
+  {
+    path: "/auth/callback",
+    name: "AuthCallback",
+    component: AuthCallback,
+    meta: {
+      requiresAuth: false,
+    },
   },
 ];
 
