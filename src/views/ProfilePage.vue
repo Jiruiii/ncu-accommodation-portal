@@ -1,9 +1,10 @@
 <template>
   <div class="profile-page">
+    <!-- 保留現有的個人資料頭部 -->
     <div class="profile-header">
       <div class="profile-avatar">
         <img
-          src="https://randomuser.me/api/portraits/women/65.jpg"
+          :src="user.profile_image || 'https://randomuser.me/api/portraits/women/65.jpg'"
           alt="用戶頭像"
         />
         <button class="edit-avatar-btn">
@@ -11,17 +12,26 @@
         </button>
       </div>
       <div class="profile-info">
-        <h1>王小明 <span class="verified">✓ 已驗證</span></h1>
+        <h1>{{ fullName }} <span class="verified" v-if="user.is_verified">✓ 已驗證</span></h1>
         <div class="profile-meta">
-          <div><i>📧</i> wang123@gmail.com</div>
-          <div><i>📱</i> 09XX-XXX-XXX</div>
-          <div><i>🏫</i> 中央大學 - 資訊工程學系</div>
+          <div><i>📧</i> {{ user.email }}</div>
+          <div v-if="user.phone"><i>📱</i> {{ user.phone }}</div>
+          <div v-if="studentInfo"><i>🏫</i> {{ studentInfo }}</div>
+          <!-- 新增管理員或超級管理員角色標記 -->
+          <div v-if="isAdmin" class="admin-badge">
+            <i>👑</i> {{ user.user_role === 'superuser' ? '超級管理員' : '管理員' }}
+          </div>
         </div>
       </div>
       <button class="edit-profile-btn">編輯個人資料</button>
+      <!-- 新增管理員後台入口按鈕 -->
+      <button v-if="isAdmin" class="admin-dashboard-btn" @click="goToAdminDashboard">
+        <i>⚙️</i> 進入管理後台
+      </button>
     </div>
 
     <div class="profile-content">
+      <!-- 保留現有的選項卡導航 -->
       <div class="profile-navbar">
         <div
           v-for="tab in tabs"
@@ -36,6 +46,7 @@
         </div>
       </div>
 
+      <!-- 保留現有的內容部分，各選項卡內容 -->
       <div v-if="activeTab === 'verify'" class="student-verification">
         <div class="section-header">
           <h2>學生身分認證</h2>
@@ -416,6 +427,50 @@
           </div>
         </div>
 
+        <!-- 在帳戶設置中也添加管理員面板的項目 -->
+        <div class="settings-section" v-if="isAdmin">
+          <h2>管理員功能</h2>
+          
+          <div class="admin-features">
+            <div class="admin-feature-card">
+              <div class="admin-feature-icon">⚙️</div>
+              <div class="admin-feature-content">
+                <h3>系統管理</h3>
+                <p>進入管理後台查看系統狀態、管理用戶和查看數據庫紀錄。</p>
+                <button @click="goToAdminDashboard" class="admin-feature-btn">進入後台</button>
+              </div>
+            </div>
+            
+            <div class="admin-feature-card" v-if="user.user_role === 'superuser'">
+              <div class="admin-feature-icon">👥</div>
+              <div class="admin-feature-content">
+                <h3>用戶權限管理</h3>
+                <p>管理系統用戶權限、指派管理員角色和維護系統安全。</p>
+                <button @click="goToUserManagement" class="admin-feature-btn">用戶管理</button>
+              </div>
+            </div>
+            
+            <div class="admin-feature-card">
+              <div class="admin-feature-icon">📊</div>
+              <div class="admin-feature-content">
+                <h3>數據分析</h3>
+                <p>查看系統使用數據、租屋趨勢和用戶互動統計。</p>
+                <button @click="goToAnalytics" class="admin-feature-btn">查看分析</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="admin-login-history">
+            <h3>最近登入記錄</h3>
+            <div class="login-history-item">
+              <div class="login-time">{{ formatDate(new Date()) }}</div>
+              <div class="login-device">Chrome 瀏覽器 - Windows 10</div>
+              <div class="login-ip">127.0.0.1</div>
+              <div class="login-status success">成功</div>
+            </div>
+          </div>
+        </div>
+
         <div class="danger-zone">
           <h2>危險區域</h2>
           <button class="danger-btn">刪除帳戶</button>
@@ -426,600 +481,843 @@
 </template>
 
 <script>
-  export default {
-    name: "ProfilePage",
-    data() {
-      return {
-        activeTab: "housing",
-        tabs: [
-          { id: "housing", name: "我的租屋資訊" },
-          { id: "posts", name: "我的發布" },
-          { id: "settings", name: "帳戶設置" },
-        ],
-      };
-    },
-  };
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import apiService from '@/services/api';
+
+export default {
+  name: "ProfilePage",
+  setup() {
+    const router = useRouter();
+    const activeTab = ref("housing");
+    const user = ref({
+      username: 'Loading...',
+      email: 'Loading...',
+      user_role: '',
+      first_name: '',
+      last_name: '',
+      is_verified: false,
+      phone: '',
+      profile_image: ''
+    });
+    
+    const tabs = [
+      { id: "housing", name: "我的租屋資訊" },
+      { id: "posts", name: "我的發布" },
+      { id: "settings", name: "帳戶設置" },
+    ];
+    
+    // 計算屬性：檢查用戶是否為管理員或超級管理員
+    const isAdmin = computed(() => {
+      return ['admin', 'superuser'].includes(user.value.user_role);
+    });
+    
+    // 計算屬性：格式化用戶全名
+    const fullName = computed(() => {
+      if (user.value.first_name || user.value.last_name) {
+        return `${user.value.first_name || ''} ${user.value.last_name || ''}`.trim();
+      }
+      return user.value.username || '未知用戶';
+    });
+    
+    // 計算屬性：學生資訊
+    const studentInfo = computed(() => {
+      // 這裡可以根據實際需求從用戶資料中提取學校和系所資訊
+      return user.value.school ? `${user.value.school} - ${user.value.department || ''}` : null;
+    });
+    
+    // 格式化日期的方法
+    const formatDate = (dateString) => {
+      if (!dateString) return "從未";
+
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat("zh-TW", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
+    };
+    
+    // 導航到管理後台
+    const goToAdminDashboard = () => {
+      router.push('/admin');
+    };
+    
+    // 導航到用戶管理頁面
+    const goToUserManagement = () => {
+      router.push('/admin/users');
+    };
+    
+    // 導航到數據分析頁面
+    const goToAnalytics = () => {
+      router.push('/admin/analytics');
+    };
+    
+    // 獲取用戶資料
+    const fetchUserData = async () => {
+      try {
+        // 嘗試從本地存儲獲取
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        if (userStr) {
+          user.value = JSON.parse(userStr);
+        } else {
+          // 或從後端獲取當前用戶資訊
+          const response = await apiService.auth.checkSession();
+          if (response.authenticated) {
+            user.value = response.user;
+          }
+        }
+      } catch (error) {
+        console.error('獲取用戶資料失敗:', error);
+      }
+    };
+    
+    onMounted(() => {
+      fetchUserData();
+    });
+    
+    return {
+      activeTab,
+      tabs,
+      user,
+      isAdmin,
+      fullName,
+      studentInfo,
+      formatDate,
+      goToAdminDashboard,
+      goToUserManagement,
+      goToAnalytics
+    };
+  }
+};
 </script>
 
 <style scoped>
-  .profile-page {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 30px 20px;
-    background-color: #f9f9f9;
-    min-height: 100vh;
-  }
-
-  .profile-header {
-    display: flex;
-    align-items: center;
-    padding: 30px;
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    margin-bottom: 30px;
-    position: relative;
-  }
-
-  .profile-avatar {
-    position: relative;
-    margin-right: 30px;
-  }
-
-  .profile-avatar img {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 4px solid #f0f0f0;
-  }
-
-  .edit-avatar-btn {
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-
-  .profile-info {
-    flex: 1;
-  }
-
-  .profile-info h1 {
-    font-size: 2rem;
-    margin: 0 0 10px 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .verified {
-    font-size: 0.85rem;
-    color: #28a745;
-    background-color: rgba(40, 167, 69, 0.1);
-    padding: 4px 8px;
-    border-radius: 4px;
-  }
-
-  .profile-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    color: #666;
-  }
-
-  .profile-meta div {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .edit-profile-btn {
-    position: absolute;
-    top: 30px;
-    right: 30px;
-    padding: 10px 20px;
-    background-color: #f0f0f0;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-  }
-
-  .edit-profile-btn:hover {
-    background-color: #e0e0e0;
-  }
-
-  .profile-content {
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-  }
-
-  .profile-navbar {
-    display: flex;
-    border-bottom: 1px solid #eee;
-  }
-
-  .nav-item {
-    padding: 20px 30px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-  }
-
-  .nav-item:hover {
-    background-color: #f9f9f9;
-  }
-
-  .nav-item.active {
-    color: #007bff;
-  }
-
-  .nav-item.active::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background-color: #007bff;
-  }
-
-  /* 我的租屋資訊 */
-  .housing-info {
-    padding: 30px;
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  .section-header h2 {
-    font-size: 1.5rem;
-    margin: 0;
-    color: #333;
-  }
-
-  .current-housing {
-    margin-bottom: 40px;
-  }
-
-  .property-card {
-    display: flex;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-  }
-
-  .property-image {
-    width: 300px;
-    height: 200px;
-    object-fit: cover;
-  }
-
-  .property-details {
-    padding: 20px;
-    flex: 1;
-  }
-
-  .property-details h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.3rem;
-  }
-
-  .address {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: #666;
-    margin-bottom: 15px;
-  }
-
-  .lease-details {
-    display: flex;
-    gap: 30px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #eee;
-  }
-
-  .landlord {
-    display: flex;
-    align-items: center;
-  }
-
-  .landlord-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    margin-right: 15px;
-  }
-
-  .landlord-name {
-    font-weight: 500;
-    margin-bottom: 5px;
-  }
-
-  .landlord-contact {
-    color: #666;
-    font-size: 0.9rem;
-  }
-
-  .contact-btn {
-    margin-left: auto;
-    padding: 8px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-
-  .lease-actions {
-    display: flex;
-    gap: 15px;
-  }
-
-  .action-btn {
-    flex: 1;
-    padding: 12px 0;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-  }
-
-  .report {
-    background-color: #f8f9fa;
-    color: #343a40;
-  }
-
-  .extend {
-    background-color: #28a745;
-    color: white;
-  }
-
-  .terminate {
-    background-color: #dc3545;
-    color: white;
-  }
-
-  .receipt {
-    background-color: #17a2b8;
-    color: white;
-  }
-
-  .housing-history {
-    margin-top: 20px;
-  }
-
-  .history-item {
-    display: flex;
-    padding: 20px;
-    border-radius: 8px;
-    background-color: #f8f9fa;
-    margin-bottom: 15px;
-  }
-
-  .history-date {
-    width: 150px;
-    font-weight: 500;
-  }
-
-  .history-content {
-    flex: 1;
-  }
-
-  .history-title {
-    font-weight: 500;
-    margin-bottom: 5px;
-  }
-
-  .history-address,
-  .history-rent {
-    color: #666;
-    font-size: 0.9rem;
-  }
-
-  .rating {
-    text-align: center;
-  }
-
-  .stars {
-    color: #ffc107;
-    font-size: 1.2rem;
-    margin-bottom: 5px;
-  }
-
-  .rating-text {
-    font-size: 0.8rem;
-    color: #777;
-  }
-
-  /* 我的發布 */
-  .my-posts {
-    padding: 30px;
-  }
-
-  .add-post-btn {
-    padding: 8px 15px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-
-  .post-list {
-    margin-top: 20px;
-  }
-
-  .post-item {
-    display: flex;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
-    margin-bottom: 20px;
-    position: relative;
-  }
-
-  .post-status {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
-
-  .active {
-    background-color: #28a745;
-    color: white;
-  }
-
-  .inactive {
-    background-color: #6c757d;
-    color: white;
-  }
-
-  .post-image {
-    width: 300px;
-    height: 180px;
-    object-fit: cover;
-  }
-
-  .post-details {
-    padding: 20px;
-    flex: 1;
-  }
-
-  .post-details h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.2rem;
-  }
-
-  .post-info {
-    display: flex;
-    gap: 15px;
-    color: #666;
-    font-size: 0.85rem;
-    margin-bottom: 10px;
-  }
-
-  .post-address {
-    display: flex;
-    align-items: center;
-    color: #555;
-    margin-bottom: 10px;
-  }
-
-  .post-price {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 10px;
-  }
-
-  .original {
-    color: #666;
-    text-decoration: line-through;
-  }
-
-  .transfer {
-    color: #dc3545;
-    font-weight: 500;
-  }
-
-  .post-period {
-    color: #555;
-    font-size: 0.9rem;
-  }
-
-  .post-actions {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 20px;
-    background-color: #f8f9fa;
-  }
-
-  .post-btn {
-    padding: 8px 20px;
-    margin-bottom: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-
-  .edit {
-    background-color: #17a2b8;
-    color: white;
-  }
-
-  .deactivate {
-    background-color: #ffc107;
-    color: #212529;
-  }
-
-  .activate {
-    background-color: #28a745;
-    color: white;
-  }
-
-  .delete {
-    background-color: #dc3545;
-    color: white;
-  }
-
-  /* 帳戶設置 */
-  .account-settings {
-    padding: 30px;
-  }
-
-  .settings-section {
-    margin-bottom: 40px;
-  }
-
-  .settings-section h2 {
-    font-size: 1.4rem;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-  }
-
-  .settings-item {
-    display: flex;
-    padding: 15px 0;
-    border-bottom: 1px solid #f5f5f5;
-  }
-
-  .settings-label {
-    width: 150px;
-    font-weight: 500;
-  }
-
-  .settings-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-
-  .verified-tag {
-    padding: 2px 8px;
-    background-color: rgba(40, 167, 69, 0.1);
-    color: #28a745;
-    border-radius: 4px;
-    font-size: 0.8rem;
-  }
-
-  .last-updated {
-    color: #777;
-    font-size: 0.85rem;
-  }
-
-  .settings-btn {
-    padding: 5px 15px;
-    background-color: #f0f0f0;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-left: auto;
-  }
-
-  .settings-btn.highlight {
-    background-color: #007bff;
-    color: white;
-  }
-
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 24px;
-  }
-
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.4s;
-    border-radius: 24px;
-  }
-
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: 0.4s;
-    border-radius: 50%;
-  }
-
-  input:checked + .slider {
-    background-color: #007bff;
-  }
-
-  input:checked + .slider:before {
-    transform: translateX(26px);
-  }
-
-  .settings-select {
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    width: 180px;
-  }
-
-  .danger-zone {
-    margin-top: 40px;
-    padding: 20px;
-    background-color: #fff5f5;
-    border-radius: 8px;
-    border: 1px solid #ffcccc;
-  }
-
-  .danger-zone h2 {
-    color: #dc3545;
-    font-size: 1.2rem;
-    margin-bottom: 15px;
-  }
-
-  .danger-btn {
-    padding: 10px 20px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
+/* 保留現有樣式 */
+.profile-page {
+  margin: 0 auto;
+  padding: 30px 20px;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  padding: 30px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.profile-avatar {
+  position: relative;
+  margin-right: 30px;
+}
+
+.profile-avatar img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #f0f0f0;
+}
+
+.edit-avatar-btn {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-info h1 {
+  font-size: 2rem;
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.verified {
+  font-size: 0.85rem;
+  color: #28a745;
+  background-color: rgba(40, 167, 69, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  color: #666;
+}
+
+.profile-meta div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.edit-profile-btn {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  padding: 10px 20px;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.edit-profile-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.profile-content {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.profile-navbar {
+  display: flex;
+  border-bottom: 1px solid #eee;
+}
+
+.nav-item {
+  padding: 20px 30px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.nav-item:hover {
+  background-color: #f9f9f9;
+}
+
+.nav-item.active {
+  color: #007bff;
+}
+
+.nav-item.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: #007bff;
+}
+
+/* 我的租屋資訊 */
+.housing-info {
+  padding: 30px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: #333;
+}
+
+.current-housing {
+  margin-bottom: 40px;
+}
+
+.property-card {
+  display: flex;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.property-image {
+  width: 300px;
+  height: 200px;
+  object-fit: cover;
+}
+
+.property-details {
+  padding: 20px;
+  flex: 1;
+}
+
+.property-details h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.3rem;
+}
+
+.address {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.lease-details {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.landlord {
+  display: flex;
+  align-items: center;
+}
+
+.landlord-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 15px;
+}
+
+.landlord-name {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.landlord-contact {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.contact-btn {
+  margin-left: auto;
+  padding: 8px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.lease-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.report {
+  background-color: #f8f9fa;
+  color: #343a40;
+}
+
+.extend {
+  background-color: #28a745;
+  color: white;
+}
+
+.terminate {
+  background-color: #dc3545;
+  color: white;
+}
+
+.receipt {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.housing-history {
+  margin-top: 20px;
+}
+
+.history-item {
+  display: flex;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  margin-bottom: 15px;
+}
+
+.history-date {
+  width: 150px;
+  font-weight: 500;
+}
+
+.history-content {
+  flex: 1;
+}
+
+.history-title {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.history-address,
+.history-rent {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.rating {
+  text-align: center;
+}
+
+.stars {
+  color: #ffc107;
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+}
+
+.rating-text {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+/* 我的發布 */
+.my-posts {
+  padding: 30px;
+}
+
+.add-post-btn {
+  padding: 8px 15px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.post-list {
+  margin-top: 20px;
+}
+
+.post-item {
+  display: flex;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.post-status {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.active {
+  background-color: #28a745;
+  color: white;
+}
+
+.inactive {
+  background-color: #6c757d;
+  color: white;
+}
+
+.post-image {
+  width: 300px;
+  height: 180px;
+  object-fit: cover;
+}
+
+.post-details {
+  padding: 20px;
+  flex: 1;
+}
+
+.post-details h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+}
+
+.post-info {
+  display: flex;
+  gap: 15px;
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+}
+
+.post-address {
+  display: flex;
+  align-items: center;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.post-price {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.original {
+  color: #666;
+  text-decoration: line-through;
+}
+
+.transfer {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.post-period {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.post-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.post-btn {
+  padding: 8px 20px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edit {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.deactivate {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.activate {
+  background-color: #28a745;
+  color: white;
+}
+
+.delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* 帳戶設置 */
+.account-settings {
+  padding: 30px;
+}
+
+.settings-section {
+  margin-bottom: 40px;
+}
+
+.settings-section h2 {
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.settings-item {
+  display: flex;
+  padding: 15px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.settings-label {
+  width: 150px;
+  font-weight: 500;
+}
+
+.settings-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.verified-tag {
+  padding: 2px 8px;
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.last-updated {
+  color: #777;
+  font-size: 0.85rem;
+}
+
+.settings-btn {
+  padding: 5px 15px;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.settings-btn.highlight {
+  background-color: #007bff;
+  color: white;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #007bff;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.settings-select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  width: 180px;
+}
+
+.danger-zone {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #fff5f5;
+  border-radius: 8px;
+  border: 1px solid #ffcccc;
+}
+
+.danger-zone h2 {
+  color: #dc3545;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+.danger-btn {
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* 添加管理員相關樣式 */
+.admin-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+.admin-dashboard-btn {
+  position: absolute;
+  top: 75px;
+  right: 30px;
+  padding: 10px 20px;
+  background-color: #b91c1c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.2s;
+}
+
+.admin-dashboard-btn:hover {
+  background-color: #991b1b;
+}
+
+.admin-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.admin-feature-card {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.admin-feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.admin-feature-icon {
+  font-size: 2rem;
+  background-color: #f0f0f0;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-feature-content {
+  flex: 1;
+}
+
+.admin-feature-content h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+}
+
+.admin-feature-content p {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.admin-feature-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.admin-feature-btn:hover {
+  background-color: #0056b3;
+}
+
+.admin-login-history {
+  margin-top: 30px;
+}
+
+.admin-login-history h3 {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+}
+
+.login-history-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.login-time {
+  width: 180px;
+  font-weight: 500;
+}
+
+.login-device {
+  flex: 1;
+}
+
+.login-ip {
+  width: 120px;
+  color: #666;
+}
+
+.login-status {
+  width: 60px;
+  text-align: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.login-status.success {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+.login-status.failed {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
 </style>
