@@ -10,8 +10,6 @@ class User(db.Model):
     username = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    first_name = db.Column(db.String(50))
-    last_name = db.Column(db.String(50))
     phone = db.Column(db.String(20))
     profile_image = db.Column(db.String(255))
     user_role = db.Column(db.Enum('student', 'landlord', 'admin', 'superuser',name='user_role_enum'), 

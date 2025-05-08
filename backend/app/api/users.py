@@ -44,8 +44,6 @@ def get_profile():
                 "user_id": user.user_id,
                 "username": user.username,
                 "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
                 "phone": user.phone,
                 "profile_image": user.profile_image,
                 "user_role": user.user_role,
@@ -72,10 +70,7 @@ def update_profile():
         data = request.get_json()
         
         # 只允許更新特定欄位
-        allowed_fields = [
-            'first_name', 'last_name', 'phone', 'bio',
-            'username', 'email'
-        ]
+        allowed_fields = ['phone', 'bio','username', 'email']
         
         # 更新用戶資料
         for field in allowed_fields:
@@ -103,8 +98,6 @@ def update_profile():
                 "user_id": user.user_id,
                 "username": user.username,
                 "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
                 "phone": user.phone,
                 "profile_image": user.profile_image,
                 "bio": user.bio,

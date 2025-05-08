@@ -143,8 +143,6 @@ def get_sublet_detail(id):
         'poster': {
             'id': sublet.poster.user_id,
             'username': sublet.poster.username,
-            'first_name': sublet.poster.first_name,
-            'last_name': sublet.poster.last_name,
             'email': sublet.poster.email if sublet.poster.email else None,
             'phone': sublet.poster.phone if sublet.poster.phone else None,
             'is_verified': sublet.poster.is_verified

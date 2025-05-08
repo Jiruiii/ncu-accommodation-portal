@@ -42,10 +42,6 @@ def register():
     user.set_password(data['password'])
     
     # 其他可選欄位
-    if 'first_name' in data:
-        user.first_name = data['first_name']
-    if 'last_name' in data:
-        user.last_name = data['last_name']
     if 'phone' in data:
         user.phone = data['phone']
     
@@ -86,13 +82,13 @@ def login():
     return jsonify({
         'message': '登入成功',
         'user': {
-            'id': user.user_id,
-            'username': user.username,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'user_role': user.user_role,
-            'is_verified': user.is_verified,
+            "user_id": user.user_id,
+            "username": user.username,
+            "email": user.email,
+            "phone": user.phone,
+            "profile_image": user.profile_image,
+            "user_role": user.user_role,
+            "has_protal_id": bool(user.portal_id), 
             'is_admin': user.is_admin(),
             'is_superuser': user.is_superuser(),
         }
@@ -206,8 +202,6 @@ def portal_callback():
                 username=user_info.get('chineseName', identifier),
                 email=user_info.get('email', f"{identifier}@cc.ncu.edu.tw"),
                 portal_id=identifier,
-                first_name=user_info.get('chineseName', '').split(' ')[0] if user_info.get('chineseName') else '',
-                last_name=' '.join(user_info.get('chineseName', '').split(' ')[1:]) if user_info.get('chineseName') else '',
                 phone=user_info.get('mobilePhone', ''),
                 is_verified=True,  # 從 Portal 登入的用戶自動驗證
                 user_role='student'  # 默認為學生角色
@@ -237,10 +231,6 @@ def portal_callback():
         # 更新最後登入時間
         user.last_login = datetime.utcnow()
         db.session.commit()
-        
-        # 4. 生成 JWT 令牌
-        access_token = create_access_token(identity=user.user_id)
-        refresh_token = create_refresh_token(identity=user.user_id)
 
         # 獲取學生ID（如果有）
         student_verification = StudentVerification.query.filter_by(user_id=user.user_id).first()
@@ -248,14 +238,11 @@ def portal_callback():
         
         # 返回令牌和用戶信息
         return jsonify({
-            "access_token": access_token,
-            "refresh_token": refresh_token,
+            "message": "Portal 登入成功",
             "user": {
                 "id": user.user_id,
                 "username": user.username,
                 "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
                 "user_role": user.user_role,
                 "is_verified": user.is_verified,
                 "student_id": student_id

@@ -316,77 +316,69 @@ def get_users():
         # 獲取參數
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 20, type=int), 50)
+        sort_by = request.args.get('sort_by', 'created_at')
+        sort_direction = request.args.get('sort_direction', 'desc')
+        search = request.args.get('search', '')
         
-        # 直接返回測試數據 (避開 SQL 查詢)
-        # 這是一個簡化的方法來測試前後端連接是否正常
+        # 構建查詢
+        query = User.query
+        
+        # 添加搜索條件
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                db.or_(
+                    User.username.like(search_term),
+                    User.email.like(search_term),
+                    User.first_name.like(search_term),
+                    User.last_name.like(search_term)
+                )
+            )
+        
+        # 添加排序
+        if sort_direction == 'desc':
+            query = query.order_by(db.desc(getattr(User, sort_by, User.created_at)))
+        else:
+            query = query.order_by(getattr(User, sort_by, User.created_at))
+        
+        # 分頁
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        
+        # 格式化結果
+        users = []
+        for user in pagination.items:
+            users.append({
+                "user_id": user.user_id,
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "user_role": user.user_role,
+                "created_at": user.created_at.isoformat() if user.created_at else None,
+                "last_login": user.last_login.isoformat() if user.last_login else None,
+                "is_active": user.is_active,
+                "is_verified": user.is_verified,
+                "portal_id": user.portal_id if hasattr(user, 'portal_id') else None,
+                "has_portal_id": bool(user.portal_id) if hasattr(user, 'portal_id') else False
+            })
+        
         return jsonify({
-            "items": [
-                {
-                    "user_id": 1,
-                    "username": "admin",
-                    "email": "admin@example.com",
-                    "user_role": "admin",
-                    "created_at": datetime.datetime.utcnow().isoformat(),
-                    "first_name": "Admin",
-                    "last_name": "User",
-                    "is_active": True,
-                    "is_verified": True
-                }
-            ],
-            "total": 1,
-            "pages": 1,
-            "current_page": page
+            "items": users,
+            "total": pagination.total,
+            "pages": pagination.pages,
+            "current_page": page,
+            "has_next": pagination.has_next,
+            "has_prev": pagination.has_prev,
+            "next_num": pagination.next_num,
+            "prev_num": pagination.prev_num
         })
         
     except Exception as e:
         # 捕獲並記錄所有錯誤
         print(f"獲取用戶數據錯誤: {str(e)}")
         print(traceback.format_exc())
-        return jsonify({"message": f"系統錯誤: {str(e)}"}), 500
-    
-# 創建管理員用戶
-@api_bp.route('/admin/users', methods=['POST'])
-@admin_required
-def create_user():
-    data = request.get_json()
-    
-    # 檢查必要欄位
-    required_fields = ['username', 'email', 'password', 'user_role']
-    if not all(field in data for field in required_fields):
-        return jsonify({'message': '缺少必要欄位'}), 400
-    
-    # 檢查郵箱是否已存在
-    if User.query.filter_by(email=data['email']).first():
-        return jsonify({'message': '此郵箱已被使用'}), 400
-    
-    # 檢查用戶名是否已存在
-    if User.query.filter_by(username=data['username']).first():
-        return jsonify({'message': '此用戶名已被使用'}), 400
-    
-    # 創建新用戶
-    new_user = User(
-        username=data['username'],
-        email=data['email'],
-        user_role=data['user_role'],
-        first_name=data.get('first_name', ''),
-        last_name=data.get('last_name', ''),
-        phone=data.get('phone', ''),
-        is_verified=True,  # 管理員創建的用戶自動驗證
-        is_active=True
-    )
-    
-    # 設置密碼
-    new_user.set_password(data['password'])
-    
-    # 保存到資料庫
-    db.session.add(new_user)
-    db.session.commit()
-    
-    return jsonify({
-        'message': '用戶創建成功',
-        'user_id': new_user.user_id
-    }), 201
-
+        return jsonify({"message": f"系統錯誤: {str(e)}"}), 500    
+        
 # 獲取單個用戶
 @api_bp.route('/admin/users/<int:user_id>', methods=['GET'])
 @admin_required
@@ -397,8 +389,6 @@ def get_user(user_id):
         'user_id': user.user_id,
         'username': user.username,
         'email': user.email,
-        'first_name': user.first_name,
-        'last_name': user.last_name,
         'phone': user.phone,
         'profile_image': user.profile_image,
         'user_role': user.user_role,
@@ -437,12 +427,6 @@ def update_user(user_id):
     
     if 'user_role' in data:
         user.user_role = data['user_role']
-    
-    if 'first_name' in data:
-        user.first_name = data['first_name']
-    
-    if 'last_name' in data:
-        user.last_name = data['last_name']
     
     if 'phone' in data:
         user.phone = data['phone']
