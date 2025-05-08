@@ -6,111 +6,123 @@
       <div class="hero-content">
         <h1>中央大學校外外宿網</h1>
         <p>整合式的校外住宿資訊平台，讓你的找房體驗更輕鬆</p>
-        <div class="search-container">
+        <div class="search-container" style="border-radius: 8px;">
           <div class="search-input">
             <i class="search-icon"></i>
             <input
               type="text"
               placeholder="輸入地點、價格或房型..."
               v-model="searchQuery"
+              style="border-radius: 0; height: 50px;"
             />
           </div>
-          <div class="search-button" @click="quickSearch">快速搜尋</div>
+          <div class="search-button" style="border-radius: 0;" @click="quickSearch">快速搜尋</div>
         </div>
       </div>
 
-      <!-- 波浪形狀分隔線 -->
-      <div class="wave-divider">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
-          <path
-            fill="#ffffff"
-            fill-opacity="1"
-            d="M0,288L48,272C96,256,192,224,288,213.3C384,203,480,213,576,229.3C672,245,768,267,864,261.3C960,256,1056,224,1152,208C1248,192,1344,192,1392,192L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-          ></path>
-        </svg>
-      </div>
-    </div>
+</div>
 
-    <!-- 特色版塊 -->
-    <div class="features-section">
-      <div class="feature-card" v-for="(feature, idx) in features" :key="idx">
-        <div class="feature-icon" :class="feature.iconClass"></div>
-        <h3>{{ feature.title }}</h3>
-        <p>{{ feature.description }}</p>
-      </div>
-    </div>
+<!-- 特色版塊 -->
+<div class="features-section">
+  <div class="feature-card" v-for="(feature, idx) in features" :key="idx">
+  <div class="feature-icon" :class="feature.iconClass"></div>
+  <h3>{{ feature.title }}</h3>
+  <p>{{ feature.description }}</p>
+  </div>
+</div>
 
-    <!-- 推薦房源輪播 -->
-    <div class="featured-listings">
-      <h2>精選推薦房源</h2>
-      <div class="listings-carousel">
-        <div
-          class="listing-card"
-          v-for="listing in featuredListings"
-          :key="listing.id"
-          @click="viewListing(listing)"
-        >
-          <div
-            class="listing-image"
-            :style="`background-image: url(${listing.photo})`"
-          >
-            <div class="listing-price">NT$ {{ listing.price }} / 月</div>
-          </div>
-          <div class="listing-content">
-            <h3>{{ listing.title }}</h3>
-            <div class="listing-info">
-              <span
-                ><i class="location-icon"></i>{{ listing.distance }}km
-                至中央大學</span
-              >
-              <span><i class="home-type-icon"></i>{{ listing.roomType }}</span>
-            </div>
-            <div class="listing-rating">
-              <div class="stars">
-                <i
-                  class="star-icon"
-                  v-for="n in 5"
-                  :key="n"
-                  :class="n <= listing.rating ? 'filled' : ''"
-                ></i>
-              </div>
-              <span>{{ listing.reviews }} 評價</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+<!-- 統計資訊區 -->
+<div class="stats-container" style="background-image: url('https://images.unsplash.com/photo-1518481852452-9415b262eba4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80'); background-size: cover; background-position: center; position: relative; padding: 80px 20px; min-height: 300px;">
+  <div class="stats-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7);"></div>
+  <div class="stat-item" style="position: relative; z-index: 2; color: white;">
+    <h2>{{ clients }}</h2>
+    <p>租屋用戶</p>
+  </div>
+  <div class="stat-item" style="position: relative; z-index: 2; color: white;">
+    <h2>{{ listings }}</h2>
+    <p>房源數量</p>
+  </div>
+  <div class="stat-item" style="position: relative; z-index: 2; color: white;">
+    <h2>{{ inquiries }}</h2>
+    <p>聯絡詢問次數</p>
+  </div>
+  <div class="stat-item" style="position: relative; z-index: 2; color: white;">
+    <h2>{{ agents }}</h2>
+    <p>合作房仲</p>
+  </div>
+</div>
 
-    <!-- 使用者故事/見證 -->
-    <div class="testimonials">
-      <h2>學生使用心得</h2>
-      <div class="testimonial-container">
-        <div
-          class="testimonial"
-          v-for="(testimonial, idx) in testimonials"
-          :key="idx"
-        >
-          <div class="testimonial-content">
-            <p>"{{ testimonial.content }}"</p>
-          </div>
-          <div class="testimonial-author">
-            <div
-              class="author-avatar"
-              :style="`background-image: url(${testimonial.avatar})`"
-            ></div>
-            <div class="author-info">
-              <h4>{{ testimonial.name }}</h4>
-              <p>{{ testimonial.department }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+<!-- 推薦房源輪播 -->
+<div class="featured-listings">
+  <h2>精選推薦房源</h2>
+  <div class="listings-carousel">
+  <div
+    class="listing-card"
+    v-for="listing in featuredListings"
+    :key="listing.id"
+    @click="viewListing(listing)"
+  >
+    <div
+    class="listing-image"
+    :style="`background-image: url(${listing.photo})`"
+    >
+    <div class="listing-price">NT$ {{ listing.price }} / 月</div>
     </div>
+    <div class="listing-content">
+    <h3>{{ listing.title }}</h3>
+    <div class="listing-info">
+      <span
+      ><i class="location-icon"></i>{{ listing.distance }}km
+      至中央大學</span
+      >
+      <span><i class="home-type-icon"></i>{{ listing.roomType }}</span>
+    </div>
+    <div class="listing-rating">
+      <div class="stars">
+      <i
+        class="star-icon"
+        v-for="n in 5"
+        :key="n"
+        :class="n <= listing.rating ? 'filled' : ''"
+      ></i>
+      </div>
+      <span>{{ listing.reviews }} 評價</span>
+    </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- 使用者故事/見證 -->
+<div class="testimonials">
+  <h2>學生使用心得</h2>
+  <div class="testimonial-container">
+  <div
+    class="testimonial"
+    v-for="(testimonial, idx) in testimonials"
+    :key="idx"
+  >
+    <div class="testimonial-content">
+    <p>"{{ testimonial.content }}"</p>
+    </div>
+    <div class="testimonial-author">
+    <div
+      class="author-avatar"
+      :style="`background-image: url(${testimonial.avatar})`"
+    ></div>
+    <div class="author-info">
+      <h4>{{ testimonial.name }}</h4>
+      <p>{{ testimonial.department }}</p>
+    </div>
+    </div>
+  </div>
+  </div>
+</div>
   </div>
 </template>
 
 <script>
-  import { ref } from "vue";
+  import { ref, onMounted } from "vue";
   import { useStore } from "vuex";
 
   export default {
@@ -118,6 +130,18 @@
     setup() {
       const store = useStore();
       const searchQuery = ref("");
+      
+      // 統計資訊 (目標值)
+      const clientsTarget = 232;
+      const listingsTarget = 521;
+      const inquiriesTarget = 1453;
+      const agentsTarget = 32;
+      
+      // 用於動畫的ref值
+      const clients = ref(0);
+      const listings = ref(0);
+      const inquiries = ref(0);
+      const agents = ref(0);
 
       const features = [
         {
@@ -213,6 +237,53 @@
         },
       ];
 
+      // 數字動畫函數
+      const animateCount = (target, current, setter) => {
+        const duration = 2000; // 動畫總時間(毫秒)
+        const steps = 50; // 動畫總步數
+        const stepTime = duration / steps; // 每步的時間
+        const increment = target / steps; // 每步增加的數值
+        let currentStep = 0;
+        
+        const timer = setInterval(() => {
+          currentStep++;
+          if (currentStep >= steps) {
+            setter(target);
+            clearInterval(timer);
+          } else {
+            setter(Math.round(increment * currentStep));
+          }
+        }, stepTime);
+      };
+
+      // 觀察器，當元素進入視野時觸發動畫
+      const observeStats = () => {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              // 開始動畫
+              animateCount(clientsTarget, clients.value, val => clients.value = val);
+              animateCount(listingsTarget, listings.value, val => listings.value = val);
+              animateCount(inquiriesTarget, inquiries.value, val => inquiries.value = val);
+              animateCount(agentsTarget, agents.value, val => agents.value = val);
+              // 只觸發一次
+              observer.disconnect();
+            }
+          });
+        }, { threshold: 0.1 });
+
+        // 觀察統計區域
+        setTimeout(() => {
+          const statsElement = document.querySelector('.stats-container');
+          if (statsElement) observer.observe(statsElement);
+        }, 100);
+      };
+
+      // 在組件掛載後設置觀察器
+      onMounted(() => {
+        observeStats();
+      });
+
       const quickSearch = () => {
         // 應用搜尋過濾條件
         store.commit("APPLY_FILTERS", { searchQuery: searchQuery.value });
@@ -232,6 +303,11 @@
         testimonials,
         quickSearch,
         viewListing,
+        // 統計資訊 (動態值)
+        clients,
+        listings,
+        inquiries,
+        agents
       };
     },
   };
@@ -556,6 +632,42 @@
     font-size: 14px;
   }
 
+  /* 統計數字*/
+  .stats-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    margin: 40px 0;
+    padding: 60px 20px;
+    background-color: #f4f4f4;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex: 0 1 150px;
+    margin: 0 20px;
+  }
+
+  .stat-item h2 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #ffffff;
+  }
+
+  .stat-item p {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+  }
+
   /* 響應式調整 */
   @media (max-width: 768px) {
     .hero-content h1 {
@@ -576,4 +688,6 @@
       border-radius: 0 0 16px 16px;
     }
   }
+
+  
 </style>
