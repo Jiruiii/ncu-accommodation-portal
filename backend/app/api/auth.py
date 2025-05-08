@@ -6,10 +6,10 @@ import traceback
 
 from flask import session # type: ignore
 from flask import request, jsonify, current_app
-from flask_jwt_extended import ( # type: ignore
-    create_access_token, create_refresh_token, 
-    jwt_required, get_jwt_identity
-) 
+# from flask_jwt_extended import ( # type: ignore
+#     create_access_token, create_refresh_token, 
+#     jwt_required, get_jwt_identity
+# ) 
 
 from datetime import datetime, timedelta
 from app.api import api_bp
@@ -136,14 +136,6 @@ def check_auth_status():
             "error": str(e)
         }), 500
 
-@api_bp.route('/auth/refresh', methods=['POST'])
-@jwt_required(refresh=True)
-def refresh():
-    current_user = get_jwt_identity()
-    access_token = create_access_token(identity=current_user)
-    
-    return jsonify({'access_token': access_token}), 200
-
 @api_bp.route('/auth/portal-callback', methods=['POST'])
 def portal_callback():
     data = request.json
@@ -200,7 +192,7 @@ def portal_callback():
         if not user:
             user = User(
                 username=user_info.get('chineseName', identifier),
-                email=user_info.get('email', f"{identifier}@cc.ncu.edu.tw"),
+                school_email=user_info.get('email', f"{identifier}@cc.ncu.edu.tw"),
                 portal_id=identifier,
                 phone=user_info.get('mobilePhone', ''),
                 is_verified=True,  # 從 Portal 登入的用戶自動驗證
@@ -214,27 +206,10 @@ def portal_callback():
             
             db.session.add(user)
             db.session.commit()
-            
-            # 如果有學生身份資訊，創建學生驗證記錄
-            if 'academyRecords' in user_info and user_info.get('studentId'):
-                student_verification = StudentVerification(
-                    user_id=user.user_id,
-                    student_id=user_info.get('studentId', ''),
-                    department=user_info.get('academyRecords', {}).get('didGroup', ''),
-                    verified_at=datetime.utcnow(),
-                    expires_at=datetime.utcnow() + timedelta(days=365),  # 一年有效期
-                    verification_status='verified'
-                )
-                db.session.add(student_verification)
-                db.session.commit()
         
         # 更新最後登入時間
         user.last_login = datetime.utcnow()
         db.session.commit()
-
-        # 獲取學生ID（如果有）
-        student_verification = StudentVerification.query.filter_by(user_id=user.user_id).first()
-        student_id = student_verification.student_id if student_verification else None
         
         # 返回令牌和用戶信息
         return jsonify({
@@ -242,13 +217,30 @@ def portal_callback():
             "user": {
                 "id": user.user_id,
                 "username": user.username,
-                "email": user.email,
+                "school_email": user.school_email,
+                "phone": user.phone,
                 "user_role": user.user_role,
-                "is_verified": user.is_verified,
-                "student_id": student_id
+                "student_id": user.portal_id
             }
         }), 200
         
     except Exception as e:
         current_app.logger.error(f"Portal 登入錯誤: {str(e)}")
         return jsonify({"message": f"登入過程中發生錯誤: {str(e)}"}), 500
+    
+@api_bp.route('/auth/logout', methods=['POST'])
+def logout():
+    """登出用戶，清除 session"""
+    try:
+        # 清除 session 數據
+        session.clear()
+        return jsonify({
+            "success": True,
+            "message": "成功登出"
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f"登出錯誤: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"登出過程中發生錯誤: {str(e)}"
+        }), 500

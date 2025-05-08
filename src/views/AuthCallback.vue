@@ -36,8 +36,6 @@ export default {
         const data = await apiService.auth.portal.handleCallback(code);
         
         // 存儲認證信息
-        localStorage.setItem('token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('user', JSON.stringify(data.user));
         
         // 跳轉到主頁

@@ -330,8 +330,6 @@ def get_users():
                 db.or_(
                     User.username.like(search_term),
                     User.email.like(search_term),
-                    User.first_name.like(search_term),
-                    User.last_name.like(search_term)
                 )
             )
         
@@ -351,8 +349,6 @@ def get_users():
                 "user_id": user.user_id,
                 "username": user.username,
                 "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
                 "user_role": user.user_role,
                 "created_at": user.created_at.isoformat() if user.created_at else None,
                 "last_login": user.last_login.isoformat() if user.last_login else None,

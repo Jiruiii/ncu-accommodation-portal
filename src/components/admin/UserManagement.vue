@@ -181,12 +181,24 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- 角色選擇 - 只有超級管理員可以修改 -->
             <div class="form-group">
               <label for="edit-role">角色</label>
-              <select id="edit-role" v-model="editingUser.user_role" :disabled="!isSuperUser" required>
-                <option value="superuser" v-if="isSuperUser && currentUser.user_id !== editingUser.user_id">超級管理員</option>
+              <select
+                id="edit-role"
+                v-model="editingUser.user_role"
+                :disabled="!isSuperUser"
+                required
+              >
+                <option
+                  value="superuser"
+                  v-if="
+                    isSuperUser && currentUser.user_id !== editingUser.user_id
+                  "
+                >
+                  超級管理員
+                </option>
                 <option value="admin">系統管理員</option>
                 <option value="moderator">內容審核員</option>
                 <option value="student">學生</option>
@@ -232,7 +244,8 @@
 
         <div class="modal-body">
           <p class="confirmation-message">
-            確定要刪除用戶 <strong>{{ userToDelete.username }}</strong>？此操作不可逆。
+            確定要刪除用戶 <strong>{{ userToDelete.username }}</strong
+            >？此操作不可逆。
           </p>
 
           <div class="danger-zone">
@@ -293,6 +306,11 @@
       const showResetPassword = ref(false);
       const deleteConfirmed = ref(false);
 
+      const currentUser = ref({
+        user_id: null,
+        user_role: ''
+      });
+
       // 用戶資料
       const newUser = ref({
         username: "",
@@ -300,8 +318,6 @@
         password: "",
         confirmPassword: "",
         user_role: "admin",
-        first_name: "",
-        last_name: "",
         phone: "",
       });
 
@@ -311,7 +327,7 @@
       // 標籤頁
       const tabs = computed(() => [
         { label: "所有用戶", value: "all", count: totalUsers.value },
-        { label: "管理員", value: "admin" },
+        { label: "管理員", value: "admin,superuser" },
         { label: "學生", value: "student" },
         { label: "房東", value: "landlord" },
         { label: "已停用", value: "inactive" },
@@ -325,7 +341,16 @@
         if (activeTab.value !== "all") {
           if (activeTab.value === "inactive") {
             filtered = filtered.filter((user) => !user.is_active);
+          } else if (activeTab.value === "admin,superuser") {
+            // 特殊處理管理員標籤，包含 admin 和 superuser 角色
+            filtered = filtered.filter(
+              (user) =>
+                (user.user_role === "admin" ||
+                  user.user_role === "superuser") &&
+                user.is_active
+            );
           } else {
+            // 其他標籤正常過濾
             filtered = filtered.filter(
               (user) => user.user_role === activeTab.value && user.is_active
             );
@@ -338,14 +363,36 @@
           filtered = filtered.filter(
             (user) =>
               user.username.toLowerCase().includes(query) ||
-              user.email.toLowerCase().includes(query) ||
-              (user.first_name &&
-                user.first_name.toLowerCase().includes(query)) ||
-              (user.last_name && user.last_name.toLowerCase().includes(query))
+              user.email.toLowerCase().includes(query)
           );
         }
 
         return filtered;
+      });
+
+      const getCurrentUser = async () => {
+        try {
+          const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+          if (userStr) {
+            currentUser.value = JSON.parse(userStr);
+          } else {
+            // 如果本地存儲中沒有用戶信息，嘗試從API獲取
+            try {
+              const response = await apiService.auth.status();
+              if (response.authenticated) {
+                currentUser.value = response.user;
+              }
+            } catch (error) {
+              console.error("獲取用戶狀態失敗:", error);
+            }
+          }
+        } catch (error) {
+          console.error("獲取當前用戶信息失敗:", error);
+        }
+      };
+
+      const isSuperUser = computed(() => {
+        return currentUser.value.user_role === 'superuser';
       });
 
       // 載入用戶數據
@@ -406,8 +453,6 @@
           password: "",
           confirmPassword: "",
           user_role: "admin",
-          first_name: "",
-          last_name: "",
           phone: "",
         };
         showCreateModal.value = true;
@@ -528,6 +573,7 @@
 
       const formatRole = (role) => {
         const roles = {
+          superuser: "超級管理員",
           admin: "系統管理員",
           moderator: "內容審核員",
           student: "學生",
@@ -558,6 +604,7 @@
 
       onMounted(() => {
         loadUsers();
+        getCurrentUser();
       });
 
       return {
@@ -594,6 +641,8 @@
         formatRole,
         getRoleClass,
         getInitials,
+        isSuperUser,
+        currentUser,
       };
     },
   };
@@ -826,6 +875,12 @@
   .role-badge.landlord {
     background-color: #fef3c7;
     color: #d97706;
+  }
+
+  .role-badge.superuser {
+    background-color: #fee2e2;
+    color: #dc2626;
+    font-weight: 600;
   }
 
   .status-badge {
@@ -1076,6 +1131,10 @@
     background-color: #ef4444;
     color: white;
     border: none;
+  }
+
+  .delete-btn .material-symbols-outlined {
+    color: red;
   }
 
   .delete-btn:hover:not(:disabled) {

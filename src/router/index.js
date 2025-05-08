@@ -68,34 +68,37 @@ const routes = [
 
   // 管理員登入
   {
-    path: '/admin/login',
-    name: 'AdminLogin',
+    path: "/admin/login",
+    name: "AdminLogin",
     component: AdminLoginPage,
-    meta: { requiresAuth: false }
+    meta: { requiresAdmin: false },
   },
-  
+
   // 管理後台路由
   {
-    path: '/admin',
-    component: () => import('@/components/admin/AdminLayout.vue'),
+    path: "/admin",
+    component: () => import("@/components/admin/AdminLayout.vue"),
     meta: { requiresAuth: true, requiresAdmin: true },
     children: [
       {
-        path: '',
-        name: 'AdminDashboard',
+        path: "",
+        name: "AdminDashboard",
         component: AdminDashboard,
+        meta: { requiresAdmin: true },
       },
       {
-        path: 'users',
-        name: 'UserManagement',
+        path: "users",
+        name: "UserManagement",
         component: UserManagement,
+        meta: { requiresAdmin: true },
       },
       {
-        path: 'tables/:tableName',
-        name: 'TableView',
+        path: "tables/:tableName",
+        name: "TableView",
         component: TableView,
-      }
-    ]
+        meta: { requiresAdmin: true },
+      },
+    ],
   },
   {
     path: "/:catchAll(.*)",
@@ -107,6 +110,67 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
+});
+
+router.beforeEach(async (to, from, next) => {
+  // 如果路由需要管理員權限
+  if (to.meta.requiresAdmin) {
+    try {
+      // 檢查用戶是否登入以及是否有管理員權限
+      const userStr =
+        localStorage.getItem("user") || sessionStorage.getItem("user");
+      let isAdmin = false;
+
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        isAdmin = ["admin", "superuser"].includes(user.user_role);
+      }
+
+      if (!isAdmin) {
+        // 如果不是管理員，嘗試從後端獲取狀態
+        try {
+          const response = await fetch(
+            `${
+              process.env.VUE_APP_API_BASE_URL || "http://localhost:5000"
+            }/api/auth/status`,
+            {
+              credentials: "include",
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            if (
+              data.authenticated &&
+              ["admin", "superuser"].includes(data.user.user_role)
+            ) {
+              isAdmin = true;
+            }
+          }
+        } catch (apiError) {
+          console.error("獲取用戶狀態時出錯:", apiError);
+        }
+
+        if (!isAdmin) {
+          // 確認非管理員，清除本地存儲並重定向
+          localStorage.removeItem("user");
+          sessionStorage.removeItem("user");
+          next("/admin/login");
+          return; // 確保函數結束
+        }
+      }
+
+      // 是管理員，允許訪問
+      next();
+    } catch (error) {
+      console.error("檢查管理員權限時發生錯誤:", error);
+      next("/admin/login");
+      return; 
+    }
+  } else {
+    // 非管理員頁面，正常繼續
+    next();
+  }
 });
 
 export default router;

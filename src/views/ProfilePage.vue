@@ -494,8 +494,6 @@ export default {
       username: 'Loading...',
       email: 'Loading...',
       user_role: '',
-      first_name: '',
-      last_name: '',
       is_verified: false,
       phone: '',
       profile_image: ''
@@ -514,9 +512,6 @@ export default {
     
     // 計算屬性：格式化用戶全名
     const fullName = computed(() => {
-      if (user.value.first_name || user.value.last_name) {
-        return `${user.value.first_name || ''} ${user.value.last_name || ''}`.trim();
-      }
       return user.value.username || '未知用戶';
     });
     

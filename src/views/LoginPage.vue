@@ -238,17 +238,6 @@
             // 清除舊的認證資料
             clearAuthData();
 
-            // 儲存 JWT token
-            // const currentTime = new Date().getTime();
-
-            if (this.rememberMe) {
-              localStorage.setItem("token", data.access_token);
-              localStorage.setItem("refresh_token", data.refresh_token);
-            } else {
-              sessionStorage.setItem("token", data.access_token);
-              sessionStorage.setItem("refresh_token", data.refresh_token);
-            }
-
             // 儲存用戶資訊
             localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -300,8 +289,6 @@
                 password: this.registerPassword,
                 phone: this.phone,
                 user_role: this.userRole,
-                first_name: this.fullName.split(" ")[0],
-                last_name: this.fullName.split(" ").slice(1).join(" "),
               }),
             }
           );

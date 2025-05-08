@@ -9,6 +9,7 @@ class User(db.Model):
     portal_id = db.Column(db.String(50), unique=True, nullable=True)  # 用於 Portal 登入
     username = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
+    school_email = db.Column(db.String(100), unique=True, nullable=True)  # 學校郵箱
     password_hash = db.Column(db.String(255), nullable=False)
     phone = db.Column(db.String(20))
     profile_image = db.Column(db.String(255))

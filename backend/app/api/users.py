@@ -44,6 +44,7 @@ def get_profile():
                 "user_id": user.user_id,
                 "username": user.username,
                 "email": user.email,
+                "school_email": user.school_email,
                 "phone": user.phone,
                 "profile_image": user.profile_image,
                 "user_role": user.user_role,
