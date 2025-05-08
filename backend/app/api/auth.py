@@ -2,12 +2,15 @@ import requests # type: ignore
 import os
 import base64
 import json
+import traceback
 
+from flask import session # type: ignore
 from flask import request, jsonify, current_app
 from flask_jwt_extended import ( # type: ignore
     create_access_token, create_refresh_token, 
     jwt_required, get_jwt_identity
 ) 
+
 from datetime import datetime, timedelta
 from app.api import api_bp
 from app.models.user import User, StudentVerification
@@ -73,13 +76,15 @@ def login():
     user.last_login = datetime.utcnow()
     db.session.commit()
     
-    # 生成 JWT token
-    access_token = create_access_token(identity=user.user_id)
-    refresh_token = create_refresh_token(identity=user.user_id)
+    # session 設置
+    session.clear()
+    session['user_id'] = user.user_id
+    session['username'] = user.username
+    session['user_role'] = user.user_role
+    session.permanent = True
     
     return jsonify({
-        'access_token': access_token,
-        'refresh_token': refresh_token,
+        'message': '登入成功',
         'user': {
             'id': user.user_id,
             'username': user.username,
@@ -87,9 +92,53 @@ def login():
             'first_name': user.first_name,
             'last_name': user.last_name,
             'user_role': user.user_role,
-            'is_verified': user.is_verified
+            'is_verified': user.is_verified,
+            'is_admin': user.is_admin(),
+            'is_superuser': user.is_superuser(),
         }
     }), 200
+    
+@api_bp.route('/auth/status', methods=['GET'])
+def check_auth_status():
+    """檢查當前用戶的認證狀態"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({
+                "authenticated": False,
+                "message": "未登入"
+            })
+        
+        user_id = session.get('user_id')
+        user = User.query.get(user_id)
+        
+        if not user:
+            # 用戶不存在，清除 session
+            session.clear()
+            return jsonify({
+                "authenticated": False,
+                "message": "用戶不存在"
+            })
+        
+        # 返回當前用戶信息
+        return jsonify({
+            "authenticated": True,
+            "user": {
+                "user_id": user.user_id,
+                "username": user.username,
+                "email": user.email,
+                "user_role": user.user_role,
+                "is_admin": user.is_admin(),
+                "is_superuser": user.is_superuser()
+            },
+            "session_data": dict(session)  # 調試用
+        })
+    except Exception as e:
+        print(f"檢查認證狀態時出錯: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({
+            "authenticated": False,
+            "error": str(e)
+        }), 500
 
 @api_bp.route('/auth/refresh', methods=['POST'])
 @jwt_required(refresh=True)

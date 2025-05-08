@@ -16,7 +16,7 @@
           <li>
             <router-link to="/admin">
               <span class="material-symbols-outlined">dashboard</span>
-              儀表板
+              資料庫儀表板
             </router-link>
           </li>
           <li>

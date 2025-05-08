@@ -2,10 +2,7 @@
   <div class="user-management">
     <div class="page-header">
       <h1>用戶管理</h1>
-      <button @click="openCreateModal" class="create-button">
-        <span class="material-symbols-outlined">person_add</span>
-        新增管理員
-      </button>
+      <!-- 移除新增管理員按鈕 -->
     </div>
 
     <div class="tabs">
@@ -94,7 +91,9 @@
             <td>{{ formatDate(user.created_at) }}</td>
             <td>{{ formatDate(user.last_login) }}</td>
             <td class="actions">
+              <!-- 只有超級管理員可以編輯用戶角色 -->
               <button
+                v-if="isSuperUser"
                 @click="openEditModal(user)"
                 class="edit-btn"
                 title="編輯用戶"
@@ -102,6 +101,7 @@
                 <span class="material-symbols-outlined">edit</span>
               </button>
 
+              <!-- 所有管理員都可以啟用/禁用用戶 -->
               <button
                 @click="toggleUserStatus(user)"
                 :class="[
@@ -115,7 +115,9 @@
                 </span>
               </button>
 
+              <!-- 刪除按鈕只對超級管理員顯示 -->
               <button
+                v-if="isSuperUser"
                 @click="openDeleteModal(user)"
                 class="delete-btn"
                 title="刪除用戶"
@@ -156,107 +158,11 @@
       </button>
     </div>
 
-    <!-- 新建管理員模態框 -->
-    <div v-if="showCreateModal" class="modal-overlay">
-      <div class="modal-container">
-        <div class="modal-header">
-          <h2>新增管理員用戶</h2>
-          <button @click="showCreateModal = false" class="close-btn">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <form @submit.prevent="createUser">
-            <div class="form-group">
-              <label for="username">用戶名</label>
-              <input
-                id="username"
-                v-model="newUser.username"
-                type="text"
-                required
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="email">電子郵件</label>
-              <input id="email" v-model="newUser.email" type="email" required />
-            </div>
-
-            <div class="form-group">
-              <label for="password">密碼</label>
-              <input
-                id="password"
-                v-model="newUser.password"
-                type="password"
-                required
-              />
-              <span class="password-hint">密碼至少8位，包含字母和數字</span>
-            </div>
-
-            <div class="form-group">
-              <label for="confirm-password">確認密碼</label>
-              <input
-                id="confirm-password"
-                v-model="newUser.confirmPassword"
-                type="password"
-                required
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="role">角色</label>
-              <select id="role" v-model="newUser.user_role" required>
-                <option value="admin">系統管理員</option>
-                <option value="moderator">內容審核員</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="first-name">名字</label>
-              <input
-                id="first-name"
-                v-model="newUser.first_name"
-                type="text"
-                required
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="last-name">姓氏</label>
-              <input
-                id="last-name"
-                v-model="newUser.last_name"
-                type="text"
-                required
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="phone">手機號碼</label>
-              <input id="phone" v-model="newUser.phone" type="tel" />
-            </div>
-
-            <div class="modal-footer">
-              <button
-                type="button"
-                @click="showCreateModal = false"
-                class="cancel-btn"
-              >
-                取消
-              </button>
-              <button type="submit" class="submit-btn">創建用戶</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- 編輯用戶模態框 -->
+    <!-- 編輯用戶模態框 - 主要用於權限管理 -->
     <div v-if="showEditModal" class="modal-overlay">
       <div class="modal-container">
         <div class="modal-header">
-          <h2>編輯用戶資料</h2>
+          <h2>編輯用戶權限</h2>
           <button @click="showEditModal = false" class="close-btn">
             <span class="material-symbols-outlined">close</span>
           </button>
@@ -265,86 +171,38 @@
         <div class="modal-body">
           <form @submit.prevent="updateUser">
             <div class="form-group">
-              <label for="edit-username">用戶名</label>
-              <input
-                id="edit-username"
-                v-model="editingUser.username"
-                type="text"
-                required
-              />
+              <label>用戶資訊</label>
+              <div class="user-detail-box">
+                <div class="user-detail">
+                  <strong>用戶名:</strong> {{ editingUser.username }}
+                </div>
+                <div class="user-detail">
+                  <strong>郵箱:</strong> {{ editingUser.email }}
+                </div>
+              </div>
             </div>
-
-            <div class="form-group">
-              <label for="edit-email">電子郵件</label>
-              <input
-                id="edit-email"
-                v-model="editingUser.email"
-                type="email"
-                required
-              />
-            </div>
-
+            
+            <!-- 角色選擇 - 只有超級管理員可以修改 -->
             <div class="form-group">
               <label for="edit-role">角色</label>
-              <select id="edit-role" v-model="editingUser.user_role" required>
+              <select id="edit-role" v-model="editingUser.user_role" :disabled="!isSuperUser" required>
+                <option value="superuser" v-if="isSuperUser && currentUser.user_id !== editingUser.user_id">超級管理員</option>
                 <option value="admin">系統管理員</option>
                 <option value="moderator">內容審核員</option>
                 <option value="student">學生</option>
                 <option value="landlord">房東</option>
               </select>
+              <span class="permission-hint" v-if="!isSuperUser">
+                只有超級管理員可以修改用戶角色
+              </span>
             </div>
 
             <div class="form-group">
-              <label for="edit-first-name">名字</label>
-              <input
-                id="edit-first-name"
-                v-model="editingUser.first_name"
-                type="text"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="edit-last-name">姓氏</label>
-              <input
-                id="edit-last-name"
-                v-model="editingUser.last_name"
-                type="text"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="edit-phone">手機號碼</label>
-              <input id="edit-phone" v-model="editingUser.phone" type="tel" />
-            </div>
-
-            <div class="form-group">
-              <label for="edit-status">狀態</label>
+              <label for="edit-status">帳號狀態</label>
               <select id="edit-status" v-model="editingUser.is_active">
                 <option :value="true">活躍</option>
                 <option :value="false">停用</option>
               </select>
-            </div>
-
-            <div class="form-group">
-              <label>重設密碼</label>
-              <div class="reset-password-toggle">
-                <input
-                  type="checkbox"
-                  id="reset-password-toggle"
-                  v-model="showResetPassword"
-                />
-                <label for="reset-password-toggle">我要重設此用戶的密碼</label>
-              </div>
-            </div>
-
-            <div v-if="showResetPassword" class="form-group">
-              <label for="new-password">新密碼</label>
-              <input
-                id="new-password"
-                v-model="editingUser.new_password"
-                type="password"
-              />
-              <span class="password-hint">密碼至少8位，包含字母和數字</span>
             </div>
 
             <div class="modal-footer">
@@ -355,7 +213,7 @@
               >
                 取消
               </button>
-              <button type="submit" class="submit-btn">更新資料</button>
+              <button type="submit" class="submit-btn">更新權限</button>
             </div>
           </form>
         </div>
@@ -374,8 +232,7 @@
 
         <div class="modal-body">
           <p class="confirmation-message">
-            確定要刪除用戶 <strong>{{ userToDelete.username }}</strong
-            >？此操作不可逆。
+            確定要刪除用戶 <strong>{{ userToDelete.username }}</strong>？此操作不可逆。
           </p>
 
           <div class="danger-zone">
@@ -501,8 +358,6 @@
             sort_by: sortBy.value,
             sort_direction: sortDirection.value,
           };
-
-          console.log(params);
 
           // 只有當標籤值是特定值時才添加參數
           if (activeTab.value !== "all" && activeTab.value !== "inactive") {

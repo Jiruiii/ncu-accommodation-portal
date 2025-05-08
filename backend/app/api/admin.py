@@ -412,6 +412,7 @@ def get_user(user_id):
 
 # 更新用戶
 @api_bp.route('/admin/users/<int:user_id>', methods=['PUT'])
+@admin_required
 def update_user(user_id):
     user = User.query.get_or_404(user_id)
     data = request.get_json()
@@ -462,11 +463,12 @@ def update_user(user_id):
 
 # 刪除用戶
 @api_bp.route('/admin/users/<int:user_id>', methods=['DELETE'])
+@admin_required
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
     
     # 檢查是否嘗試刪除自己
-    current_user_id = get_jwt_identity()
+    current_user_id = session.get('user_id')
     if user_id == current_user_id:
         return jsonify({'message': '不能刪除當前登入的用戶'}), 400
     

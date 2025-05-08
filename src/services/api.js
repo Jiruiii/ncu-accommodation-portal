@@ -9,14 +9,12 @@ export const apiService = {
         "Content-Type": "application/json",
       };
 
-      // 使用 credentials: 'include' 來發送 cookies (session ID)
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: headers,
-        credentials: "include", // 這將自動發送 cookies
+        credentials: "include", 
       });
 
       if (!response.ok) {
-        // 嘗試獲取更詳細的錯誤信息
         let errorMessage;
         try {
           const errorData = await response.json();
@@ -26,10 +24,8 @@ export const apiService = {
           errorMessage = `HTTP error! status: ${response.status}`;
         }
 
-        // 如果是認證錯誤，特別處理
         if (response.status === 401) {
           console.error("認證錯誤:", errorMessage);
-          // 未登入或會話已過期，可以重定向到登入頁面
           if (requireAuth) {
             window.location.href = "/admin/login";
             throw new Error("請先登入");

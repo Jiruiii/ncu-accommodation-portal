@@ -9,8 +9,8 @@ const SubletPage = () => import("@/views/SubletPage.vue");
 const LoginPage = () => import("@/views/LoginPage.vue");
 const AuthCallback = () => import("@/views/AuthCallback.vue");
 const AdminDashboard = () => import("@/views/admin/AdminDashboard.vue");
-const TableView = () => import("@/views/admin/TableView.vue");
-const UserManagement = () => import("@/views/admin/UserManagement.vue");
+const TableView = () => import("@/components/admin/TableView.vue");
+const UserManagement = () => import("@/components/admin/UserManagement.vue");
 const AdminLoginPage = () => import("@/views/admin/AdminLoginPage.vue");
 const NotFound = () => import("@/views/NotFound.vue");
 
@@ -77,7 +77,7 @@ const routes = [
   // 管理後台路由
   {
     path: '/admin',
-    component: () => import('@/views/admin/AdminLayout.vue'),
+    component: () => import('@/components/admin/AdminLayout.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
     children: [
       {
