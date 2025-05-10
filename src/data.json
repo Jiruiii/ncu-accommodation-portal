@@ -12,7 +12,8 @@
       "其他費用": "每學期水電網路費3000元",
       "屋內設備": ["電冰箱", "洗衣機", "脫水機", "飲水機", "衣櫃", "單人床", "書櫃", "書桌(椅)", "寬頻網路", "第四台"],
       "公共設施": ["公共陽台", "停車場"],
-      "屋況說明": ["已完成106學年賃居訪視安全評核"]
+      "屋況說明": ["已完成106學年賃居訪視安全評核"],
+      "房屋照片": []
     },
     {
       "編碼": 2,
@@ -26,7 +27,15 @@
       "其他費用": "電費(自用)、網路費",
       "屋內設備": ["電冰箱", "冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "單人床", "書桌(椅)", "寬頻網路"],
       "公共設施": ["中庭", "停車場", "光纖網路"],
-      "屋況說明": ["已完成107學年賃居消防安全檢查"]
+      "屋況說明": ["已完成107學年賃居消防安全檢查"],
+      "房屋照片": [
+        "assets/images-data/2-1.jpg",
+        "assets/images-data/2-2.jpg",
+        "assets/images-data/2-3.jpg",
+        "assets/images-data/2-4.jpg",
+        "assets/images-data/2-5.jpg",
+        "assets/images-data/2-6.jpg"
+      ]
     },
     {
       "編碼": 3,
@@ -44,6 +53,9 @@
         "中央大學房東聯誼會成員較能配合學校政策執行賃居作為",
         "已完成103學年賃居訪視安全評核",
         "2010年5月13日完成建築物結構耐震能力初步評估合格處所"
+      ],
+      "房屋照片": [
+        "assets/images-data/3-1.jpg"
       ]
     }
     ,
@@ -62,6 +74,17 @@
       "屋況說明": [
         "中央大學房東聯誼會成員較能配合學校政策執行賃居作為",
         "已完成106學年賃居訪視安全評核"
+      ],
+      "房屋照片": [
+        "assets/images-data/4-1.jpg",
+        "assets/images-data/4-2.jpg",
+        "assets/images-data/4-3.jpg",
+        "assets/images-data/4-4.jpg",
+        "assets/images-data/4-5.jpg",
+        "assets/images-data/4-6.jpg",
+        "assets/images-data/4-7.jpg",
+        "assets/images-data/4-8.jpg",
+        "assets/images-data/4-9.jpg"
       ]
     },
     {
@@ -79,6 +102,14 @@
       "屋況說明": [
         "已完成106學年賃居訪視安全評核",
         "已完成107學年賃居消防安全檢查"
+      ],
+      "房屋照片": [
+        "assets/images-data/5-1.jpg",
+        "assets/images-data/5-2.jpg",
+        "assets/images-data/5-3.jpg",
+        "assets/images-data/5-4.jpg",
+        "assets/images-data/5-5.jpg",
+        "assets/images-data/5-6.jpg"       
       ]
     },
     {
@@ -96,6 +127,14 @@
       "屋況說明": [
         "已完成107學年賃居消防安全檢查",
         "107年8月份期間可接受短租(聯繫電話 0915853770)"
+      ],
+      "房屋照片": [
+        "assets/images-data/6-1.jpg",
+        "assets/images-data/6-2.jpg",
+        "assets/images-data/6-3.jpg",
+        "assets/images-data/6-4.jpg",
+        "assets/images-data/6-5.jpg",
+        "assets/images-data/6-6.jpg"
       ]
     },
     {
@@ -116,6 +155,14 @@
         "機車停車棚為門禁刷卡進出",
         "本棟有安裝大樓用消防管(消防隊定期測試)",
         "本棟有安裝大樓用火警警報系統(消防隊定期測試)"
+      ],
+      "房屋照片": [
+        "assets/images-data/7-1.jpg",
+        "assets/images-data/7-2.jpg",
+        "assets/images-data/7-3.jpg",
+        "assets/images-data/7-4.jpg",
+        "assets/images-data/7-5.jpg",
+        "assets/images-data/7-6.jpg"
       ]
     },
     {
@@ -133,6 +180,9 @@
       "屋況說明": [
         "中央大學房東聯誼會成員較能配合學校政策執行賃居作為",
         "已完成106學年賃居訪視安全評核"
+      ],
+      "房屋照片": [
+        "assets/images-data/8-1.jpg"
       ]
     },
     {
@@ -152,6 +202,14 @@
         "已完成112學年賃居訪視安全評核",
         "電梯有使用許可證",
         "2009年12月24日完成建築物結構耐震能力初步評估合格處所"
+      ],
+      "房屋照片": [
+        "assets/images-data/9-1.jpg",
+        "assets/images-data/9-2.jpg",
+        "assets/images-data/9-3.jpg",
+        "assets/images-data/9-4.jpg",
+        "assets/images-data/9-5.jpg",
+        "assets/images-data/9-6.jpg"
       ]
     },
     {
@@ -171,6 +229,19 @@
         "已完成112學年賃居訪視安全評核",
         "已完成112學年賃居消防安全檢查",
         "已於98/12/24通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/10-1.jpg",
+        "assets/images-data/10-2.jpg",
+        "assets/images-data/10-3.jpg",
+        "assets/images-data/10-4.jpg",
+        "assets/images-data/10-5.jpg",
+        "assets/images-data/10-6.jpg",
+        "assets/images-data/10-7.jpg",
+        "assets/images-data/10-8.jpg",
+        "assets/images-data/10-9.jpg",
+        "assets/images-data/10-10.jpg",
+        "assets/images-data/10-11.jpg"
       ]
     }
     ,
@@ -190,6 +261,14 @@
         "電梯有使用許可證",
         "已完成107學年賃居消防安全檢查",
         "已於98/12/18通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/11-1.jpg",
+        "assets/images-data/11-2.jpg",
+        "assets/images-data/11-3.jpg",
+        "assets/images-data/11-4.jpg",
+        "assets/images-data/11-5.jpg",
+        "assets/images-data/11-6.jpg"
       ]
     },
     {
@@ -202,7 +281,8 @@
       "其他費用": "無",
       "屋內設備": ["衣櫃", "雙人床", "書櫃", "寬頻網路", "第四台"],
       "公共設施": ["電梯"],
-      "屋況說明": ["已完成107學年賃居消防安全檢查", "已完成106學年賃居訪視安全評核"]
+      "屋況說明": ["已完成107學年賃居消防安全檢查", "已完成106學年賃居訪視安全評核"],
+      "房屋照片": []
     },
     {
       "編碼": 13,
@@ -214,7 +294,12 @@
       "其他費用": "無",
       "屋內設備": ["烘乾機", "飲水機", "衣櫃", "單人床", "書櫃", "書桌(椅)", "檯燈", "光纖網路"],
       "公共設施": ["光纖網路"],
-      "屋況說明": ["已完成103學年賃居訪視安全評核", "已完成106學年賃居訪視安全評核"]
+      "屋況說明": ["已完成103學年賃居訪視安全評核", "已完成106學年賃居訪視安全評核"],
+      "房屋照片": [
+        "assets/images-data/13-1.jpg",
+        "assets/images-data/13-2.jpg",
+        "assets/images-data/13-3.jpg"
+      ]
     },
     {
       "編碼": 14,
@@ -232,6 +317,14 @@
         "電梯無使用許可證",
         "已完成107學年賃居消防安全檢查",
         "已於98/12/24通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/14-1.jpg",
+        "assets/images-data/14-2.jpg",
+        "assets/images-data/14-3.jpg",
+        "assets/images-data/14-4.jpg",
+        "assets/images-data/14-5.jpg",
+        "assets/images-data/14-6.jpg"
       ]
     },
     {
@@ -244,7 +337,21 @@
       "其他費用": "無",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "單人床", "書桌(椅)", "寬頻網路"],
       "公共設施": ["停車場"],
-      "屋況說明": ["已完成109學年賃居訪視安全評核"]
+      "屋況說明": ["已完成109學年賃居訪視安全評核"],
+      "房屋照片": [
+        "assets/images-data/15-1.jpg",
+        "assets/images-data/15-2.jpg",
+        "assets/images-data/15-3.jpg",
+        "assets/images-data/15-4.jpg",
+        "assets/images-data/15-5.jpg",
+        "assets/images-data/15-6.jpg",
+        "assets/images-data/15-7.jpg",
+        "assets/images-data/15-8.jpg",
+        "assets/images-data/15-9.jpg",
+        "assets/images-data/15-10.jpg",
+        "assets/images-data/15-11.jpg",
+        "assets/images-data/15-12.jpg"
+      ]
     },
     {
       "編碼": 16,
@@ -262,6 +369,11 @@
         "電梯有使用許可證",
         "已完成107學年賃居消防安全檢查",
         "已於98/12/18通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/16-1.jpg",
+        "assets/images-data/16-2.jpg",
+        "assets/images-data/16-3.jpg"
       ]
     },
     {
@@ -278,6 +390,14 @@
         "2014年消防安全認證合格編號：2014046",
         "中央大學房東聯誼會成員較能配合學校政策執行賃居作為",
         "已完成107學年賃居消防安全檢查"
+      ],
+      "房屋照片": [
+        "assets/images-data/17-1.jpg",
+        "assets/images-data/17-2.jpg",
+        "assets/images-data/17-3.jpg",
+        "assets/images-data/17-4.jpg",
+        "assets/images-data/17-5.jpg",
+        "assets/images-data/17-6.jpg"
       ]
     }
     ,
@@ -294,6 +414,14 @@
       "屋況說明": [
         "中央大學房東聯誼會成員較能配合學校政策執行賃居作為",
         "已完成103學年賃居訪視安全評核"
+      ],
+      "房屋照片": [
+        "assets/images-data/18-1.jpg",
+        "assets/images-data/18-2.jpg",
+        "assets/images-data/18-3.jpg",
+        "assets/images-data/18-4.jpg",
+        "assets/images-data/18-5.jpg",
+        "assets/images-data/18-6.jpg"
       ]
     },
     {
@@ -309,6 +437,13 @@
       "屋況說明": [
         "已完成107學年賃居訪視安全評核",
         "已完成107學年賃居消防安全檢查"
+      ],
+      "房屋照片": [
+        "assets/images-data/19-1.jpg",
+        "assets/images-data/19-2.jpg",
+        "assets/images-data/19-3.jpg",
+        "assets/images-data/19-4.jpg",
+        "assets/images-data/19-5.jpg"
       ]
     },
     {
@@ -325,6 +460,9 @@
         "中央大學房東聯誼會成員較能配合學校政策執行賃居作為",
         "已完成106學年賃居訪視安全評核",
         "已完成107學年賃居消防安全檢查"
+      ],
+      "房屋照片": [
+        "assets/images-data/20-1.jpg"
       ]
     }
     ,
@@ -343,6 +481,14 @@
         "已完成103學年賃居訪視安全評核",
         "已完成107學年賃居消防安全檢查",
         "已於98/12/22通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/21-1.jpg",
+        "assets/images-data/21-2.jpg",
+        "assets/images-data/21-3.jpg",
+        "assets/images-data/21-4.jpg",
+        "assets/images-data/21-5.jpg",
+        "assets/images-data/21-6.jpg"
       ]
     },
     {
@@ -360,6 +506,14 @@
         "已完成106、107、108學年賃居訪視安全評核",
         "已完成106、107、108學年賃居消防安全檢查",
         "已於99/05/14通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/22-1.jpg",
+        "assets/images-data/22-2.jpg",
+        "assets/images-data/22-3.jpg",
+        "assets/images-data/22-4.jpg",
+        "assets/images-data/22-5.jpg",
+        "assets/images-data/22-6.jpg"
       ]
     },
     {
@@ -375,6 +529,14 @@
       "屋況說明": [
         "已完成107學年賃居消防安全檢查",
         "已於98/12/25通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/23-1.jpg",
+        "assets/images-data/23-2.jpg",
+        "assets/images-data/23-3.jpg",
+        "assets/images-data/23-4.jpg",
+        "assets/images-data/23-5.jpg",
+        "assets/images-data/23-6.jpg"
       ]
     },
     {
@@ -390,6 +552,9 @@
       "屋況說明": [
         "已完成107學年賃居消防安全檢查",
         "已於99/01/18通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/24-1.jpg"
       ]
     },
     {
@@ -406,6 +571,15 @@
         "中央大學房東聯誼會成員較能配合學校政策執行賃居作為",
         "已完成106學年賃居訪視安全評核",
         "已完成107學年賃居消防安全檢查"
+      ],
+      "房屋照片": [
+        "assets/images-data/25-1.jpg",
+        "assets/images-data/25-2.jpg",
+        "assets/images-data/25-3.jpg",
+        "assets/images-data/25-4.jpg",
+        "assets/images-data/25-5.jpg",
+        "assets/images-data/25-6.jpg",
+        "assets/images-data/25-7.jpg"
       ]
     },
     {
@@ -421,6 +595,14 @@
       "屋況說明": [
         "已完成103學年賃居訪視安全評核",
         "電梯無使用許可證（有定期檢查記錄）"
+      ],
+      "房屋照片": [
+        "assets/images-data/26-1.jpg",
+        "assets/images-data/26-2.jpg",
+        "assets/images-data/26-3.jpg",
+        "assets/images-data/26-4.jpg",
+        "assets/images-data/26-5.jpg",
+        "assets/images-data/26-6.jpg"
       ]
     },
     {
@@ -436,6 +618,14 @@
       "屋況說明": [
         "已完成107學年賃居消防安全檢查",
         "已完成106學年賃居訪視安全評核"
+      ],
+      "房屋照片": [
+        "assets/images-data/27-1.jpg",
+        "assets/images-data/27-2.jpg",
+        "assets/images-data/27-3.jpg",
+        "assets/images-data/27-4.jpg",
+        "assets/images-data/27-5.jpg",
+        "assets/images-data/27-6.jpg"
       ]
     },
     {
@@ -452,6 +642,14 @@
         "中央大學房東聯誼會成員較能配合學校政策執行賃居作為",
         "已完成106、107、108學年賃居訪視安全評核",
         "已完成106、107、108學年賃居消防安全檢查"
+      ],
+      "房屋照片": [
+        "assets/images-data/28-1.jpg",
+        "assets/images-data/28-2.jpg",
+        "assets/images-data/28-3.jpg",
+        "assets/images-data/28-4.jpg",
+        "assets/images-data/28-5.jpg",
+        "assets/images-data/28-6.jpg"
       ]
     },
     {
@@ -469,6 +667,15 @@
         "已完成106年賃居訪視",
         "已完成107學年賃居消防安全檢查",
         "已於98/12/25通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/29-1.jpg",
+        "assets/images-data/29-2.jpg",
+        "assets/images-data/29-3.jpg",
+        "assets/images-data/29-4.jpg",
+        "assets/images-data/29-5.jpg",
+        "assets/images-data/29-6.jpg",
+        "assets/images-data/29-7.jpg"
       ]
     },
     {
@@ -481,7 +688,21 @@
       "其他費用": "費，公用電費，網路費，機車棚，洗衣機全部免費",
       "屋內設備": ["冷氣機", "洗衣機", "烘乾機", "飲水機", "衣櫃", "單人床", "書櫃", "書桌(椅)", "寬頻網路"],
       "公共設施": ["停車場"],
-      "屋況說明": ["已完成114學年賃居訪視安全評核"]
+      "屋況說明": ["已完成114學年賃居訪視安全評核"],
+      "房屋照片": [
+        "assets/images-data/30-1.jpg",
+        "assets/images-data/30-2.jpg",
+        "assets/images-data/30-3.jpg",
+        "assets/images-data/30-4.jpg",
+        "assets/images-data/30-5.jpg",
+        "assets/images-data/30-6.jpg",
+        "assets/images-data/30-7.jpg",
+        "assets/images-data/30-8.jpg",
+        "assets/images-data/30-9.jpg",
+        "assets/images-data/30-10.jpg",
+        "assets/images-data/30-11.jpg",
+        "assets/images-data/30-12.jpg"
+      ]
     },
     {
       "編碼": 31,
@@ -493,7 +714,15 @@
       "其他費用": "無",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "單人床", "雙人床", "書櫃", "書桌(椅)", "寬頻網路", "第四台", "電話"],
       "公共設施": ["公共陽台", "中庭", "停車場", "光纖網路"],
-      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成103學年賃居訪視安全評核"]
+      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成103學年賃居訪視安全評核"],
+      "房屋照片": [
+        "assets/images-data/31-1.jpg",
+        "assets/images-data/31-2.jpg",
+        "assets/images-data/31-3.jpg",
+        "assets/images-data/31-4.jpg",
+        "assets/images-data/31-5.jpg",
+        "assets/images-data/31-6.jpg"
+      ]
     },
     {
       "編碼": 32,
@@ -505,7 +734,13 @@
       "其他費用": "公用水電費180",
       "屋內設備": ["電冰箱", "中央空調", "洗衣機", "脫水機", "烘乾機", "沙發", "衣櫃", "單人床", "雙人床", "書櫃", "檯燈", "光纖網路"],
       "公共設施": ["中庭", "停車場"],
-      "屋況說明": ["已完成107學年賃居消防安全檢查", "已於98/12/24通過建築物結構耐震能力初步評估合格"]
+      "屋況說明": ["已完成107學年賃居消防安全檢查", "已於98/12/24通過建築物結構耐震能力初步評估合格"],"房屋照片": [
+        "assets/images-data/32-1.jpg",
+        "assets/images-data/32-2.jpg",
+        "assets/images-data/32-3.jpg",
+        "assets/images-data/32-4.jpg",
+        "assets/images-data/32-5.jpg"
+      ]
     },
     {
       "編碼": 33,
@@ -517,7 +752,15 @@
       "其他費用": "網路，公用電費",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "飲水機", "衣櫃", "雙人床", "書櫃", "書桌(椅)", "光纖網路"],
       "公共設施": ["中庭", "停車場", "電梯", "光纖網路"],
-      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成103學年賃居訪視安全評核", "已於98/12/18通過建築物結構耐震能力初步評估合格"]
+      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成103學年賃居訪視安全評核", "已於98/12/18通過建築物結構耐震能力初步評估合格"],
+      "房屋照片": [
+        "assets/images-data/33-1.jpg",
+        "assets/images-data/33-2.jpg",
+        "assets/images-data/33-3.jpg",
+        "assets/images-data/33-4.jpg",
+        "assets/images-data/33-5.jpg",
+        "assets/images-data/33-6.jpg"
+      ]
     },
     {
       "編碼": 34,
@@ -535,6 +778,19 @@
         "有定期檢查記錄",
         "已完成107學年賃居消防安全檢查",
         "已於98/12/22通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/34-1.jpg",
+        "assets/images-data/34-2.jpg",
+        "assets/images-data/34-3.jpg",
+        "assets/images-data/34-4.jpg",
+        "assets/images-data/34-5.jpg",
+        "assets/images-data/34-6.jpg",
+        "assets/images-data/34-7.jpg",
+        "assets/images-data/34-8.jpg",
+        "assets/images-data/34-9.jpg",
+        "assets/images-data/34-10.jpg",
+        "assets/images-data/34-11.jpg"
       ]
     },
     {
@@ -551,6 +807,14 @@
         "已完成106學年賃居訪視安全評核",
         "已完成107學年賃居消防安全檢查",
         "已於98/12/30通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/35-1.jpg",
+        "assets/images-data/35-2.jpg",
+        "assets/images-data/35-3.jpg",
+        "assets/images-data/35-4.jpg",
+        "assets/images-data/35-5.jpg",
+        "assets/images-data/35-6.jpg"
       ]
     },
     {
@@ -567,6 +831,14 @@
         "已完成107學年賃居消防安全檢查",
         "已完成106學年賃居訪視安全評核",
         "已於99/05/15通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/36-1.jpg",
+        "assets/images-data/36-2.jpg",
+        "assets/images-data/36-3.jpg",
+        "assets/images-data/36-4.jpg",
+        "assets/images-data/36-5.jpg",
+        "assets/images-data/36-6.jpg"
       ]
     },
     {
@@ -582,7 +854,15 @@
       "屋況說明": [
         "已完成107學年賃居消防安全檢查",
         "已於98/12/25通過建築物結構耐震能力初步評估合格"
-      ]
+      ],
+    "房屋照片": [
+      "assets/images-data/37-1.jpg",
+      "assets/images-data/37-2.jpg",
+      "assets/images-data/37-3.jpg",
+      "assets/images-data/37-4.jpg",
+      "assets/images-data/37-5.jpg",
+      "assets/images-data/37-6.jpg"
+    ]
     },
     {
       "編碼": 38,
@@ -597,6 +877,13 @@
       "屋況說明": [
         "已完成107學年賃居消防安全檢查",
         "已於98/12/25通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/38-1.jpg",
+        "assets/images-data/38-2.jpg",
+        "assets/images-data/38-3.jpg",
+        "assets/images-data/38-4.jpg",
+        "assets/images-data/38-5.jpg"
       ]
     },
     {
@@ -615,6 +902,11 @@
         "電梯無使用許可證（有電梯保養紀錄）",
         "已完成107學年賃居消防安全檢查",
         "已於98/12/18通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/39-1.jpg",
+        "assets/images-data/39-2.jpg",
+        "assets/images-data/39-3.jpg"
       ]
     },
     {
@@ -633,6 +925,14 @@
         "電梯有使用許可證（有定期電梯保養紀錄）",
         "已完成107學年賃居消防安全檢查",
         "已於98/12/18通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/40-1.jpg",
+        "assets/images-data/40-2.jpg",
+        "assets/images-data/40-3.jpg",
+        "assets/images-data/40-4.jpg",
+        "assets/images-data/40-5.jpg",
+        "assets/images-data/40-6.jpg"
       ]
     },
     {
@@ -645,7 +945,17 @@
       "其他費用": "公共水電費200元/月，網路900元/半年",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "單人床", "雙人床", "書櫃", "光纖網路"],
       "公共設施": ["停車場", "電梯"],
-      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成106學年賃居訪視安全評核", "已完成107學年賃居消防安全檢查"]
+      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成106學年賃居訪視安全評核", "已完成107學年賃居消防安全檢查"],
+      "房屋照片": [
+        "assets/images-data/41-1.jpg",
+        "assets/images-data/41-2.jpg",
+        "assets/images-data/41-3.jpg",
+        "assets/images-data/41-4.jpg",
+        "assets/images-data/41-5.jpg",
+        "assets/images-data/41-6.jpg",
+        "assets/images-data/41-7.jpg",
+        "assets/images-data/41-8.jpg"
+      ]
     },
     {
       "編碼": 42,
@@ -657,7 +967,8 @@
       "其他費用": "無",
       "屋內設備": ["電視機", "冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "雙人床", "書櫃", "書桌(椅)", "寬頻網路", "第四台"],
       "公共設施": ["停車場"],
-      "屋況說明": ["已完成106學年賃居訪視安全評核"]
+      "屋況說明": ["已完成106學年賃居訪視安全評核"],
+      "房屋照片": []
     },
     {
       "編碼": 43,
@@ -669,7 +980,15 @@
       "其他費用": "公共水電費200元/月",
       "屋內設備": ["電冰箱", "中央空調", "洗衣機", "脫水機", "烘乾機", "沙發", "衣櫃", "單人床", "雙人床", "書櫃", "檯燈", "寬頻網路"],
       "公共設施": ["公共陽台", "中庭", "停車場"],
-      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成106學年賃居訪視安全評核", "電梯無使用許可證（有定期檢查記錄）", "已完成107學年賃居消防安全檢查", "已於98/12/18通過建築物結構耐震能力初步評估合格"]
+      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成106學年賃居訪視安全評核", "電梯無使用許可證（有定期檢查記錄）", "已完成107學年賃居消防安全檢查", "已於98/12/18通過建築物結構耐震能力初步評估合格"],
+      "房屋照片": [
+        "assets/images-data/43-1.jpg",
+        "assets/images-data/43-2.jpg",
+        "assets/images-data/43-3.jpg",
+        "assets/images-data/43-4.jpg",
+        "assets/images-data/43-5.jpg",
+        "assets/images-data/43-6.jpg"
+      ]
     },
     {
       "編碼": 44,
@@ -681,7 +1000,21 @@
       "其他費用": "無",
       "屋內設備": ["冷氣機", "洗衣機", "飲水機", "衣櫃", "雙人床", "書櫃", "書桌(椅)", "寬頻網路"],
       "公共設施": ["停車場"],
-      "屋況說明": []
+      "屋況說明": [],
+      "房屋照片": [
+        "assets/images-data/44-1.jpg",
+        "assets/images-data/44-2.jpg",
+        "assets/images-data/44-3.jpg",
+        "assets/images-data/44-4.jpg",
+        "assets/images-data/44-5.jpg",
+        "assets/images-data/44-6.jpg",
+        "assets/images-data/44-7.jpg",
+        "assets/images-data/44-8.jpg",
+        "assets/images-data/44-9.jpg",
+        "assets/images-data/44-10.jpg",
+        "assets/images-data/44-11.jpg",
+        "assets/images-data/44-12.jpg"
+      ]
     },
     {
       "編碼": 45,
@@ -693,7 +1026,10 @@
       "其他費用": "水費100/月，公電200/月，網路200/月",
       "屋內設備": ["電視機", "冷氣機", "中央空調", "洗衣機", "脫水機", "飲水機", "衣櫃", "單人床", "雙人床", "書桌(椅)", "檯燈"],
       "公共設施": ["公共陽台", "中庭", "光纖網路"],
-      "屋況說明": ["已完成107學年賃居消防安全檢查", "已於98/12/18通過建築物結構耐震能力初步評估合格"]
+      "屋況說明": ["已完成107學年賃居消防安全檢查", "已於98/12/18通過建築物結構耐震能力初步評估合格"],
+      "房屋照片": [
+        "assets/images-data/45-1.jpg"
+      ]
     },
     {
       "編碼": 46,
@@ -705,7 +1041,8 @@
       "其他費用": "無",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "雙人床", "書桌(椅)", "寬頻網路", "第四台"],
       "公共設施": ["停車場"],
-      "屋況說明": ["2014年消防安全認證合格編號：2014052", "已完成106學年賃居訪視安全評核"]
+      "屋況說明": ["2014年消防安全認證合格編號：2014052", "已完成106學年賃居訪視安全評核"],
+      "房屋照片": []
     },
     {
       "編碼": 47,
@@ -717,7 +1054,13 @@
       "其他費用": "依台電費率(公共電費：1學期500元)",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "單人床", "書桌(椅)", "寬頻網路"],
       "公共設施": ["停車場", "電梯"],
-      "屋況說明": ["已完成106學年賃居訪視安全評核", "電梯無使用許可證", "提供網站預覽http://www.zhuyuan-inc.com.tw/web/SpecialProducts/1/10", "另有雙人房可來電詢問。", "已完成107學年賃居消防安全檢查"]
+      "屋況說明": ["已完成106學年賃居訪視安全評核", "電梯無使用許可證", "提供網站預覽http://www.zhuyuan-inc.com.tw/web/SpecialProducts/1/10", "另有雙人房可來電詢問。", "已完成107學年賃居消防安全檢查"],
+      "房屋照片": [
+        "assets/images-data/47-1.jpg",
+        "assets/images-data/47-2.jpg",
+        "assets/images-data/47-3.jpg",
+        "assets/images-data/47-4.jpg"
+      ]
     },
     {
       "編碼": 48,
@@ -729,7 +1072,15 @@
       "其他費用": "電費及網路",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "單人床", "雙人床", "書櫃", "書桌(椅)", "寬頻網路", "第四台"],
       "公共設施": ["停車場"],
-      "屋況說明": ["已完成106學年賃居訪視安全評核"]
+      "屋況說明": ["已完成106學年賃居訪視安全評核"],
+      "房屋照片": [
+        "assets/images-data/48-1.jpg",
+        "assets/images-data/48-2.jpg",
+        "assets/images-data/48-3.jpg",
+        "assets/images-data/48-4.jpg",
+        "assets/images-data/48-5.jpg",
+        "assets/images-data/48-6.jpg"
+      ]
     },
     {
       "編碼": 49,
@@ -741,7 +1092,15 @@
       "其他費用": "無",
       "屋內設備": ["電冰箱", "中央空調", "洗衣機", "脫水機", "烘乾機", "沙發", "單人床", "雙人床", "書櫃", "檯燈", "寬頻網路"],
       "公共設施": ["公共陽台", "中庭"],
-      "屋況說明": ["已完成112學年賃居消防安全檢查", "電梯有使用許可證", "已於99/05/15通過建築物結構耐震能力初步評估合格"]
+      "屋況說明": ["已完成112學年賃居消防安全檢查", "電梯有使用許可證", "已於99/05/15通過建築物結構耐震能力初步評估合格"],
+      "房屋照片": [
+        "assets/images-data/49-1.jpg",
+        "assets/images-data/49-2.jpg",
+        "assets/images-data/49-3.jpg",
+        "assets/images-data/49-4.jpg",
+        "assets/images-data/49-5.jpg",
+        "assets/images-data/49-6.jpg"
+      ]
     },
     {
       "編碼": 50,
@@ -753,7 +1112,10 @@
       "其他費用": "無",
       "屋內設備": ["電冰箱", "中央空調", "洗衣機", "脫水機", "烘乾機", "沙發", "衣櫃", "單人床", "雙人床", "書櫃", "檯燈", "寬頻網路"],
       "公共設施": ["中庭", "停車場", "光纖網路"],
-      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成106學年賃居訪視安全評核", "已完成107學年賃居消防安全檢查", "已於106/08/25通過建築物結構耐震能力初步評估合格"]
+      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成106學年賃居訪視安全評核", "已完成107學年賃居消防安全檢查", "已於106/08/25通過建築物結構耐震能力初步評估合格"],
+      "房屋照片": [
+        "assets/images-data/50-1.jpg"
+      ]
     },
     {
       "編碼": 51,
@@ -765,7 +1127,13 @@
       "其他費用": "電費",
       "屋內設備": ["電冰箱", "中央空調", "洗衣機", "脫水機", "烘乾機", "沙發", "衣櫃", "單人床", "雙人床", "書櫃", "檯燈", "寬頻網路"],
       "公共設施": ["中庭", "停車場"],
-      "屋況說明": ["已完成106學年賃居訪視安全評核", "電梯無使用許可證（有定期檢查記錄）", "已完成107學年賃居消防安全檢查", "已於98/12/24通過建築物結構耐震能力初步評估合格"]
+      "屋況說明": ["已完成106學年賃居訪視安全評核", "電梯無使用許可證（有定期檢查記錄）", "已完成107學年賃居消防安全檢查", "已於98/12/24通過建築物結構耐震能力初步評估合格"],
+      "房屋照片": [
+        "assets/images-data/51-1.jpg",
+        "assets/images-data/51-2.jpg",
+        "assets/images-data/51-3.jpg",
+        "assets/images-data/51-4.jpg"
+      ]
     },
     {
       "編碼": 52,
@@ -777,7 +1145,15 @@
       "其他費用": "無",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "書櫃", "書桌(椅)", "寬頻網路", "第四台"],
       "公共設施": ["停車場", "電梯"],
-      "屋況說明": ["2014年消防安全認證合格編號：2014048", "中央大學房東聯誼會成員較能配合學校政策執行賃居作為"]
+      "屋況說明": ["2014年消防安全認證合格編號：2014048", "中央大學房東聯誼會成員較能配合學校政策執行賃居作為"],
+      "房屋照片": [
+        "assets/images-data/52-1.jpg",
+        "assets/images-data/52-2.jpg",
+        "assets/images-data/52-3.jpg",
+        "assets/images-data/52-4.jpg",
+        "assets/images-data/52-5.jpg",
+        "assets/images-data/52-6.jpg"
+      ]
     },
     {
       "編碼": 53,
@@ -789,7 +1165,15 @@
       "其他費用": "公用水電各100元",
       "屋內設備": ["電冰箱", "中央空調", "洗衣機", "脫水機", "烘乾機", "沙發", "衣櫃", "單人床", "雙人床", "書櫃", "檯燈", "寬頻網路"],
       "公共設施": ["中庭", "停車場"],
-      "屋況說明": ["已完成112年賃居消防安全檢查", "已於106/06/12通過建築物結構耐震能力初步評估合格"]
+      "屋況說明": ["已完成112年賃居消防安全檢查", "已於106/06/12通過建築物結構耐震能力初步評估合格"],
+      "房屋照片": [
+        "assets/images-data/53-1.jpg",
+        "assets/images-data/53-2.jpg",
+        "assets/images-data/53-3.jpg",
+        "assets/images-data/53-4.jpg",
+        "assets/images-data/53-5.jpg",
+        "assets/images-data/53-6.jpg"
+      ]
     },
     {
       "編碼": 54,
@@ -801,7 +1185,15 @@
       "其他費用": "無",
       "屋內設備": ["電視機", "電冰箱", "中央空調", "洗衣機", "脫水機", "烘乾機", "沙發", "衣櫃", "單人床", "雙人床", "書櫃", "檯燈", "寬頻網路"],
       "公共設施": ["中庭", "停車場"],
-      "屋況說明": ["2014年消防安全認證合格編號：2014034", "中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成107學年賃居消防安全檢查"]
+      "屋況說明": ["2014年消防安全認證合格編號：2014034", "中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成107學年賃居消防安全檢查"],
+      "房屋照片": [
+        "assets/images-data/54-1.jpg",
+        "assets/images-data/54-2.jpg",
+        "assets/images-data/54-3.jpg",
+        "assets/images-data/54-4.jpg",
+        "assets/images-data/54-5.jpg",
+        "assets/images-data/54-6.jpg"
+      ]
     },
     {
       "編碼": 55,
@@ -813,7 +1205,15 @@
       "其他費用": "公用水電100元",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "雙人床", "書櫃", "書桌(椅)", "寬頻網路", "第四台"],
       "公共設施": ["公共陽台", "停車場", "電梯"],
-      "屋況說明": []
+      "屋況說明": [],
+      "房屋照片": [
+        "assets/images-data/55-1.jpg",
+        "assets/images-data/55-2.jpg",
+        "assets/images-data/55-3.jpg",
+        "assets/images-data/55-4.jpg",
+        "assets/images-data/55-5.jpg",
+        "assets/images-data/55-6.jpg"
+      ]
     },
     {
       "編碼": 56,
@@ -825,7 +1225,10 @@
       "其他費用": "公用水電1200/學期，網路1200/學期",
       "屋內設備": ["電視機", "電冰箱", "中央空調", "洗衣機", "脫水機", "烘乾機", "沙發", "單人床", "雙人床", "書櫃", "檯燈", "寬頻網路", "光纖網路"],
       "公共設施": ["公共陽台", "中庭", "停車場", "光纖網路"],
-      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成106學年賃居訪視安全評核", "電梯無使用許可證(有定期檢查記錄)", "已完成107學年賃居消防安全檢查", "已於106/06/12通過建築物結構耐震能力初步評估合格"]
+      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成106學年賃居訪視安全評核", "電梯無使用許可證(有定期檢查記錄)", "已完成107學年賃居消防安全檢查", "已於106/06/12通過建築物結構耐震能力初步評估合格"],
+      "房屋照片": [
+        "assets/images-data/56-1.jpg"
+      ]
     },
     {
       "編碼": 57,
@@ -837,7 +1240,15 @@
       "其他費用": "無",
       "屋內設備": ["電視機", "電冰箱", "中央空調", "洗衣機", "脫水機", "烘乾機", "沙發", "單人床", "雙人床", "書櫃", "檯燈", "寬頻網路", "光纖網路"],
       "公共設施": ["中庭", "停車場"],
-      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成103學年賃居訪視安全評核", "2009年12月18日完成建築物結構耐震能力初步評估合格處所"]
+      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成103學年賃居訪視安全評核", "2009年12月18日完成建築物結構耐震能力初步評估合格處所"],
+      "房屋照片": [
+        "assets/images-data/57-1.jpg",
+        "assets/images-data/57-2.jpg",
+        "assets/images-data/57-3.jpg",
+        "assets/images-data/57-4.jpg",
+        "assets/images-data/57-5.jpg",
+        "assets/images-data/57-6.jpg"
+      ]
     },
     {
       "編碼": 58,
@@ -849,7 +1260,8 @@
       "其他費用": "無",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "雙人床", "書櫃", "書桌(椅)", "寬頻網路", "第四台"],
       "公共設施": ["公共陽台", "停車場", "電梯"],
-      "屋況說明": ["已完成107學年賃居消防安全檢查"]
+      "屋況說明": ["已完成107學年賃居消防安全檢查"],
+      "房屋照片": []
     },
     {
       "編碼": 59,
@@ -861,7 +1273,20 @@
       "其他費用": "無",
       "屋內設備": ["電冰箱", "冷氣機", "洗衣機", "飲水機", "衣櫃", "雙人床", "書櫃", "書桌(椅)", "檯燈", "寬頻網路"],
       "公共設施": ["公共曬衣空間"],
-      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為"]
+      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為"],
+      "房屋照片": [
+        "assets/images-data/59-1.jpg",
+        "assets/images-data/59-2.jpg",
+        "assets/images-data/59-3.jpg",
+        "assets/images-data/59-4.jpg",
+        "assets/images-data/59-5.jpg",
+        "assets/images-data/59-6.jpg",
+        "assets/images-data/59-7.jpg",
+        "assets/images-data/59-8.jpg",
+        "assets/images-data/59-9.jpg",
+        "assets/images-data/59-10.jpg",
+        "assets/images-data/59-11.jpg"
+      ]
     },
     {
       "編碼": 60,
@@ -873,7 +1298,18 @@
       "其他費用": "每月公用水費100元、電費100元、網路200元",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "單人床", "書櫃", "書桌(椅)", "寬頻網路"],
       "公共設施": ["停車場", "電梯"],
-      "屋況說明": ["已完成107年度賃居訪視及消防檢查", "98.12.30已完成房屋耐震初評合格", "有投保公共意外險"]
+      "屋況說明": ["已完成107年度賃居訪視及消防檢查", "98.12.30已完成房屋耐震初評合格", "有投保公共意外險"],
+      "房屋照片": [
+        "assets/images-data/60-1.jpg",
+        "assets/images-data/60-2.jpg",
+        "assets/images-data/60-3.jpg",
+        "assets/images-data/60-4.jpg",
+        "assets/images-data/60-5.jpg",
+        "assets/images-data/60-6.jpg",
+        "assets/images-data/60-7.jpg",
+        "assets/images-data/60-8.jpg",
+        "assets/images-data/60-9.jpg"
+      ]
     },
     {
       "編碼": 61,
@@ -885,7 +1321,15 @@
       "其他費用": "無",
       "屋內設備": ["冷氣機", "洗衣機", "脫水機", "電視機", "第四台", "衣櫃", "單人床", "書櫃", "書桌(椅)", "寬頻網路"],
       "公共設施": ["停車場", "公共陽台"],
-      "屋況說明": "無"
+      "屋況說明": "無",
+      "房屋照片": [
+        "assets/images-data/61-1.jpg",
+        "assets/images-data/61-2.jpg",
+        "assets/images-data/61-3.jpg",
+        "assets/images-data/61-4.jpg",
+        "assets/images-data/61-5.jpg",
+        "assets/images-data/61-6.jpg"
+      ]
     },
     {
       "編碼": 62,
@@ -897,7 +1341,10 @@
       "其他費用": "無",
       "屋內設備": ["電冰箱", "中央空調", "烘乾機", "單人床", "雙人床", "書櫃", "檯燈", "寬頻網路", "光纖網路"],
       "公共設施": ["公共陽台", "中庭", "停車場", "光纖網路"],
-      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成106學年賃居訪視安全評核", "已完成107學年賃居消防安全檢查", "已於106/09/04通過建築物結構耐震能力初步評估合格"]
+      "屋況說明": ["中央大學房東聯誼會成員較能配合學校政策執行賃居作為", "已完成106學年賃居訪視安全評核", "已完成107學年賃居消防安全檢查", "已於106/09/04通過建築物結構耐震能力初步評估合格"],
+      "房屋照片": [
+        "assets/images-data/62-1.jpg"
+      ]
     },
     {
       "編碼": 63,
@@ -912,6 +1359,14 @@
       "屋況說明": [
         "已完成106學年賃居訪視安全評核",
         "已完成107學年賃居消防安全檢查"
+      ],
+      "房屋照片": [
+        "assets/images-data/63-1.jpg",
+        "assets/images-data/63-2.jpg",
+        "assets/images-data/63-3.jpg",
+        "assets/images-data/63-4.jpg",
+        "assets/images-data/63-5.jpg",
+        "assets/images-data/63-6.jpg"
       ]
     },
     {
@@ -929,6 +1384,12 @@
         "簽約一年享有優惠",
         "套房6坪有電視及冰箱年繳平均5000~6000元/月不等",
         "如想了解更完整資訊可直接Facebook搜尋:「中央極品」套房出租 或直接連接以下網址 www.facebook.com/pages/中央極品套房出租/662656823804852?fref=ts"
+      ],
+      "房屋照片": [
+        "assets/images-data/64-1.jpg",
+        "assets/images-data/64-2.jpg",
+        "assets/images-data/64-3.jpg",
+        "assets/images-data/64-4.jpg"
       ]
     },
     {
@@ -944,6 +1405,14 @@
       "屋況說明": [
         "已完成107學年賃居消防安全檢查",
         "已於98/12/25通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/65-1.jpg",
+        "assets/images-data/65-2.jpg",
+        "assets/images-data/65-3.jpg",
+        "assets/images-data/65-4.jpg",
+        "assets/images-data/65-5.jpg",
+        "assets/images-data/65-6.jpg"
       ]
     },
     {
@@ -956,22 +1425,48 @@
       "其他費用": ["台電公告之費用"],
       "屋內設備": ["冷氣機", "洗衣機", "烘乾機", "飲水機", "衣櫃", "雙人床", "書櫃", "書桌(椅)", "寬頻網路", "第四台"],
       "公共設施": ["公共陽台"],
-      "屋況說明": ["已完成112學年賃居訪視安全評核 (免費寬頻網路)"]
+      "屋況說明": ["已完成112學年賃居訪視安全評核 (免費寬頻網路)"],
+      "房屋照片": [
+        "assets/images-data/66-1.jpg",
+        "assets/images-data/66-2.jpg",
+        "assets/images-data/66-3.jpg",
+        "assets/images-data/66-4.jpg",
+        "assets/images-data/66-5.jpg",
+        "assets/images-data/66-6.jpg"
+      ]
     },
     {
       "編碼": 67,
-      "標題": "【學長姐推薦.生活好環境.房東好人】",
-      "房租": "每月 5500 元",
-      "地址": "桃園市中壢區中央路232巷12號",
-      "聯絡資訊": "江房東 (0936467599)",
-      "出租房數": {"套房": {"坪數": "約7坪", "總數": 25, "空房": 10}},
-      "其他費用": ["無"],
-      "屋內設備": ["電視機", "電冰箱", "中央空調", "洗衣機", "脫水機", "烘乾機", "沙發", "衣櫃", "單人床", "雙人床", "書櫃", "檯燈", "寬頻網路"],
-      "公共設施": ["中庭", "停車場"],
+      "標題": "【學長姐推薦.生活好環境.房東親切，讚！一學期六個月36000元，押金6000元】 房間出租 套房6間",
+      "房租": "每月 6000 元",
+      "地址": "桃園市中壢區中央路148號",
+      "聯絡資訊": "吳先生 (0921847202)",
+      "出租房數": {"套房": {"坪數": "約6坪", "總數": 38, "空房": 6}},
+      "其他費用": "無",
+      "屋內設備": ["電冰箱", "冷氣機", "洗衣機", "脫水機", "烘乾機", "飲水機", "衣櫃", "單人床", "雙人床", "書櫃", "書桌(椅)", "寬頻網路"],
+      "公共設施": ["公共陽台", "中庭", "停車場", "電梯"],
       "屋況說明": [
-        "2014年消防安全認證合格編號：2014034",
-        "中央大學房東聯誼會成員較能配合學校政策執行賃居作為",
-        "已完成107學年賃居消防安全檢查"
+        "一學期六個月36000元 (每月6000元)，押金6000元",
+        "房子後面有田園.免費Wifi.床超大超軟Q.新的曬衣場.新冷氣.新電梯",
+        "房東待人親切.服務周到，2017就讀中央學長推薦",
+        "已完成2023學年賃居消防安全檢查",
+        "已於2023通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/67-1.jpg",
+        "assets/images-data/67-2.jpg",
+        "assets/images-data/67-3.jpg",
+        "assets/images-data/67-4.jpg",
+        "assets/images-data/67-5.jpg",
+        "assets/images-data/67-6.jpg",
+        "assets/images-data/67-7.jpg",
+        "assets/images-data/67-7.jpg",
+        "assets/images-data/67-9.jpg",
+        "assets/images-data/67-10.jpg",
+        "assets/images-data/67-11.jpg",
+        "assets/images-data/67-12.jpg",
+        "assets/images-data/67-13.jpg",
+        "assets/images-data/67-14.jpg"
       ]
     },
     
@@ -988,7 +1483,15 @@
       "其他費用": "無",
       "屋內設備": ["電視機", "冷氣機", "洗衣機", "衣櫃", "單人床", "雙人床", "書桌(椅)", "寬頻網路", "第四台"],
       "公共設施": ["公共陽台", "停車場"],
-      "屋況說明": ["全新屋"]
+      "屋況說明": ["全新屋"],
+      "房屋照片": [
+        "assets/images-data/68-1.jpg",
+        "assets/images-data/68-2.jpg",
+        "assets/images-data/68-3.jpg",
+        "assets/images-data/68-4.jpg",
+        "assets/images-data/68-5.jpg",
+        "assets/images-data/68.6.jpg"
+      ]
     },
     {
       "編碼": 69,
@@ -1007,6 +1510,14 @@
         "中央大學房東聯誼會成員較能配合學校政策執行賃居作為",
         "已完成103學年賃居訪視安全評核",
         "電梯有使用許可證"
+      ],
+      "房屋照片": [
+        "assets/images-data/69-1.jpg",
+        "assets/images-data/69-2.jpg",
+        "assets/images-data/69-3.jpg",
+        "assets/images-data/69-4.jpg",
+        "assets/images-data/69-5.jpg",
+        "assets/images-data/69-6.jpg"
       ]
     },
     {
@@ -1019,7 +1530,15 @@
       "其他費用": "公用水電費200元",
       "屋內設備": ["電視機", "電冰箱", "冷氣機", "洗衣機", "沙發", "衣櫃", "單人床", "雙人床", "書櫃", "書桌(椅)", "寬頻網路", "第四台"],
       "公共設施": ["公共陽台", "中庭", "停車場", "電梯"],
-      "屋況說明": []
+      "屋況說明": [],
+      "房屋照片": [
+        "assets/images-data/70-1.jpg",
+        "assets/images-data/70-2.jpg",
+        "assets/images-data/70-3.jpg",
+        "assets/images-data/70-4.jpg",
+        "assets/images-data/70-5.jpg",
+        "assets/images-data/70-6.jpg"
+      ]
     },
     {
       "編碼": 71,
@@ -1038,6 +1557,14 @@
         "只有1戶，月租25000元，,三房兩廳兩衛,大後院,變頻冷暖氣,書桌椅,電視,洗衣機,適合3-5人共租,需整戶一起出租",
         "該戶緊鄰中央大學客家學院後門出口，進出學校方便，機車位每月需付清潔費",
         "房東LINE: jason787787"
+      ],
+      "房屋照片": [
+        "assets/images-data/71-1.jpg",
+        "assets/images-data/71-2.jpg",
+        "assets/images-data/71-3.jpg",
+        "assets/images-data/71-4.jpg",
+        "assets/images-data/71-5.jpg",
+        "assets/images-data/71-6.jpg"
       ]
     },
     {
@@ -1055,6 +1582,20 @@
       "公共設施": ["公共陽台", "中庭", "停車場", "電梯", "大廳"],
       "屋況說明": [
         "屋況新穎，有24小時保全警衛，磁扣管制進出，屋內三房兩廳兩衛浴兩陽台，需整間一起出租，適合3~5人合租。全套家電家俱,有地下室機車位,房東LINE: jason787787"
+      ],
+      "房屋照片": [
+        "assets/images-data/72-1.jpg",
+        "assets/images-data/72-2.jpg",
+        "assets/images-data/72-3.jpg",
+        "assets/images-data/72-4.jpg",
+        "assets/images-data/72-5.jpg",
+        "assets/images-data/72-6.jpg",
+        "assets/images-data/72-7.jpg",
+        "assets/images-data/72-8.jpg",
+        "assets/images-data/72-9.jpg",
+        "assets/images-data/72-10.jpg",
+        "assets/images-data/72-11.jpg",
+        "assets/images-data/72-12.jpg"
       ]
     },
     {
@@ -1070,6 +1611,14 @@
       "屋況說明": [
         "已完成107學年賃居消防安全檢查",
         "已於98/12/24通過建築物結構耐震能力初步評估合格"
+      ],
+      "房屋照片": [
+        "assets/images-data/73-1.jpg",
+        "assets/images-data/73-2.jpg",
+        "assets/images-data/73-3.jpg",
+        "assets/images-data/73-4.jpg",
+        "assets/images-data/73-5.jpg",
+        "assets/images-data/73-6.jpg"
       ]
     }
   ]
