@@ -951,10 +951,11 @@ export default {
   align-items: flex-start;
   justify-content: center;
   z-index: 1100;
-  padding: 20px;
+  padding: 10px;
   overflow-y: auto;
   overflow-x: hidden;
 }
+
 .property-detail-content {
   width: 90%;
   max-width: 900px;
@@ -964,7 +965,7 @@ export default {
   display: flex;
   flex-direction: column;
   position: relative;
-  margin: 40px 0;
+  margin:15px 0 30px 0;
   max-height: none;
 }
 
@@ -987,7 +988,7 @@ export default {
 
 .property-detail-gallery {
   position: relative;
-  height: 450px;
+  height: 300px;
 }
 
 .gallery-image {
@@ -1185,18 +1186,18 @@ export default {
   }
 
   .property-detail-modal {
-    padding: 15px;
-    align-items: center;
+    align-items: flex-start;
+    padding: 5px;
   }
-
+  
   .property-detail-content {
-    width: 95%;
-    margin: 20px 0;
+    margin: 10px 0 20px 0;
+  }
+  
+  .property-detail-gallery {
+    height: 250px;
   }
 
-  .property-detail-gallery {
-    height: 350px;
-  }
 
   .gallery-image {
     height: 250px;
@@ -1208,25 +1209,40 @@ export default {
   }
 }
 
-@media (max-width: 576px) {
-  .header h1 {
-    font-size: 1.5rem;
-  }
-
-  .checkbox-group {
-    grid-template-columns: 1fr 1fr;
-  }
-  .property-detail-modal {
-    padding: 10px;
-  }
-
+@media (max-height: 600px) {
   .property-detail-gallery {
-    height: 250px;
+    height: 200px;
   }
+}
 
+@media (max-width: 576px), (max-height: 500px) {
+  .property-detail-modal {
+    padding: 0;
+  }
+  
   .property-detail-content {
-    width: 98%;
-    margin: 10px 0;
+    width: 100%;
+    margin: 0;
+    border-radius: 0; /* 移除圓角 */
+    height: 100%; /* 佔滿整個螢幕 */
+  }
+  
+  .property-detail-gallery {
+    height: 180px;
+  }
+  
+  .close-btn {
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+  }
+  
+  .gallery-nav {
+    width: 36px;
+    height: 36px;
   }
 }
 
