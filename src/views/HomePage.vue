@@ -29,10 +29,10 @@
       <h2>為中央大學學生解決租屋困擾</h2>
       <p>每年開學季，找房成為許多學生最大的挑戰。我們針對中央大學學生租屋痛點，提供完整解決方案。</p>
       <ul class="intro-points">
-        <li><i class="check-icon"></i> 提供經過驗證的可靠房源</li>
-        <li><i class="check-icon"></i> 透明價格與實際照片對比</li>
-        <li><i class="check-icon"></i> 詳細的生活機能與交通資訊</li>
-        <li><i class="check-icon"></i> 校友評價與真實入住經驗分享</li>
+        <li><i class="check-icon"></i> 改善資訊集中與查詢效率</li>
+        <li><i class="check-icon"></i> 提供即時更新與透明資訊</li>
+        <li><i class="check-icon"></i> 增設評價與回饋機制</li>
+        <li><i class="check-icon"></i> 集中轉租資訊降低詐騙風險</li>
       </ul>
       <button class="learn-more-btn">了解更多</button>
     </div>
@@ -83,9 +83,12 @@
   </div>
 </div>
 
-<!-- 特色版塊 -->
+<!-- 服務內容 -->
 <div class="features-section">
-  <h2 class="features-title">服務內容</h2>
+  <div class="section-header">
+    <h2 class="features-title">服務內容</h2>
+    <div class="section-underline"></div>
+  </div>
   <div class="feature-card" v-for="(feature, idx) in features" :key="idx">
     <div class="feature-icon" :class="feature.iconClass"></div>
     <h3>{{ feature.title }}</h3>
@@ -93,9 +96,12 @@
   </div>
 </div>
 
-<!-- 推薦房源輪播 -->
+<!-- 本月精選輪播 -->
 <div class="featured-listings">
-  <h2>精選推薦房源</h2>
+  <div class="section-header">
+    <h2>本月精選</h2>
+    <div class="section-underline"></div>
+  </div>
   <div class="listings-carousel">
   <div
     class="listing-card"
@@ -134,9 +140,12 @@
   </div>
 </div>
 
-<!-- 使用者故事/見證 -->
+<!-- 使用者心得 -->
 <div class="testimonials">
-  <h2>學生使用心得</h2>
+  <div class="section-header">
+    <h2>使用心得</h2>
+    <div class="section-underline"></div>
+  </div>
   <div class="testimonial-carousel">
     <button class="carousel-arrow prev-arrow" @click="prevTestimonial">
       <i class="arrow-icon left"></i>
@@ -182,7 +191,10 @@
 
 <!-- 常見問題 -->
 <div class="faq-section">
-  <h2>常見問題</h2>
+  <div class="section-header">
+    <h2>常見問題</h2>
+    <div class="section-underline"></div>
+  </div>
   <div class="faq-container">
     <div 
       class="faq-item" 
@@ -206,7 +218,7 @@
 </template>
 
 <script>
-  import { ref, onMounted, watch, nextTick } from "vue";
+  import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
   import { useStore } from "vuex";
 
   export default {
@@ -271,29 +283,31 @@
         }
       ]);
 
+      // 服務內容
       const features = [
         {
-          title: "整合式租屋資訊",
-          description: "匯集各平台的租屋資訊，統一格式便於比較",
+          title: "租屋列表",
+          description: "整合來自各平台的租屋資訊，統一格式便於比較，快速篩選合適房源。",
           iconClass: "integration-icon",
         },
         {
-          title: "互動式地圖搜尋",
-          description: "直觀顯示房源位置、學校距離與周邊便利設施",
+          title: "地圖搜尋",
+          description: "直觀顯示房源位置、學校距離以及周邊便利設施，讓搜尋過程更加便捷。",
           iconClass: "map-icon",
         },
         {
-          title: "學生評價系統",
-          description: "真實住宿體驗分享，提高租屋決策透明度",
+          title: "我的收藏",
+          description: "收藏您喜愛的房源，隨時查看並比較，快速有效做出最佳選擇。",
           iconClass: "review-icon",
         },
         {
-          title: "防詐騙機制",
-          description: "身分驗證與舉報系統，創造安全租屋環境",
+          title: "轉租專區",
+          description: "提供專屬管道集中轉租資訊，並有防詐騙機制保障您的租賃安全。",
           iconClass: "security-icon",
         },
       ];
 
+      //本月精選
       const featuredListings = [
         {
           id: 1,
@@ -339,8 +353,20 @@
           photo:
             "https://images.unsplash.com/photo-1554995207-c18c203602cb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
         },
+        {
+          id: 5,
+          title: "桃園區豪華雙人套房",
+          price: 9800,
+          distance: 3.2,
+          roomType: "雙人套房",
+          rating: 4.7,
+          reviews: 41,
+          photo:
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+        },
       ];
 
+      // 使用者心得
       const testimonials = [
         {
           name: "王小明",
@@ -382,6 +408,7 @@
       // 使用者見證輪播功能
       const currentTestimonial = ref(0);
       const testimonialContainer = ref(null);
+      const autoplayInterval = ref(null);
 
       const nextTestimonial = () => {
         if (currentTestimonial.value < testimonials.length - 1) {
@@ -410,15 +437,52 @@
         if (testimonialContainer.value) {
           const scrollAmount = testimonialContainer.value.clientWidth * index;
           testimonialContainer.value.scrollTo({
-            left: scrollAmount,
-            behavior: 'smooth'
+        left: scrollAmount,
+        behavior: 'smooth'
           });
+        }
+      };
+
+      // 開始自動輪播
+      const startAutoplay = () => {
+        stopAutoplay(); // 確保不會有多個計時器
+        autoplayInterval.value = setInterval(() => {
+          nextTestimonial();
+        }, 5000); // 每5秒切換一次
+      };
+
+      // 停止自動輪播
+      const stopAutoplay = () => {
+        if (autoplayInterval.value) {
+          clearInterval(autoplayInterval.value);
         }
       };
 
       // 監聽當前testimonial變化，確保正確滾動
       watch(currentTestimonial, (newVal) => {
         scrollToTestimonial(newVal);
+      });
+
+      // 設置懸停時暫停輪播，離開時恢復輪播
+      onMounted(() => {
+        startAutoplay();
+        
+        // 為容器添加懸停事件
+        if (testimonialContainer.value) {
+          testimonialContainer.value.addEventListener('mouseenter', stopAutoplay);
+          testimonialContainer.value.addEventListener('mouseleave', startAutoplay);
+        }
+      });
+      
+      // 組件卸載時清理
+      onUnmounted(() => {
+        stopAutoplay();
+        
+        // 移除事件監聽器
+        if (testimonialContainer.value) {
+          testimonialContainer.value.removeEventListener('mouseenter', stopAutoplay);
+          testimonialContainer.value.removeEventListener('mouseleave', startAutoplay);
+        }
       });
 
       // FAQ切換功能
@@ -797,7 +861,7 @@
     }
   }
 
-  /* 特色版塊 */
+  /* 服務內容版塊 */
   .features-section {
     padding: 80px 20px;
     display: grid;
@@ -807,13 +871,26 @@
     margin: 0 auto;
   }
 
-  .features-title {
+  .section-header {
     grid-column: 1 / -1;
     text-align: center;
     margin-bottom: 40px;
+    position: relative;
+  }
+
+  .features-title {
     font-size: 2rem;
     color: var(--text-color);
     font-weight: 700;
+    margin-bottom: 15px;
+  }
+
+  .section-underline {
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 2px;
+    margin: 0 auto;
   }
 
   .feature-card {
@@ -834,10 +911,29 @@
     height: 70px;
     margin: 0 auto 20px;
     border-radius: 50%;
-    background: var(--light-gray);
+    background: rgba(var(--primary-rgb), 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
+    background-size: 35px;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .integration-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234CAF50"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-7-2h2V7h-4v2h2z"/></svg>');
+  }
+
+  .map-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232196F3"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>');
+  }
+
+  .review-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FF9800"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+  }
+
+  .security-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239C27B0"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>');
   }
 
   .feature-card h3 {
@@ -851,17 +947,23 @@
     line-height: 1.6;
   }
 
-  /* 推薦房源輪播 */
+  /* 本月精選板塊 */
   .featured-listings {
     padding: 80px 20px;
     background-color: var(--light-gray);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .featured-listings .section-header {
+    margin-bottom: 40px;
   }
 
   .featured-listings h2 {
-    text-align: center;
-    margin-bottom: 40px;
     font-size: 2rem;
     color: var(--text-color);
+    font-weight: 700;
+    margin-bottom: 15px;
   }
 
   .listings-carousel {
@@ -949,7 +1051,7 @@
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffc107"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>');
   }
 
-  /* 使用者故事/見證 */
+  /* 使用者心得板塊 */
   .testimonials {
     padding: 80px 20px;
     background-color: #f9f9f9;
@@ -958,7 +1060,7 @@
 
   .testimonials h2 {
     text-align: center;
-    margin-bottom: 50px;
+    margin-bottom: 15px;
     font-size: 2rem;
     font-weight: 700;
     color: var(--text-color);
@@ -1154,7 +1256,7 @@
 
   .faq-section h2 {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 15px;
     font-size: 2rem;
     color: var(--text-color);
     font-weight: 700;
@@ -1164,6 +1266,7 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin-top: 40px;
   }
 
   .faq-item {
