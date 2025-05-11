@@ -46,7 +46,14 @@
 
 <script>
   /* eslint-disable */
-  import { ref, onMounted, onBeforeUnmount, computed, nextTick } from "vue";
+  import {
+    ref,
+    watch,
+    onMounted,
+    onBeforeUnmount,
+    computed,
+    nextTick,
+  } from "vue";
   import { useStore } from "vuex";
   import { useRouter } from "vue-router";
   import { gsap } from "gsap";
@@ -57,7 +64,7 @@
       const router = useRouter();
       const store = useStore();
 
-      const isOpen = ref(false);
+      const isOpen = computed(() => store.state.isNavOpen);
       const isAnimating = ref(false);
       const navContainer = ref(null);
 
@@ -105,6 +112,43 @@
       // 初始化動畫時間線
       let tl = null;
 
+      watch(
+        () => store.state.isNavOpen,
+        (newVal, oldVal) => {
+          // 只有當值實際改變時才執行
+          if (newVal !== oldVal) {
+            // 如果是從開啟變為關閉
+            if (!newVal && oldVal) {
+              // 手動觸發收起動畫
+              navContainer.value.classList.remove("active");
+              navContainer.value.classList.add("closing");
+
+              // 隱藏所有提示
+              document
+                .querySelectorAll(".option-tooltip")
+                .forEach((tooltip) => {
+                  tooltip.style.opacity = "0";
+                  tooltip.style.visibility = "hidden";
+                  tooltip.style.display = "none";
+                });
+
+              // 執行關閉動畫
+              isAnimating.value = true;
+              animateNavClose();
+
+              // 設置足夠的動畫時間
+              setTimeout(() => {
+                isAnimating.value = false;
+                if (navContainer.value) {
+                  navContainer.value.classList.remove("closing");
+                  navContainer.value.classList.remove("animating");
+                }
+              }, 600);
+            }
+          }
+        }
+      );
+
       onMounted(() => {
         // 預設將所有選項設為隱藏
         gsap.set(".nav-option", {
@@ -130,6 +174,10 @@
         });
         document.addEventListener("touchend", handleTouchEnd);
         window.addEventListener("resize", handleResize);
+
+        if (!store.state.currentRoute && route.name) {
+          store.commit("SET_CURRENTROUTE", route.name);
+        }
 
         setTimeout(() => {
           snapToNearestEdge();
@@ -300,7 +348,7 @@
         const isClosing = isOpen.value;
 
         // 改變展開狀態
-        isOpen.value = !isOpen.value;
+        store.commit("TOGGLE_NAV");
 
         // 先移除所有可能衝突的類別
         navContainer.value.classList.remove("active", "closing", "animating");
@@ -659,6 +707,8 @@
         router.push({ name: route });
 
         store.commit("SET_CURRENTROUTE", route);
+
+        store.commit("CLOSE_NAV");
       };
 
       // 處理主按鈕點擊

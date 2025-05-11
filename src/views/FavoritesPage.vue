@@ -248,6 +248,8 @@ export default {
 
     const goToList = () => {
       store.commit("SET_CURRENTROUTE", "accommodation-list");
+
+      store.commit("CLOSE_NAV");
       
       router.push({ name: "accommodation-list" });
     };

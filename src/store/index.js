@@ -9,7 +9,8 @@ export default createStore({
 
     // 導航狀態
     navigationOpen: false,
-    currentRoute: 'home',
+    currentRoute: localStorage.getItem('currentRoute') || 'home',
+    isNavOpen: false,
 
     // 房源資料
     accommodations: [],
@@ -45,6 +46,19 @@ export default createStore({
 
     SET_CURRENTROUTE(state, route) {
       state.currentRoute = route;
+      localStorage.setItem('currentRoute', route);
+    },
+
+    OPEN_NAV(state) {
+      state.isNavOpen = true;
+    },
+
+    CLOSE_NAV(state) {
+      state.isNavOpen = false;
+    },
+
+    TOGGLE_NAV(state) {
+      state.isNavOpen = !state.isNavOpen;
     },
 
     SET_ACCOMMODATIONS(state, accommodations) {
