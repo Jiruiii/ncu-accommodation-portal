@@ -440,24 +440,6 @@
                 <button @click="goToAdminDashboard" class="admin-feature-btn">進入後台</button>
               </div>
             </div>
-            
-            <div class="admin-feature-card" v-if="user.user_role === 'superuser'">
-              <div class="admin-feature-icon">👥</div>
-              <div class="admin-feature-content">
-                <h3>用戶權限管理</h3>
-                <p>管理系統用戶權限、指派管理員角色和維護系統安全。</p>
-                <button @click="goToUserManagement" class="admin-feature-btn">用戶管理</button>
-              </div>
-            </div>
-            
-            <div class="admin-feature-card">
-              <div class="admin-feature-icon">📊</div>
-              <div class="admin-feature-content">
-                <h3>數據分析</h3>
-                <p>查看系統使用數據、租屋趨勢和用戶互動統計。</p>
-                <button @click="goToAnalytics" class="admin-feature-btn">查看分析</button>
-              </div>
-            </div>
           </div>
           
           <div class="admin-login-history">
@@ -481,7 +463,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import apiService from '@/services/api';
 
@@ -490,20 +472,51 @@ export default {
   setup() {
     const router = useRouter();
     const activeTab = ref("housing");
+    const loading = ref(true);
+    const error = ref(null);
+    const showEditModal = ref(false);
+    const showPasswordModal = ref(false);
+    const showBindPortalModal = ref(false);
+    
+    // 個人資料編輯表單
+    const editForm = reactive({
+      username: '',
+      email: '',
+      phone: '',
+      bio: ''
+    });
+    
+    // 密碼修改表單
+    const passwordForm = reactive({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+
     const user = ref({
       username: 'Loading...',
       email: 'Loading...',
       user_role: '',
       is_verified: false,
       phone: '',
-      profile_image: ''
+      profile_image: '',
+      has_portal_id: false
     });
     
-    const tabs = [
-      { id: "housing", name: "我的租屋資訊" },
-      { id: "posts", name: "我的發布" },
-      { id: "settings", name: "帳戶設置" },
-    ];
+    // 確定标签應該顯示哪些
+    const tabs = computed(() => {
+      const baseTabs = [
+        { id: "housing", name: "我的租屋資訊" },
+        { id: "settings", name: "帳戶設置" }
+      ];
+      
+      // 如果用户有發佈權限則添加「我的發布」標籤
+      if (['landlord', 'admin', 'superuser'].includes(user.value.user_role)) {
+        baseTabs.splice(1, 0, { id: "posts", name: "我的發布" });
+      }
+      
+      return baseTabs;
+    });
     
     // 計算屬性：檢查用戶是否為管理員或超級管理員
     const isAdmin = computed(() => {
@@ -517,8 +530,10 @@ export default {
     
     // 計算屬性：學生資訊
     const studentInfo = computed(() => {
-      // 這裡可以根據實際需求從用戶資料中提取學校和系所資訊
-      return user.value.school ? `${user.value.school} - ${user.value.department || ''}` : null;
+      if (user.value.has_portal_id) {
+        return '國立中央大學學生';
+      }
+      return null;
     });
     
     // 格式化日期的方法
@@ -553,22 +568,155 @@ export default {
     // 獲取用戶資料
     const fetchUserData = async () => {
       try {
-        // 嘗試從本地存儲獲取
+        loading.value = true;
+        error.value = null;
+        
+        // 從API獲取用戶資料
+        const response = await apiService.users.getProfile();
+        console.log('獲取用戶資料:', response);
+        
+        if (response && response.user) {
+          user.value = response.user;
+          // 填充編輯表單
+          editForm.username = response.user.username || '';
+          editForm.email = response.user.email || '';
+          editForm.phone = response.user.phone || '';
+          editForm.school_email = response.user.school_email || '';
+        } else {
+          error.value = "無法獲取用戶資料";
+        }
+      } catch (err) {
+        console.error('獲取用戶資料失敗:', err);
+        error.value = "獲取資料失敗，請稍後重試";
+        
+        // 如果API請求失敗，嘗試從本地存儲獲取
         const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
         if (userStr) {
           user.value = JSON.parse(userStr);
-        } else {
-          // 或從後端獲取當前用戶資訊
-          const response = await apiService.auth.checkSession();
-          if (response.authenticated) {
-            user.value = response.user;
-          }
         }
-      } catch (error) {
-        console.error('獲取用戶資料失敗:', error);
+      } finally {
+        loading.value = false;
       }
     };
     
+    // 開啟編輯個人資料模態框
+    const openEditModal = () => {
+      // 確保表單數據與當前用戶數據一致
+      editForm.username = user.value.username || '';
+      editForm.email = user.value.email || '';
+      editForm.phone = user.value.phone || '';
+      editForm.bio = user.value.bio || '';
+      showEditModal.value = true;
+    };
+    
+    // 提交個人資料更新
+    const submitProfileUpdate = async () => {
+      try {
+        const response = await apiService.users.updateProfile({
+          username: editForm.username,
+          email: editForm.email,
+          phone: editForm.phone,
+          bio: editForm.bio
+        });
+        
+        if (response && response.user) {
+          user.value = {...user.value, ...response.user};
+          alert("個人資料已更新");
+        }
+        
+        showEditModal.value = false;
+      } catch (err) {
+        console.error('更新個人資料失敗:', err);
+        alert(`更新失敗: ${err.message || '未知錯誤'}`);
+      }
+    };
+    
+    // 上傳頭像
+    const uploadAvatar = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      try {
+        const response = await apiService.users.uploadProfileImage(formData);
+        
+        if (response && response.profile_image) {
+          user.value.profile_image = response.profile_image;
+          alert("頭像已更新");
+        }
+      } catch (err) {
+        console.error('上傳頭像失敗:', err);
+        alert(`上傳失敗: ${err.message || '未知錯誤'}`);
+      }
+    };
+    
+    // 修改密碼
+    const changePassword = async () => {
+      // 驗證密碼
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        alert("兩次輸入的密碼不一致");
+        return;
+      }
+      
+      if (passwordForm.newPassword.length < 8) {
+        alert("新密碼長度不得少於8個字符");
+        return;
+      }
+      
+      try {
+        await apiService.users.changePassword({
+          current_password: passwordForm.currentPassword,
+          new_password: passwordForm.newPassword
+        });
+        
+        alert("密碼已成功修改");
+        showPasswordModal.value = false;
+        
+        // 清空表單
+        passwordForm.currentPassword = '';
+        passwordForm.newPassword = '';
+        passwordForm.confirmPassword = '';
+      } catch (err) {
+        console.error('修改密碼失敗:', err);
+        alert(`修改失敗: ${err.message || '未知錯誤'}`);
+      }
+    };
+    
+    // 綁定 Portal 帳號
+    const bindPortalAccount = () => {
+      // 獲取Portal OAuth配置
+      const clientId = process.env.VUE_APP_NCU_OAUTH_CLIENT_ID;
+      const redirectUri = encodeURIComponent(process.env.VUE_APP_NCU_OAUTH_REDIRECT_URI);
+      
+      // 構建OAuth URL並跳轉
+      const authUrl = `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=identifier`;
+      window.location.href = authUrl;
+    };
+    
+    // 刪除帳戶
+    const deleteAccount = async () => {
+      if (!confirm("您確定要刪除帳戶嗎？此操作不可恢復！")) {
+        return;
+      }
+      
+      const password = prompt("請輸入您的密碼以確認刪除帳戶");
+      if (!password) return;
+      
+      try {
+        await apiService.users.deleteAccount({ password });
+        alert("帳戶已成功刪除");
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+        router.push('/login');
+      } catch (err) {
+        console.error('刪除帳戶失敗:', err);
+        alert(`刪除失敗: ${err.message || '未知錯誤'}`);
+      }
+    };
+    
+    // 生命週期鉤子
     onMounted(() => {
       fetchUserData();
     });
@@ -581,6 +729,19 @@ export default {
       fullName,
       studentInfo,
       formatDate,
+      loading,
+      error,
+      showEditModal,
+      showPasswordModal,
+      showBindPortalModal,
+      editForm,
+      passwordForm,
+      openEditModal,
+      submitProfileUpdate,
+      uploadAvatar,
+      changePassword,
+      bindPortalAccount,
+      deleteAccount,
       goToAdminDashboard,
       goToUserManagement,
       goToAnalytics

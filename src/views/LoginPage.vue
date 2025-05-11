@@ -4,14 +4,6 @@
       {{ message }}
     </div>
 
-    <!-- 訪客模式按鈕 -->
-    <div class="guest-access">
-      <button class="guest-button" @click="accessAsGuest">
-        <span>訪客瀏覽</span>
-        <span class="material-symbols-outlined">travel_explore</span>
-      </button>
-    </div>
-
     <div class="forms-container" :class="{ 'sign-up-mode': isSignUp }">
       <div class="left-panel">
         <form
@@ -19,7 +11,11 @@
           @submit.prevent="handleLogin"
           class="login-form"
         >
-          <h2>登入中央大學校外外宿網</h2>
+          <div class="separator">
+            <span>使用電子郵件登入</span>
+          </div>
+
+          <!-- 保留現有的電子郵件表單 -->
           <input type="email" v-model="email" placeholder="電子郵件" required />
           <input
             type="password"
@@ -37,12 +33,20 @@
             >
           </div>
           <button type="submit">登入</button>
-          <div class="sso-login">
-            <p>或使用以下方式登入</p>
-            <button type="button" @click="handleSSOLogin" class="sso-button">
-              <span>中央大學 Portal 登入</span>
-              <span class="material-symbols-outlined">school</span>
-            </button>
+
+          <!-- Portal 快速登入 -->
+          <div class="portal-login">
+            <div class="portal-info">
+              <p>已綁定 Portal 的用戶可使用快速登入</p>
+              <button
+                type="button"
+                @click="handlePortalLogin"
+                class="portal-button"
+              >
+                <span class="material-symbols-outlined">school</span>
+                <span>Portal 快速登入</span>
+              </button>
+            </div>
           </div>
         </form>
         <form
@@ -51,17 +55,12 @@
           class="register-form"
         >
           <h2>註冊帳號</h2>
-          <!-- <div class="role-selection">
-            <label>
-              <input type="radio" v-model="userRole" value="student" checked />
-              學生
-            </label>
-            <label>
-              <input type="radio" v-model="userRole" value="landlord" />
-              房東
-            </label>
-          </div> -->
-          <input type="text" v-model="fullName" placeholder="姓名" required />
+          <input
+            type="text"
+            v-model="fullName"
+            placeholder="使用者名稱"
+            required
+          />
           <input
             type="email"
             v-model="registerEmail"
@@ -82,6 +81,22 @@
             placeholder="確認密碼"
             required
           />
+
+          <!-- 綁定 Portal 選項 -->
+          <div class="portal-binding-option">
+            <button
+              type="button"
+              @click="bindPortal"
+              :class="['bind-portal-btn', { bound: portalBound }]"
+            >
+              <span v-if="!portalBound">綁定中央大學 Portal</span>
+              <span v-else class="bound-text">
+                <span class="material-symbols-outlined">check_circle</span>
+                已綁定 Portal
+              </span>
+            </button>
+          </div>
+
           <div class="terms-agreement">
             <input type="checkbox" v-model="agreeTerms" required id="terms" />
             <label for="terms">
@@ -158,37 +173,78 @@
   </div>
 </template>
 
+<!-- filepath: c:\Users\USER\Desktop\ncu-accommodation-portal\src\views\LoginPage.vue -->
 <script>
-  import { ref } from "vue";
-  import { useRoute, useRouter } from "vue-router";
-  import { clearAuthData } from "@/utils/auth";
-  import apiService from "@/services/api";
+import { ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { clearAuthData } from "@/utils/auth";
+import apiService from "@/services/api";
 
-  export default {
-    setup() {
-      const route = useRoute();
-      const router = useRouter();
+export default {
+  setup() {
+    const route = useRoute();
+    const router = useRouter();
+    
+    // Portal 狀態
+    const portalBound = ref(false);
+    const portalInfo = ref({});
 
-      if (route.query.error) {
-        const message = ref(decodeURIComponent(route.query.error));
-        const messageType = ref("error");
-
-        // 清除 URL 參數
-        router.replace({ path: route.path });
-
-        return {
-          // ...其他返回值
-          message,
-          messageType,
-        };
+    // 檢查是否從 Portal 綁定頁面返回，且是註冊流程
+    if (route.query.register === 'true') {
+      const isSignUp = ref(true);
+      
+      // 嘗試從 localStorage 獲取表單數據和 Portal 信息
+      if (localStorage.getItem('portalBound') === 'true') {
+        portalBound.value = true;
+        try {
+          portalInfo.value = JSON.parse(localStorage.getItem('portalInfo') || '{}');
+        } catch (e) {
+          console.error('解析 Portal 信息失敗:', e);
+        }
       }
-
-      const handleSSOLogin = () => {
-        // 使用 API 服務獲取 Portal 登入 URL
-        window.location.href = apiService.auth.portal.getLoginUrl();
+      
+      // 嘗試恢復註冊表單數據
+      let formData = {};
+      try {
+        formData = JSON.parse(localStorage.getItem('registerFormData') || '{}');
+      } catch (e) {
+        console.error('解析註冊表單數據失敗:', e);
+      }
+      
+      return {
+        isSignUp,
+        portalBound,
+        portalInfo,
+        fullName: ref(formData.fullName || ''),
+        registerEmail: ref(formData.registerEmail || ''),
+        phone: ref(formData.phone || ''),
+        registerPassword: ref(formData.registerPassword || ''),
+        confirmPassword: ref(formData.confirmPassword || ''),
+        userRole: ref("student"),
+        agreeTerms: ref(false),
+        message: ref(''),
+        messageType: ref(''),
+        showForgotPassword: ref(false),
+        forgotEmail: ref(''),
+        showTerms: ref(false),
+        showPrivacy: ref(false),
+        handlePortalLogin: () => {
+          window.location.href = apiService.auth.portal.getLoginUrl();
+        }
       };
+    }
+
+    // 檢查是否有錯誤訊息
+    if (route.query.error) {
+      const message = ref(decodeURIComponent(route.query.error));
+      const messageType = ref("error");
+      router.replace({ path: route.path });
 
       return {
+        message,
+        messageType,
+        portalBound,
+        portalInfo,
         isSignUp: ref(false),
         email: ref(""),
         password: ref(""),
@@ -200,168 +256,230 @@
         confirmPassword: ref(""),
         userRole: ref("student"),
         agreeTerms: ref(false),
-        message: ref(""),
-        messageType: ref("error"),
         showForgotPassword: ref(false),
         forgotEmail: ref(""),
         showTerms: ref(false),
         showPrivacy: ref(false),
-        handleSSOLogin,
+        handlePortalLogin: () => {
+          window.location.href = apiService.auth.portal.getLoginUrl();
+        }
       };
+    }
+
+    // Portal 快速登入處理
+    const handlePortalLogin = () => {
+      window.location.href = apiService.auth.portal.getLoginUrl();
+    };
+    
+    return {
+      // 登入相關
+      isSignUp: ref(false),
+      email: ref(""),
+      password: ref(""),
+      rememberMe: ref(false),
+
+      // 註冊相關
+      fullName: ref(""),
+      registerEmail: ref(""),
+      phone: ref(""),
+      registerPassword: ref(""),
+      confirmPassword: ref(""),
+      userRole: ref("student"),
+      agreeTerms: ref(false),
+      
+      // Portal 相關
+      portalBound,
+      portalInfo,
+
+      // 信息相關
+      message: ref(""),
+      messageType: ref("error"),
+
+      // 對話框控制
+      showForgotPassword: ref(false),
+      forgotEmail: ref(""),
+      showTerms: ref(false),
+      showPrivacy: ref(false),
+
+      handlePortalLogin,
+    };
+  },
+  methods: {
+    async handleLogin() {
+      try {
+        // 清除之前的錯誤訊息
+        this.message = "";
+
+        const response = await apiService.auth.login({
+          email: this.email,
+          password: this.password,
+        });
+
+        console.log("登入回應:", response);
+
+        // const data = await response.json();
+
+        if (response.success || (response.message && response.message === '登入成功')) {
+          // 清除舊的認證資料
+          clearAuthData();
+
+          // 儲存用戶資訊
+          if (response.user) {
+            localStorage.setItem("user", JSON.stringify(response.user));
+          }
+
+          this.message = "登入成功";
+          this.messageType = "success";
+
+          // 延遲導航，讓用戶看到成功訊息
+          setTimeout(() => {
+            this.$router.push("/accommodation-list");
+          }, 1000);
+        } else {
+          this.message = "登入失敗";
+          this.messageType = "error";
+        }
+      } catch (error) {
+        console.error("登入錯誤:", error);
+        this.message = "登入時發生錯誤，請稍後再試";
+        this.messageType = "error";
+      }
     },
-    methods: {
-      async accessAsGuest() {
-        clearAuthData();
-        localStorage.setItem("guestMode", "true");
-        this.$router.push("/accommodation-list");
-      },
 
-      async handleLogin() {
-        try {
-          // 清除之前的錯誤訊息
-          this.message = "";
+    async handleRegister() {
+      // 驗證密碼是否匹配
+      if (this.registerPassword !== this.confirmPassword) {
+        this.message = "密碼不匹配";
+        this.messageType = "error";
+        return;
+      }
 
-          const response = await fetch("http://localhost:5000/api/auth/login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: this.email,
-              password: this.password,
-            }),
-          });
+      // 檢查密碼強度（至少8位，包含字母和數字）
+      const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+      if (!passwordPattern.test(this.registerPassword)) {
+        this.message = "密碼至少需要8位，且包含字母和數字";
+        this.messageType = "error";
+        return;
+      }
 
-          const data = await response.json();
+      try {
+        const registerData = {
+          username: this.fullName,
+          email: this.registerEmail,
+          password: this.registerPassword,
+          phone: this.phone,
+          user_role: this.userRole,
+        };
 
-          if (response.ok) {
-            // 清除舊的認證資料
-            clearAuthData();
-
-            // 儲存用戶資訊
-            localStorage.setItem("user", JSON.stringify(data.user));
-
-            this.message = "登入成功";
-            this.messageType = "success";
-
-            // 延遲導航，讓用戶看到成功訊息
-            setTimeout(() => {
-              this.$router.push("/accommodation-list");
-            }, 1000);
-          } else {
-            this.message = data.message || "登入失敗";
-            this.messageType = "error";
+        // 如果已綁定 Portal，添加 Portal 相關資訊
+        if (this.portalBound && this.portalInfo.student_id) {
+          registerData.portal_id = this.portalInfo.student_id;
+          if (this.portalInfo.school_email) {
+            registerData.school_email = this.portalInfo.school_email;
           }
-        } catch (error) {
-          console.error("登入錯誤:", error);
-          this.message = "登入時發生錯誤，請稍後再試";
-          this.messageType = "error";
-        }
-      },
-
-      async handleRegister() {
-        // 驗證密碼是否匹配
-        if (this.registerPassword !== this.confirmPassword) {
-          this.message = "密碼不匹配";
-          this.messageType = "error";
-          return;
         }
 
-        // 檢查密碼強度（至少8位，包含字母和數字）
-        const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-        if (!passwordPattern.test(this.registerPassword)) {
-          this.message = "密碼至少需要8位，且包含字母和數字";
-          this.messageType = "error";
-          return;
-        }
+        const response = await apiService.auth.register(registerData);
 
-        try {
-          const response = await fetch(
-            "http://localhost:5000/api/auth/register",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                username: this.fullName,
-                email: this.registerEmail,
-                password: this.registerPassword,
-                phone: this.phone,
-                user_role: this.userRole,
-              }),
-            }
-          );
+        console.log("註冊回應:", response);
 
-          const data = await response.json();
+        if (response.success || (response.message && response.message === '註冊成功')) {
+          // 清除暫存數據
+          localStorage.removeItem('registerFormData');
+          localStorage.removeItem('bindingForRegistration');
+          localStorage.removeItem('portalBound');
+          localStorage.removeItem('portalInfo');
+          
+          this.message = "註冊成功，請登入";
+          this.messageType = "success";
+          this.isSignUp = false;
 
-          if (response.ok) {
-            this.message = "註冊成功，請登入";
-            this.messageType = "success";
-            this.isSignUp = false;
-
-            // 清空註冊表單
-            this.fullName = "";
-            this.registerEmail = "";
-            this.phone = "";
-            this.registerPassword = "";
-            this.confirmPassword = "";
-            this.userRole = "student";
-            this.agreeTerms = false;
-
-            // 預填登入表單
-            this.email = this.registerEmail;
-          } else {
-            this.message = data.message || "註冊失敗";
-            this.messageType = "error";
-          }
-        } catch (error) {
-          console.error("註冊錯誤:", error);
-          this.message = "註冊時發生錯誤，請稍後再試";
+          // 清空註冊表單
+          this.clearRegistrationForm();
+          // 預填登入表單
+          this.email = this.registerEmail;
+        } else {
+          this.message = response.message || "註冊失敗";
           this.messageType = "error";
         }
-      },
-
-      async handleForgotPassword() {
-        if (!this.forgotEmail) {
-          this.message = "請輸入電子郵件";
-          this.messageType = "error";
-          return;
-        }
-
-        try {
-          const response = await fetch(
-            "http://localhost:5000/api/auth/forgot-password",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                email: this.forgotEmail,
-              }),
-            }
-          );
-
-          const data = await response.json();
-
-          if (response.ok) {
-            this.message = "密碼重設連結已發送至您的信箱";
-            this.messageType = "success";
-            this.showForgotPassword = false;
-            this.forgotEmail = "";
-          } else {
-            this.message = data.message || "無法處理密碼重設請求";
-            this.messageType = "error";
-          }
-        } catch (error) {
-          console.error("密碼重設錯誤:", error);
-          this.message = "發送重設連結時發生錯誤";
-          this.messageType = "error";
-        }
-      },
+      } catch (error) {
+        console.error("註冊錯誤:", error);
+        this.message = "註冊時發生錯誤，請稍後再試";
+        this.messageType = "error";
+      }
     },
-  };
+
+    bindPortal() {
+      // 儲存當前註冊表單資訊到 localStorage，以便綁定後能返回並繼續註冊流程
+      localStorage.setItem(
+        "registerFormData",
+        JSON.stringify({
+          fullName: this.fullName,
+          registerEmail: this.registerEmail,
+          phone: this.phone,
+          registerPassword: this.registerPassword,
+          confirmPassword: this.confirmPassword,
+        })
+      );
+
+      // 標記為註冊時綁定，用於回調時識別
+      localStorage.setItem("bindingForRegistration", "true");
+
+      // 導向 Portal 授權頁面
+      window.location.href = apiService.auth.portal.getInfoUrl();
+    },
+
+    async handleForgotPassword() {
+      if (!this.forgotEmail) {
+        this.message = "請輸入電子郵件";
+        this.messageType = "error";
+        return;
+      }
+
+      try {
+        const response = await apiService.auth.forgotPassword(this.forgotEmail);
+
+        if (response.success) {
+          this.message = "密碼重設連結已發送至您的信箱";
+          this.messageType = "success";
+          this.showForgotPassword = false;
+          this.forgotEmail = "";
+        } else {
+          this.message = response.message || "無法處理密碼重設請求";
+          this.messageType = "error";
+        }
+      } catch (error) {
+        console.error("密碼重設錯誤:", error);
+        this.message = "發送重設連結時發生錯誤";
+        this.messageType = "error";
+      }
+    },
+    
+    // 清空註冊表單
+    clearRegistrationForm() {
+      this.fullName = "";
+      this.registerEmail = "";
+      this.phone = "";
+      this.registerPassword = "";
+      this.confirmPassword = "";
+      this.portalBound = false;
+      this.portalInfo = {};
+      this.userRole = "student";
+      this.agreeTerms = false;
+    }
+  },
+  
+  // 組件卸載時清理，但保留註冊過程中的數據
+  beforeUnmount() {
+    // 如果不是在註冊頁面，或者不是從 Portal 綁定回來的，清理存儲的數據
+    if (!this.isSignUp || this.$route.query.register !== 'true') {
+      localStorage.removeItem('registerFormData');
+      localStorage.removeItem('bindingForRegistration');
+      localStorage.removeItem('portalBound');
+      localStorage.removeItem('portalInfo');
+    }
+  }
+};
 </script>
 
 <style scoped>
@@ -386,44 +504,6 @@
   .success {
     background-color: #4caf50;
     color: white;
-  }
-
-  .guest-access {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 100;
-  }
-
-  .guest-button {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 16px;
-    background: #f8f9fa;
-    border: 2px solid #4a90e2;
-    color: #4a90e2;
-    border-radius: 25px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-
-  .guest-button:hover {
-    background: #4a90e2;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  .guest-button i {
-    transition: transform 0.3s ease;
-  }
-
-  .guest-button:hover i {
-    transform: translateX(5px);
   }
 
   @keyframes fadeIn {
@@ -451,7 +531,7 @@
   .forms-container {
     position: relative;
     width: 900px;
-    height: 500px;
+    height: 600px;
     background: #f0f0f0;
     border-radius: 10px;
     box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
@@ -539,12 +619,13 @@
   input {
     width: 100%;
     max-width: 300px;
-    padding: 12px;
+    padding: 10px 12px;
     border: 1px solid #ddd;
     border-radius: 25px;
     outline: none;
     font-size: 14px;
     background-color: #f0f0f0;
+    margin-bottom: 0px;
   }
 
   input:focus {
@@ -620,19 +701,19 @@
     line-height: 1.4;
   }
 
-  .sso-login {
+  .portal-login {
     margin-top: 20px;
     text-align: center;
     width: 100%;
     max-width: 300px;
   }
 
-  .sso-login p {
+  .portal-login p {
     margin-bottom: 10px;
     font-size: 14px;
   }
 
-  .sso-button {
+  .portal-button {
     width: 100%;
     background: #ffffff;
     color: #4a90e2;
@@ -705,5 +786,47 @@
     text-align: left;
     max-height: 50vh;
     overflow-y: auto;
+  }
+
+  .register-form {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .portal-binding-option {
+    width: 100%;
+    max-width: 300px;
+    margin: 5px 0;
+  }
+
+  .bind-portal-btn {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #66b3ff;
+    border-radius: 25px;
+    background: transparent;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .bind-portal-btn.bound {
+    background: #4caf50;
+    border-color: #4caf50;
+  }
+
+  .bound-text {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .bound-text .material-symbols-outlined {
+    color: white;
   }
 </style>

@@ -37,13 +37,17 @@ def register():
     user = User(
         username=data['username'],
         email=data['email'],
-        user_role=data.get('user_role', 'student')
+        user_role=data.get('user_role', 'student'),
+        phone = data['phone']
     )
     user.set_password(data['password'])
     
-    # 其他可選欄位
-    if 'phone' in data:
-        user.phone = data['phone']
+    if 'portal_id' in data:
+        user.portal_id = data['portal_id']
+        user.is_verified = True
+    
+    if 'school_email' in data:
+        user.school_email = data['school_email']
     
     db.session.add(user)
     db.session.commit()
@@ -51,7 +55,7 @@ def register():
     return jsonify({
         'message': '註冊成功',
         'user_id': user.user_id
-    }), 201
+    }), 200
 
 @api_bp.route('/auth/login', methods=['POST'])
 def login():
@@ -141,9 +145,11 @@ def portal_callback():
     data = request.json
     
     if not data or not data.get('code'):
-        return jsonify({"message": "缺少授權碼"}), 400
+        return jsonify({"success": False, "message": "缺少授權碼"}), 400
     
     code = data.get('code')
+    # 修正參數名稱從 actiontype 改為 action_type
+    action_type = data.get('action_type', 'login')
     
     try:
         # 1. 向 Portal 系統交換 token
@@ -167,7 +173,7 @@ def portal_callback():
         token_data = token_response.json()
         
         if 'access_token' not in token_data:
-            return jsonify({"message": "無法獲取訪問令牌"}), 401
+            return jsonify({"success": False, "message": "無法獲取訪問令牌"}), 401
         
         # 2. 獲取用戶資訊
         user_info_url = 'https://portal.ncu.edu.tw/apis/oauth/v1/info'
@@ -180,53 +186,143 @@ def portal_callback():
         
         user_info = user_response.json()
         
-        # 3. 處理用戶資訊，查找或創建用戶
+        # 3. 處理用戶資訊
         identifier = user_info.get('identifier')
         if not identifier:
-            return jsonify({"message": "無法獲取用戶識別碼"}), 400
+            return jsonify({"success": False, "message": "無法獲取用戶識別碼"}), 400
         
-        # 查找是否有現有用戶
-        user = User.query.filter_by(portal_id=identifier).first()
-        
-        # 如果沒有，創建新用戶
-        if not user:
-            user = User(
-                username=user_info.get('chineseName', identifier),
-                school_email=user_info.get('email', f"{identifier}@cc.ncu.edu.tw"),
-                portal_id=identifier,
-                phone=user_info.get('mobilePhone', ''),
-                is_verified=True,  # 從 Portal 登入的用戶自動驗證
-                user_role='student'  # 默認為學生角色
-            )
+        # 4. 根據操作類型處理不同的邏輯
+        if action_type == 'login':
+            # 快速登入邏輯：檢查是否存在此 Portal ID 的用戶
+            user = User.query.filter_by(portal_id=identifier).first()
             
-            # 生成隨機密碼
-            import secrets
-            random_password = secrets.token_urlsafe(16)
-            user.set_password(random_password)
+            if not user:
+                # 找不到對應的用戶，返回錯誤信息
+                return jsonify({
+                    "success": False,
+                    "message": "此 Portal 帳號尚未綁定，請先使用電子郵件登入後在個人資料頁面綁定"
+                }), 404
             
-            db.session.add(user)
+            # 找到用戶，執行登入
+            session['user_id'] = user.user_id
+            session['username'] = user.username
+            session['user_role'] = user.user_role
+            session.permanent = True
+            
+            # 更新最後登入時間
+            user.last_login = datetime.utcnow()
             db.session.commit()
+            
+            # 返回用戶資訊
+            return jsonify({
+                "success": True,
+                "message": "Portal 快速登入成功",
+                "user": {
+                    "user_id": user.user_id,
+                    "username": user.username,
+                    "email": user.email,
+                    "phone": user.phone,
+                    "profile_image": user.profile_image,
+                    "user_role": user.user_role,
+                    "has_portal_id": True,
+                    "school_email": user.school_email,
+                    'is_admin': user.is_admin(),
+                    'is_superuser': user.is_superuser(),
+                }
+            })
+            
+        elif action_type == 'binding':
+            # 處理已登入用戶的綁定操作
+            
+            # 檢查此 Portal ID 是否已被綁定
+            existing_user = User.query.filter_by(portal_id=identifier).first()
+            if existing_user:
+                # 此 Portal ID 已被綁定
+                if 'user_id' in session and existing_user.user_id == session.get('user_id'):
+                    # 已經綁定到當前登入用戶
+                    return jsonify({
+                        "success": False,
+                        "message": "您已綁定此 Portal 帳號"
+                    }), 400
+                else:
+                    # 綁定到其他用戶
+                    return jsonify({
+                        "success": False,
+                        "message": "此 Portal 帳號已被其他用戶綁定"
+                    }), 400
+            
+            # 確認用戶已登入
+            if 'user_id' not in session:
+                return jsonify({
+                    "success": False,
+                    "message": "您需要先登入才能綁定 Portal 帳號"
+                }), 401
+                
+            user_id = session.get('user_id')
+            user = User.query.get(user_id)
+            
+            if not user:
+                return jsonify({
+                    "success": False,
+                    "message": "找不到您的用戶資訊"
+                }), 404
+            
+            # 綁定 Portal ID
+            user.portal_id = identifier
+            user.school_email = user_info.get('email', f"{identifier}@cc.ncu.edu.tw")
+            user.is_verified = True
+            db.session.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "Portal 綁定成功",
+                "user": {
+                    "user_id": user.user_id,
+                    "username": user.username,
+                    "portal_id": user.portal_id,
+                    "school_email": user.school_email
+                }
+            })
         
-        # 更新最後登入時間
-        user.last_login = datetime.utcnow()
-        db.session.commit()
+        # 專門用於註冊前獲取資訊的操作類型
+        elif action_type == 'getinfo':
+            # 檢查此 Portal ID 是否已被使用
+            existing_user = User.query.filter_by(portal_id=identifier).first()
+            if existing_user:
+                return jsonify({
+                    "success": False,
+                    "message": "此 Portal 帳號已被其他用戶綁定，無法在註冊時使用"
+                }), 400
+            
+            # 獲取需要的 Portal 資訊
+            student_id = identifier
+            name = user_info.get('chineseName', '')
+            school_email = user_info.get('email', f"{identifier}@cc.ncu.edu.tw")
+            
+            return jsonify({
+                "success": True,
+                "message": "獲取 Portal 資訊成功",
+                "portal_data": {
+                    "student_id": student_id,
+                    "name": name,
+                    "school_email": school_email,
+                }
+            })
         
-        # 返回令牌和用戶信息
-        return jsonify({
-            "message": "Portal 登入成功",
-            "user": {
-                "id": user.user_id,
-                "username": user.username,
-                "school_email": user.school_email,
-                "phone": user.phone,
-                "user_role": user.user_role,
-                "student_id": user.portal_id
-            }
-        }), 200
-        
+        else:
+            # 未知的操作類型
+            return jsonify({
+                "success": False,
+                "message": f"無效的操作類型: {action_type}"
+            }), 400
+            
     except Exception as e:
-        current_app.logger.error(f"Portal 登入錯誤: {str(e)}")
-        return jsonify({"message": f"登入過程中發生錯誤: {str(e)}"}), 500
+        print(f"Portal 回調處理錯誤: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({
+            "success": False,
+            "message": f"處理失敗: {str(e)}"
+        }), 500
     
 @api_bp.route('/auth/logout', methods=['POST'])
 def logout():

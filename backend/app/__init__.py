@@ -33,11 +33,12 @@ def create_app(config_name='default'):
         supports_credentials=True, 
         resources={r"/*": {
             "origins": ["http://localhost:8080", "http://127.0.0.1:8080"],  
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  
+            "methods": ["GET", "POST", "PUT", "DELETE","OPTIONS"],  
             "allow_headers": ["Content-Type", "Authorization", "Cookie"],  # 添加 Cookie
             "expose_headers": ["Content-Length", "X-JSON"],  
         }}
     )
+    
     
     # 診斷路由
     @app.route('/debug-session', methods=['GET'])

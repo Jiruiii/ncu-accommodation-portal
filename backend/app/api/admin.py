@@ -442,7 +442,7 @@ def update_user(user_id):
     })
 
 # 刪除用戶
-@api_bp.route('/admin/users/<int:user_id>', methods=['DELETE'])
+@api_bp.route('/admin/delete/users/<int:user_id>', methods=['POST'])
 @admin_required
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
@@ -451,6 +451,9 @@ def delete_user(user_id):
     current_user_id = session.get('user_id')
     if user_id == current_user_id:
         return jsonify({'message': '不能刪除當前登入的用戶'}), 400
+    
+    # 清空學生驗證表
+    # db.session.execute(text("DELETE FROM student_verifications"))
     
     # 刪除用戶
     db.session.delete(user)

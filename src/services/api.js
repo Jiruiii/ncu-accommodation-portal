@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.VUE_APP_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = "";
 
 export const apiService = {
   // 通用 API 方法
@@ -11,7 +10,7 @@ export const apiService = {
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: headers,
-        credentials: "include", 
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -154,7 +153,7 @@ export const apiService = {
 
   // 身份驗證相關 API
   auth: {
-    login: (credentials) => apiService.post("/api/auth/login", credentials),
+    login: (userData) => apiService.post("/api/auth/login", userData),
     register: (userData) => apiService.post("/api/auth/register", userData),
     logout: () => apiService.post("/api/auth/logout"),
     checkSession: () => apiService.get("/api/auth/status"),
@@ -168,6 +167,25 @@ export const apiService = {
 
     // NCU Portal OAuth 相關
     portal: {
+      // 用於Portal綁定的URL
+      getBindingUrl: () => {
+        const clientId = "20250507153856UyZ8gD4BXoY5";
+        const redirectUri = encodeURIComponent(
+          `${window.location.origin}/auth/callback`
+        );
+        const scopes = encodeURIComponent(
+          "id identifier chinese-name student-id academy-records email mobile-phone"
+        );
+        const state = generateRandomState();
+    
+        // 保存 state 到 localStorage
+        localStorage.setItem("oauth_state", state);
+        localStorage.setItem("oauth_action", "binding");
+    
+        return `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&state=${state}`;
+      },
+      
+      // Portal 快速登入
       getLoginUrl: () => {
         const clientId = "20250507153856UyZ8gD4BXoY5";
         const redirectUri = encodeURIComponent(
@@ -177,14 +195,34 @@ export const apiService = {
           "id identifier chinese-name student-id academy-records email mobile-phone"
         );
         const state = generateRandomState();
-
+    
         // 保存 state 到 localStorage
         localStorage.setItem("oauth_state", state);
-
+        localStorage.setItem("oauth_action", "login");
+    
         return `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&state=${state}`;
       },
-      handleCallback: (code) =>
-        apiService.post("/api/auth/portal-callback", { code }),
+      
+      // 註冊時獲取 Portal 資訊
+      getInfoUrl: () => {
+        const clientId = "20250507153856UyZ8gD4BXoY5";
+        const redirectUri = encodeURIComponent(
+          `${window.location.origin}/auth/callback`
+        );
+        const scopes = encodeURIComponent(
+          "id identifier chinese-name student-id academy-records email mobile-phone"
+        );
+        const state = generateRandomState();
+    
+        // 保存 state 到 localStorage
+        localStorage.setItem("oauth_state", state);
+        localStorage.setItem("oauth_action", "getinfo");
+        localStorage.setItem("bindingForRegistration", "true");
+    
+        return `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&state=${state}`;
+      },
+      handleCallback: (code, action_type) =>
+        apiService.post("/api/auth/portal-callback", { code, action_type }),
     },
   },
 
@@ -273,7 +311,7 @@ export const apiService = {
     updateUser: (userId, userData) =>
       apiService.put(`/api/admin/users/${userId}`, userData, true),
     deleteUser: (userId) =>
-      apiService.delete(`/api/admin/users/${userId}`, true),
+      apiService.post(`/api/admin/delete/users/${userId}`, true),
   },
 };
 
