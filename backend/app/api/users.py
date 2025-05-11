@@ -51,7 +51,7 @@ def get_profile():
                 "is_verified": user.is_verified,
                 "created_at": user.created_at.isoformat() if user.created_at else None,
                 "last_login": user.last_login.isoformat() if user.last_login else None,
-                "has_protal_id": bool(user.portal_id), 
+                "has_portal_id": bool(user.portal_id), 
             }
         })
     except Exception as e:
