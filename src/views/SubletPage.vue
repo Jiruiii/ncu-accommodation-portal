@@ -73,7 +73,7 @@
           <div class="modal-body">
             <form @submit.prevent="submitSublet">
               <div class="form-group">
-                <label>標題*</label>
+                <label class="required">標題</label>
                 <input 
                   type="text" 
                   v-model="newSublet.title" 
@@ -84,7 +84,7 @@
               
               <div class="form-row">
                 <div class="form-group">
-                  <label>租金/月*</label>
+                  <label class="required">租金/月</label>
                   <input 
                     type="number" 
                     v-model="newSublet.price" 
@@ -94,7 +94,7 @@
                 </div>
                 
                 <div class="form-group">
-                  <label>剩餘租期*</label>
+                  <label class="required">剩餘租期</label>
                   <select v-model="newSublet.duration" required>
                     <option value="" disabled>請選擇</option>
                     <option value="1-3">1-3個月</option>
@@ -105,7 +105,7 @@
               </div>
               
               <div class="form-group">
-                <label>地址*</label>
+                <label class="required">地址</label>
                 <input 
                   type="text" 
                   v-model="newSublet.address" 
@@ -116,7 +116,7 @@
               
               <div class="form-row">
                 <div class="form-group">
-                  <label>房型*</label>
+                  <label label class="required">房型</label>
                   <select v-model="newSublet.roomType" required>
                     <option value="" disabled>請選擇</option>
                     <option value="套房">套房</option>
@@ -127,13 +127,13 @@
                 </div>
                 
                 <div class="form-group">
-                  <label>可入住日期*</label>
+                  <label class="required">可入住日期</label>
                   <input type="date" v-model="newSublet.availableDate" required>
                 </div>
               </div>
               
               <div class="form-group">
-                <label>房源描述*</label>
+                <label label class="required">房源描述</label>
                 <textarea 
                   v-model="newSublet.description" 
                   placeholder="請描述房源特色、附近環境、轉租原因等..."
@@ -143,7 +143,7 @@
               </div>
               
               <div class="form-group">
-                <label>聯絡方式*</label>
+                <label label class="required">聯絡方式</label>
                 <input 
                   type="text" 
                   v-model="newSublet.contact" 
@@ -153,7 +153,7 @@
               </div>
               
               <div class="form-group">
-                <label>上傳照片 (至少1張，最多5張)</label>
+                <label label class="required">上傳照片 (至少1張，最多5張)</label>
                 <div class="upload-area">
                   <input
                     type="file"
@@ -177,7 +177,7 @@
               
               <div class="form-checkbox">
                 <input type="checkbox" id="verification" v-model="newSublet.verified" required>
-                <label for="verification">我確認以上資訊屬實，並同意平台隱私政策與使用條款</label>
+                <label for="verification required">我確認以上資訊屬實，並同意平台隱私政策與使用條款</label>
               </div>
               
               <div class="security-note">
@@ -319,6 +319,7 @@
   
   <script>
   import { ref, computed, onMounted } from 'vue';
+  import Swal from 'sweetalert2';
 //   import { useStore } from 'vuex';
   
   export default {
@@ -506,7 +507,17 @@
         togglePostForm();
         
         // 顯示成功信息
-        alert('轉租資訊已發布，審核通過後將會顯示在列表中');
+        Swal.fire({
+          title: '發布成功',
+          text: '轉租資訊已發布，審核通過後將會顯示在列表中',
+          icon: 'success',
+          confirmButtonColor: '#3085d6',
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          width: '320px',
+          padding: '15px',
+        });
       };
       
       // 查看轉租詳情
@@ -517,16 +528,51 @@
       
       // 聯絡轉租者
       const contactUser = (sublet) => {
-        alert(`聯絡 ${sublet.userName}：請加 LINE ID: ${sublet.contact || 'NCU_sublet_demo'}`);
+        Swal.fire({
+          title: `聯絡 ${sublet.userName}`,
+          text: `請加 LINE ID: ${sublet.contact || 'NCU_sublet_demo'}`,
+          icon: 'info',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: '我知道了',
+          width: '300px',
+          padding: '15px',
+        });
       };
       
       // 檢舉列表
       const reportListing = () => {
-        const reason = prompt('請輸入檢舉原因：');
-        if (reason) {
-          alert('感謝您的檢舉，我們會盡速處理');
+      Swal.fire({
+        title: '檢舉房源',
+        input: 'textarea',
+        inputLabel: '請描述檢舉原因',
+        inputPlaceholder: '請輸入檢舉原因...',
+        showCancelButton: true,
+        confirmButtonText: '送出檢舉',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        width: '360px',
+        padding: '20px',
+        inputValidator: (value) => {
+          if (!value) {
+            return '請輸入檢舉原因';
+          }
         }
-      };
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: '檢舉已送出',
+            text: '感謝您的檢舉，我們會盡速處理',
+            icon: 'success',
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            width: '300px',
+            padding: '15px',
+          });
+        }
+      });
+    };
       
       // 觸發檔案上傳
       const triggerFileUpload = () => {
@@ -535,18 +581,25 @@
       
       // 處理檔案上傳
       const handleFileUpload = (event) => {
-        const files = event.target.files;
-        if (files.length + uploadedFiles.value.length > 5) {
-          alert('最多只能上傳5張照片');
-          return;
+      const files = event.target.files;
+      if (files.length + uploadedFiles.value.length > 5) {
+        Swal.fire({
+          title: '上傳失敗',
+          text: '最多只能上傳5張照片',
+          icon: 'error',
+          confirmButtonColor: '#3085d6',
+          width: '300px',
+          padding: '15px'
+        });
+        return;
+      }
+      
+      for (let i = 0; i < files.length; i++) {
+        if (uploadedFiles.value.length < 5) {
+          uploadedFiles.value.push(files[i]);
         }
-        
-        for (let i = 0; i < files.length; i++) {
-          if (uploadedFiles.value.length < 5) {
-            uploadedFiles.value.push(files[i]);
-          }
-        }
-      };
+      }
+    };
       
       // 移除已上傳的檔案
       const removeFile = (index) => {
@@ -842,6 +895,65 @@
     transform: scale(1.1);
   }
   
+  .report-icon {
+  width: 16px;
+  height: 16px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23666"><path d="M14.4 3L12 0.6L9.6 3H4V9.6L1.6 12L4 14.4V20H9.6L12 22.4L14.4 20H20V14.4L22.4 12L20 9.6V4H14.4ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  display: inline-block;
+  margin-right: 4px;
+  vertical-align: middle;
+  transition: all 0.3s ease;
+}
+
+.contact-btn.secondary:hover {
+  background-color: #f5f5f5;
+  border-color: #d0d0d0;
+}
+
+.contact-btn.secondary:hover .report-icon {
+  transform: scale(1.1);
+  filter: brightness(0.8);
+}
+
+@keyframes reportIconPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.contact-btn.secondary:active .report-icon {
+  animation: reportIconPulse 0.3s ease;
+}
+
+.message-icon {
+  width: 16px;
+  height: 16px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12zm-9-4h2v2h-2v-2zm0-6h2v4h-2V6z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  display: inline-block;
+  margin-right: 4px;
+  vertical-align: middle;
+  transition: all 0.3s ease;
+}
+
+.contact-btn.primary:hover .message-icon {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+}
+
+@keyframes messageIconPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.contact-btn.primary:active .message-icon {
+  animation: messageIconPulse 0.3s ease;
+}
+
   .sublet-price {
     position: absolute;
     bottom: 15px;
@@ -882,7 +994,7 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
-    min-height: 250px; /* 設定最小高度 */
+    min-height: 250px;
   }
   
   .sublet-content h3 {
@@ -1074,6 +1186,12 @@
     font-weight: 600;
   }
   
+  .form-group label.required::after{
+    content:'*';
+    color: #ff4444;
+    margin-left: 4px;
+  }
+
   .form-group input,
   .form-group select,
   .form-group textarea {
