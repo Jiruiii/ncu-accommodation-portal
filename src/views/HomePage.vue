@@ -1,4 +1,4 @@
-<template>
+ <template>
   <div class="home-page">
     <!-- 全屏背景視頻/圖片區 -->
     <div class="hero-section">
@@ -102,41 +102,65 @@
     <h2>本月精選</h2>
     <div class="section-underline"></div>
   </div>
-  <div class="listings-carousel">
-  <div
-    class="listing-card"
-    v-for="listing in featuredListings"
-    :key="listing.id"
-    @click="viewListing(listing)"
-  >
-    <div
-    class="listing-image"
-    :style="`background-image: url(${listing.photo})`"
-    >
-    <div class="listing-price">NT$ {{ listing.price }} / 月</div>
-    </div>
-    <div class="listing-content">
-    <h3>{{ listing.title }}</h3>
-    <div class="listing-info">
-      <span
-      ><i class="location-icon"></i>{{ listing.distance }}km
-      至中央大學</span
+  
+  <div class="listing-carousel-wrapper" style="position: relative; overflow: hidden; padding: 40px 0;">
+    <button class="carousel-arrow prev-arrow" @click="prevListing" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;">
+      <i class="arrow-icon left"></i>
+    </button>
+    
+    <div class="listings-carousel" ref="listingContainer">
+      <div
+        class="listing-card"
+        v-for="(listing, index) in featuredListings"
+        :key="listing.id"
+        @click="viewListing(listing)"
+        :class="{ 'active': currentListing === index, 'prev': currentListing === (index + 1) % featuredListings.length, 'next': currentListing === (index - 1 + featuredListings.length) % featuredListings.length }"
+        :style="{
+          transform: getCardTransform(index),
+          opacity: getCardOpacity(index),
+          zIndex: getCardZIndex(index),
+          transition: 'all 0.8s ease-in-out'
+        }"
       >
-      <span><i class="home-type-icon"></i>{{ listing.roomType }}</span>
-    </div>
-    <div class="listing-rating">
-      <div class="stars">
-      <i
-        class="star-icon"
-        v-for="n in 5"
-        :key="n"
-        :class="n <= listing.rating ? 'filled' : ''"
-      ></i>
+        <div
+          class="listing-image"
+          :style="`background-image: url(${listing.photo})`"
+        >
+          <div class="listing-price">NT$ {{ listing.price }} / 月</div>
+        </div>
+        <div class="listing-content">
+          <h3>{{ listing.title }}</h3>
+          <div class="listing-info">
+            <span><i class="location-icon"></i>{{ listing.distance }}km 至中央大學</span>
+            <span><i class="home-type-icon"></i>{{ listing.roomType }}</span>
+          </div>
+          <div class="listing-rating">
+            <div class="stars">
+              <i
+                class="star-icon"
+                v-for="n in 5"
+                :key="n"
+                :class="n <= listing.rating ? 'filled' : ''"
+              ></i>
+            </div>
+            <span>{{ listing.reviews }} 評價</span>
+          </div>
+        </div>
       </div>
-      <span>{{ listing.reviews }} 評價</span>
     </div>
-    </div>
+    
+    <button class="carousel-arrow next-arrow" @click="nextListing" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;">
+      <i class="arrow-icon right"></i>
+    </button>
   </div>
+  
+  <div class="carousel-dots">
+    <span 
+      v-for="(_, index) in featuredListings" 
+      :key="index" 
+      :class="['dot', currentListing === index ? 'active' : '']"
+      @click="goToListing(index)"
+    ></span>
   </div>
 </div>
 
@@ -214,11 +238,126 @@
   </div>
 </div>
 
+<!-- 聯絡我們 -->
+<div class="contact-section">
+  <div class="section-header">
+    <h2>聯絡我們</h2>
+    <div class="section-underline"></div>
   </div>
+  
+  <div class="contact-container">
+    <!-- 左側：聯絡資訊 -->
+    <div class="contact-info">
+      <div class="info-header">
+        <h3 class="info-title">聯絡資訊</h3>
+      </div>
+      
+      <p class="contact-intro">
+        有任何關於租屋、網站使用或合作提案的問題，歡迎隨時聯繫我們。
+        我們的團隊將在24小時內回覆您的疑問，為您提供專業的租屋建議與協助。
+      </p>
+      
+      <div class="contact-method">
+        <div class="contact-icon">
+          <i class="email-icon"></i>
+        </div>
+        <div class="contact-detail">
+          <h4>電子郵件</h4>
+          <p>accommodation@ncu.edu.tw</p>
+        </div>
+            </div>
+            
+            <div class="contact-method">
+        <div class="contact-icon">
+          <i class="phone-icon"></i>
+        </div>
+        <div class="contact-detail">
+          <h4>電話</h4>
+          <p>(03) 422-7151 #57282</p>
+        </div>
+            </div>
+            
+            <div class="contact-method">
+        <div class="contact-icon">
+          <i class="location-pin"></i>
+        </div>
+        <div class="contact-detail">
+          <h4>地址</h4>
+          <p>32001 桃園市中壢區中大路300號<br>學務處住宿服務組</p>
+        </div>
+            </div>
+            
+            <div class="contact-method">
+        <div class="contact-icon">
+          <i class="social-icon"></i>
+        </div>
+        <div class="contact-detail">
+          <h4>社群媒體</h4>
+          <p>@ncu_accommodation</p>
+        </div>
+            </div>
+      
+    </div>
+    
+    <!-- 右側：聯絡表單 -->
+    <div class="contact-form-container">
+      <form class="contact-form" @submit.prevent="submitForm">
+        <div class="form-group">
+          <label for="name">姓名</label>
+          <input 
+            type="text" 
+            id="name" 
+            v-model="contactForm.name" 
+            placeholder="請輸入您的姓名" 
+            required
+          />
+        </div>
+        
+        <div class="form-group">
+          <label for="email">電子郵件</label>
+          <input 
+            type="email" 
+            id="email" 
+            v-model="contactForm.email" 
+            placeholder="請輸入您的電子郵件" 
+            required
+          />
+        </div>
+        
+        <div class="form-group">
+          <label for="subject">主題</label>
+          <input 
+            type="text" 
+            id="subject" 
+            v-model="contactForm.subject" 
+            placeholder="請輸入訊息主題" 
+            required
+          />
+        </div>
+        
+        <div class="form-group">
+          <label for="message">訊息</label>
+          <textarea 
+            id="message" 
+            v-model="contactForm.message" 
+            placeholder="請輸入您的訊息內容" 
+            required
+            rows="5"
+          ></textarea>
+        </div>
+        
+        <button type="submit" class="submit-btn">發送訊息</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 頁尾 -->
+</div>
 </template>
 
 <script>
-  import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+  import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue";
   import { useStore } from "vuex";
 
   export default {
@@ -238,6 +377,31 @@
       const listings = ref(0);
       const inquiries = ref(0);
       const agents = ref(0);
+
+      // 聯絡表單數據
+      const contactForm = ref({
+        name: "",
+        email: "",
+        subject: "",
+        message: ""
+      });
+
+      // 提交聯絡表單
+      const submitForm = () => {
+        // 這裡可以添加表單驗證
+        console.log("提交表單數據:", contactForm.value);
+        
+        // 成功提交後顯示提示
+        alert("感謝您的訊息！我們會盡快回覆您。");
+        
+        // 重置表單
+        contactForm.value = {
+          name: "",
+          email: "",
+          subject: "",
+          message: ""
+        };
+      };
 
       // 常見問題
       const faqs = ref([
@@ -364,7 +528,135 @@
           photo:
             "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
         },
+        {
+          id: 6,
+          title: "近老街溪捷運站精裝套房",
+          price: 8500,
+          distance: 1.5,
+          roomType: "單人套房",
+          rating: 4.5,
+          reviews: 37,
+          photo:
+            "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+        },
       ];
+
+      // 本月精選輪播
+      const currentListing = ref(0);
+      const listingContainer = ref(null);
+      const listingAutoplayInterval = ref(null);
+      // 設定切換是否進行中，防止快速連續點擊
+      const isTransitioning = ref(false);
+
+      // 卡片樣式計算函數 - 調整間距讓視覺更平衡
+      const getCardTransform = (index) => {
+        const total = featuredListings.length;
+        const currentIdx = currentListing.value;
+        
+        // 計算卡片相對於當前顯示卡片的位置偏移
+        let diff = (index - currentIdx + total) % total;
+        if (diff > total/2) diff -= total;
+        
+        // 根據位置偏移計算位置，縮小間距
+        if (diff === 0) {
+          // 當前卡片 (中心位置)
+          return 'translateX(0) scale(1.1)';
+        } else if (diff === 1 || diff === -total+1) {
+          // 右邊卡片，縮小間距
+          return 'translateX(110%) scale(0.85)';
+        } else if (diff === -1 || diff === total-1) {
+          // 左邊卡片，縮小間距
+          return 'translateX(-110%) scale(0.85)';
+        } else if (diff > 0) {
+          // 右邊其他卡片 (隱藏)
+          return 'translateX(220%) scale(0.7)';
+        } else {
+          // 左邊其他卡片 (隱藏)
+          return 'translateX(-220%) scale(0.7)';
+        }
+      };
+
+      // 計算卡片的透明度
+      const getCardOpacity = (index) => {
+        const total = featuredListings.length;
+        const currentIdx = currentListing.value;
+        
+        // 計算最短距離
+        let diff = Math.abs((index - currentIdx + total) % total);
+        if (diff > total/2) diff = total - diff;
+        
+        if (diff === 0) return 1;  // 當前卡片
+        if (diff === 1) return 0.7; // 左右相鄰卡片，提高透明度
+        return 0; // 其他卡片暫時隱藏
+      };
+
+      // 計算卡片的z-index值
+      const getCardZIndex = (index) => {
+        const total = featuredListings.length;
+        const currentIdx = currentListing.value;
+        
+        if (index === currentIdx) return 10; // 當前卡片最前
+        
+        // 計算最短距離
+        let diff = Math.abs((index - currentIdx + total) % total);
+        if (diff > total/2) diff = total - diff;
+        
+        return 10 - diff; // 距離越近，z-index越大
+      };
+
+      // 放慢切換速度，確保一致性
+      const nextListing = () => {
+        if (isTransitioning.value) return;
+        isTransitioning.value = true;
+        
+        currentListing.value = (currentListing.value + 1) % featuredListings.length;
+        
+        // 設定切換完成後的延遲
+        setTimeout(() => {
+          isTransitioning.value = false;
+        }, 800); // 延遲時間與CSS過渡時間相同
+      };
+
+      const prevListing = () => {
+        if (isTransitioning.value) return;
+        isTransitioning.value = true;
+        
+        currentListing.value = (currentListing.value - 1 + featuredListings.length) % featuredListings.length;
+        
+        // 設定切換完成後的延遲
+        setTimeout(() => {
+          isTransitioning.value = false;
+        }, 800); // 延遲時間與CSS過渡時間相同
+      };
+
+      const goToListing = (index) => {
+        if (isTransitioning.value) return;
+        isTransitioning.value = true;
+        
+        currentListing.value = index;
+        
+        // 設定切換完成後的延遲
+        setTimeout(() => {
+          isTransitioning.value = false;
+        }, 800);
+      };
+
+      // 開始自動輪播本月精選，放慢自動切換速度
+      const startListingAutoplay = () => {
+        stopListingAutoplay(); // 確保不會有多個計時器
+        listingAutoplayInterval.value = setInterval(() => {
+          if (!isTransitioning.value) {
+            nextListing();
+          }
+        }, 5000); // 每5秒切換一次，延長停留時間
+      };
+
+      // 停止自動輪播本月精選
+      const stopListingAutoplay = () => {
+        if (listingAutoplayInterval.value) {
+          clearInterval(listingAutoplayInterval.value);
+        }
+      };
 
       // 使用者心得
       const testimonials = [
@@ -437,8 +729,8 @@
         if (testimonialContainer.value) {
           const scrollAmount = testimonialContainer.value.clientWidth * index;
           testimonialContainer.value.scrollTo({
-        left: scrollAmount,
-        behavior: 'smooth'
+            left: scrollAmount,
+            behavior: 'smooth'
           });
         }
       };
@@ -466,22 +758,35 @@
       // 設置懸停時暫停輪播，離開時恢復輪播
       onMounted(() => {
         startAutoplay();
+        startListingAutoplay();
         
-        // 為容器添加懸停事件
+        // 為使用者心得容器添加懸停事件
         if (testimonialContainer.value) {
           testimonialContainer.value.addEventListener('mouseenter', stopAutoplay);
           testimonialContainer.value.addEventListener('mouseleave', startAutoplay);
+        }
+        
+        // 為本月精選容器添加懸停事件
+        if (listingContainer.value) {
+          listingContainer.value.addEventListener('mouseenter', stopListingAutoplay);
+          listingContainer.value.addEventListener('mouseleave', startListingAutoplay);
         }
       });
       
       // 組件卸載時清理
       onUnmounted(() => {
         stopAutoplay();
+        stopListingAutoplay();
         
         // 移除事件監聽器
         if (testimonialContainer.value) {
           testimonialContainer.value.removeEventListener('mouseenter', stopAutoplay);
           testimonialContainer.value.removeEventListener('mouseleave', startAutoplay);
+        }
+        
+        if (listingContainer.value) {
+          listingContainer.value.removeEventListener('mouseenter', stopListingAutoplay);
+          listingContainer.value.removeEventListener('mouseleave', startListingAutoplay);
         }
       });
 
@@ -535,7 +840,7 @@
       // 在組件掛載後設置觀察器
       onMounted(() => {
         observeStats();
-        // 確保testimonialContainer已經掛載後才能操作
+        // 確保容器已經掛載後才能操作
         nextTick(() => {
           // 初始化輪播，設置第一個testimonial的位置
           if (testimonialContainer.value) {
@@ -566,8 +871,18 @@
         nextTestimonial,
         prevTestimonial,
         goToTestimonial,
+        // 本月精選輪播
+        currentListing,
+        listingContainer,
+        nextListing,
+        prevListing,
+        goToListing,
+        getCardTransform,
+        getCardOpacity,
+        getCardZIndex,
         quickSearch,
         viewListing,
+        isTransitioning,
         // 統計資訊 (動態值)
         clients,
         listings,
@@ -575,7 +890,10 @@
         agents,
         // FAQs
         faqs,
-        toggleFaq
+        toggleFaq,
+        // 聯絡表單
+        contactForm,
+        submitForm
       };
     },
   };
@@ -966,32 +1284,52 @@
     margin-bottom: 15px;
   }
 
-  .listings-carousel {
-    display: flex;
-    gap: 20px;
-    overflow-x: auto;
-    padding: 20px 0;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
+  .listing-carousel-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    margin: 0 auto;
   }
 
-  .listings-carousel::-webkit-scrollbar {
-    display: none;
+  .listings-carousel {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 420px;
+    perspective: 1000px;
   }
 
   .listing-card {
-    flex: 0 0 320px;
-    scroll-snap-align: start;
     border-radius: 16px;
     overflow: hidden;
     background: white;
     box-shadow: var(--card-shadow);
-    transition: all 0.3s ease;
+    position: absolute;
+    width: 320px;
+    height: 350px;
+    transition: all 0.8s ease-in-out;
     cursor: pointer;
   }
 
-  .listing-card:hover {
-    transform: translateY(-10px);
+  .listing-card.active {
+    transform: translateX(0) scale(1.1);
+    opacity: 1;
+    z-index: 10;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .listing-card.prev {
+    transform: translateX(-120%) scale(0.85);
+    opacity: 0.7;
+    z-index: 5;
+  }
+
+  .listing-card.next {
+    transform: translateX(120%) scale(0.85);
+    opacity: 0.7;
+    z-index: 5;
   }
 
   .listing-image {
@@ -1049,6 +1387,47 @@
 
   .star-icon.filled {
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffc107"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>');
+  }
+
+  .carousel-arrow {
+    border: none;
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 20;
+    transition: all 0.3s ease;
+  }
+
+  .carousel-arrow:hover {
+    background-color: var(--primary-color);
+  }
+
+  .carousel-arrow:hover .arrow-icon {
+    border-color: white;
+  }
+
+  .carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ddd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .dot.active {
+    background-color: var(--primary-color);
+    transform: scale(1.3);
   }
 
   /* 使用者心得板塊 */
@@ -1369,6 +1748,238 @@
     .faq-answer {
       padding: 0 20px 15px;
       font-size: 0.95rem;
+    }
+  }
+  /* 聯絡我們 */
+  .contact-section {
+    padding: 80px 20px;
+    background-color: #f9f9f9;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .contact-section h2 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 15px;
+  }
+
+  .contact-container {
+    display: flex;
+    margin-top: 40px;
+    flex-wrap: wrap;
+    gap: 30px;
+  }
+
+  .contact-info {
+    flex: 1 1 350px;
+    padding: 30px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .info-header {
+    text-align: left;
+    margin-bottom: 20px;
+  }
+
+  .info-title {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .contact-intro {
+    font-size: 0.95rem;
+    color: #777;
+    margin-bottom: 30px;
+    line-height: 1.6;
+  }
+
+  .contact-method {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+
+  .contact-method:hover {
+    transform: translateX(5px);
+  }
+
+  .contact-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+  }
+
+  .contact-method:hover .contact-icon {
+    background-color: var(--primary-color);
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+  }
+
+  .contact-method:hover .email-icon,
+  .contact-method:hover .phone-icon,
+  .contact-method:hover .location-pin,
+  .contact-method:hover .social-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>');
+  }
+
+  .email-icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232196F3"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>');
+    background-size: contain;
+    transition: all 0.3s ease;
+  }
+
+  .phone-icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232196F3"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>');
+    background-size: contain;
+    transition: all 0.3s ease;
+  }
+
+  .contact-method:hover .phone-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>');
+  }
+
+  .location-pin {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232196F3"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>');
+    background-size: contain;
+    transition: all 0.3s ease;
+  }
+
+  .contact-method:hover .location-pin {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>');
+  }
+
+  .social-icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232196F3"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7H7.9v-2.9h2.54V9.85c0-2.51 1.49-3.89 3.78-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 0 0 8.44-9.9c0-5.53-4.5-10.02-10-10.02z"/></svg>');
+    background-size: contain;
+    transition: all 0.3s ease;
+  }
+
+  .contact-method:hover .social-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7H7.9v-2.9h2.54V9.85c0-2.51 1.49-3.89 3.78-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 0 0 8.44-9.9c0-5.53-4.5-10.02-10-10.02z"/></svg>');
+  }
+
+  .contact-detail {
+    flex: 1;
+  }
+
+  .contact-detail h4 {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    color: var(--primary-color);
+    transition: all 0.3s ease;
+  }
+
+  .contact-method:hover .contact-detail h4 {
+    color: var(--secondary-color);
+    transform: translateY(-2px);
+  }
+
+  .contact-detail p {
+    color: #666;
+    line-height: 1.5;
+    transition: color 0.3s ease;
+  }
+
+  .contact-method:hover .contact-detail p {
+    color: #333;
+  }
+
+  .contact-form-container {
+    flex: 1 1 450px;
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #444;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+  }
+
+  .submit-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    align-self: flex-start;
+  }
+
+  .submit-btn:hover {
+    background: var(--secondary-color);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    .contact-container {
+      flex-direction: column;
+    }
+    
+    .contact-form-container,
+    .contact-info {
+      width: 100%;
     }
   }
 
