@@ -880,6 +880,9 @@
   
   .sublet-content {
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 250px; /* 設定最小高度 */
   }
   
   .sublet-content h3 {
@@ -907,7 +910,6 @@
     margin-bottom: 20px;
     font-size: 14px;
     color: #666;
-    line-height: 1.6;
   }
   
   .sublet-footer {
@@ -916,6 +918,7 @@
     align-items: center;
     padding-top: 15px;
     border-top: 1px solid #f0f0f0;
+    margin-top: auto; /* 推到底部 */
   }
   
   .user-info {
