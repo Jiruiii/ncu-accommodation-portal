@@ -20,6 +20,8 @@ class User(db.Model):
     last_login = db.Column(db.DateTime)
     is_verified = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
+    is_email_verified = db.Column(db.Boolean, default=False)
+    is_phone_verified = db.Column(db.Boolean, default=False)
     
     # 關聯
     accommodations = db.relationship('Accommodation', foreign_keys='Accommodation.owner_id',
@@ -28,7 +30,6 @@ class User(db.Model):
                             backref='reviewer', lazy='dynamic')
     favorites = db.relationship('Favorite', foreign_keys='Favorite.user_id',
                               backref='user', lazy='dynamic')
-    student_verification = db.relationship('StudentVerification', backref='user', uselist=False)
     tenant_leases = db.relationship('Lease', foreign_keys='Lease.tenant_id',
                                   backref='tenant', lazy='dynamic')
     landlord_leases = db.relationship('Lease', foreign_keys='Lease.landlord_id',
@@ -50,20 +51,15 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
-class StudentVerification(db.Model):
-    __tablename__ = 'student_verifications'
+class VerificationCode(db.Model):
+    __tablename__ = 'verification_codes'
     
-    verification_id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-    student_id = db.Column(db.String(20), nullable=False)
-    department = db.Column(db.String(100))
-    year_of_study = db.Column(db.Integer)
-    verification_document = db.Column(db.String(255))
-    verified_at = db.Column(db.DateTime)
-    expires_at = db.Column(db.DateTime)
-    verification_status = db.Column(db.Enum('pending', 'verified', 'rejected', 
-                                          name='verification_status_enum'),
-                                   default='pending')
+    code = db.Column(db.String(10), nullable=False)
+    type = db.Column(db.String(20), nullable=False)  # email 或 phone
+    target = db.Column(db.String(100), nullable=False)  # 郵箱或手機號
+    expiry = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    def __repr__(self):
-        return f'<StudentVerification {self.student_id}>'
+    user = db.relationship('User', backref=db.backref('verification_codes', lazy='dynamic'))

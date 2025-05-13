@@ -325,8 +325,18 @@
             <div class="settings-label">電子郵件</div>
             <div class="settings-content">
               <span>{{ user.email }}</span>
-              <button class="settings-btn" @click="showEmailModal = true">
-                修改
+              <span
+                class="verification-tag"
+                :class="{ verified: user.is_email_verified }"
+              >
+                {{ user.is_email_verified ? "已驗證" : "未驗證" }}
+              </span>
+              <button
+                v-if="!user.is_email_verified"
+                class="settings-btn"
+                @click="showEmailVerificationModal = true"
+              >
+                驗證郵箱
               </button>
             </div>
           </div>
@@ -343,8 +353,26 @@
             <div class="settings-label">手機號碼</div>
             <div class="settings-content">
               <span>{{ user.phone || "尚未設置" }}</span>
-              <button class="settings-btn" @click="showPhoneModal = true">
-                {{ user.phone ? "修改" : "設置" }}
+              <span
+                v-if="user.phone"
+                class="verification-tag"
+                :class="{ verified: user.is_phone_verified }"
+              >
+                {{ user.is_phone_verified ? "已驗證" : "未驗證" }}
+              </span>
+              <button
+                v-if="!user.is_phone_verified && user.phone"
+                class="settings-btn"
+                @click="showPhoneVerificationModal = true"
+              >
+                驗證手機
+              </button>
+              <button
+                v-if="!user.phone"
+                class="settings-btn"
+                @click="showPhoneModal = true"
+              >
+                設置手機
               </button>
             </div>
           </div>
@@ -499,6 +527,24 @@
           <h2>危險區域</h2>
           <button class="danger-btn">刪除帳戶</button>
         </div>
+
+        <!-- 電子郵件驗證彈窗 -->
+        <email-verification-modal
+          :show="showEmailVerificationModal"
+          :email="user.email"
+          @close="showEmailVerificationModal = false"
+          @send="handleSendEmailVerification"
+          @verify="handleVerifyEmail"
+        />
+
+        <!-- 手機驗證彈窗 -->
+        <phone-verification-modal
+          :show="showPhoneVerificationModal"
+          :phone="user.phone"
+          @close="showPhoneVerificationModal = false"
+          @send="handleSendPhoneVerification"
+          @verify="handleVerifyPhone"
+        />
       </div>
     </div>
   </div>
@@ -508,9 +554,16 @@
   import { ref, computed, onMounted, reactive } from "vue";
   import { useRouter } from "vue-router";
   import apiService from "@/services/api";
+  import EmailVerificationModal from "@/components/verification/EmailVerificationModal.vue";
+  import PhoneVerificationModal from "@/components/verification/PhoneVerificationModal.vue";
+  import VerificationService from "@/utils/verification";
 
   export default {
     name: "ProfilePage",
+    components: {
+      EmailVerificationModal,
+      PhoneVerificationModal,
+    },
     setup() {
       const router = useRouter();
       const activeTab = ref("housing");
@@ -519,6 +572,8 @@
       const showEditModal = ref(false);
       const showPasswordModal = ref(false);
       const showBindPortalModal = ref(false);
+      const showEmailVerificationModal = ref(false);
+      const showPhoneVerificationModal = ref(false);
       const isProcessingPortal = ref(false);
 
       // 個人資料編輯表單
@@ -804,7 +859,98 @@
         }
       };
 
-      // 生命週期鉤子
+      // 處理發送電子郵件驗證碼
+      const handleSendEmailVerification = async (email) => {
+        try {
+          const response = await VerificationService.sendEmailVerification(
+            email
+          );
+          if (response.success) {
+            alert(response.message || "驗證碼已發送到您的電子郵件");
+            return Promise.resolve();
+          } else {
+            alert(response.message || "發送驗證碼失敗");
+            return Promise.reject(new Error(response.message));
+          }
+        } catch (error) {
+          console.error("發送電子郵件驗證碼失敗:", error);
+          alert("發送驗證碼時發生錯誤，請稍後再試");
+          return Promise.reject(error);
+        }
+      };
+
+      // 處理驗證電子郵件
+      const handleVerifyEmail = async (code) => {
+        try {
+          const response = await VerificationService.verifyEmail(code);
+          if (response.success) {
+            // 更新用戶資訊
+            user.value.is_email_verified = true;
+
+            // 更新本地存儲的用戶資訊
+            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+            storedUser.is_email_verified = true;
+            localStorage.setItem("user", JSON.stringify(storedUser));
+
+            alert("電子郵件驗證成功");
+            return Promise.resolve();
+          } else {
+            alert(response.message || "驗證失敗");
+            return Promise.reject(new Error(response.message));
+          }
+        } catch (error) {
+          console.error("驗證電子郵件失敗:", error);
+          alert("驗證時發生錯誤，請稍後再試");
+          return Promise.reject(error);
+        }
+      };
+
+      // 處理發送手機驗證碼
+      const handleSendPhoneVerification = async (phone) => {
+        try {
+          const response = await VerificationService.sendPhoneVerification(
+            phone
+          );
+          if (response.success) {
+            alert(response.message || "驗證碼已發送到您的手機");
+            return Promise.resolve();
+          } else {
+            alert(response.message || "發送驗證碼失敗");
+            return Promise.reject(new Error(response.message));
+          }
+        } catch (error) {
+          console.error("發送手機驗證碼失敗:", error);
+          alert("發送驗證碼時發生錯誤，請稍後再試");
+          return Promise.reject(error);
+        }
+      };
+
+      // 處理驗證手機
+      const handleVerifyPhone = async (code) => {
+        try {
+          const response = await VerificationService.verifyPhone(code);
+          if (response.success) {
+            // 更新用戶資訊
+            user.value.is_phone_verified = true;
+
+            // 更新本地存儲的用戶資訊
+            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+            storedUser.is_phone_verified = true;
+            localStorage.setItem("user", JSON.stringify(storedUser));
+
+            alert("手機驗證成功");
+            return Promise.resolve();
+          } else {
+            alert(response.message || "驗證失敗");
+            return Promise.reject(new Error(response.message));
+          }
+        } catch (error) {
+          console.error("驗證手機失敗:", error);
+          alert("驗證時發生錯誤，請稍後再試");
+          return Promise.reject(error);
+        }
+      };
+
       onMounted(() => {
         fetchUserData();
       });
@@ -823,6 +969,8 @@
         showEditModal,
         showPasswordModal,
         showBindPortalModal,
+        showEmailVerificationModal,
+        showPhoneVerificationModal,
         editForm,
         passwordForm,
         openEditModal,
@@ -834,6 +982,10 @@
         goToAdminDashboard,
         goToUserManagement,
         goToAnalytics,
+        handleSendEmailVerification,
+        handleVerifyEmail,
+        handleSendPhoneVerification,
+        handleVerifyPhone,
       };
     },
   };
@@ -1582,7 +1734,7 @@
     animation: spin 1s linear infinite;
     margin-right: 5px;
   }
-  
+
   @keyframes spin {
     to {
       transform: rotate(360deg);

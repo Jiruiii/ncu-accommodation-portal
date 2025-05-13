@@ -13,7 +13,7 @@ from flask import request, jsonify, current_app
 
 from datetime import datetime, timedelta
 from app.api import api_bp
-from app.models.user import User, StudentVerification
+from app.models.user import User
 from app.extensions import db
 
 # 從環境變數或配置文件獲取

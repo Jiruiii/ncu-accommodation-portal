@@ -26,7 +26,7 @@ def create_app(config_name='default'):
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     
     # 初始化 Session
-    Session(app)  # 添加這行以初始化 Flask-Session
+    Session(app)  
     
     # 初始化 CORS
     CORS(app, 

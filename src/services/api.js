@@ -257,6 +257,10 @@ export const apiService = {
     changePassword: (data) =>
       apiService.post("/api/users/change-password", data),
     unbindPortal: () => apiService.post("/api/users/unbind-portal"),
+    updateEmail: (email) =>
+      apiService.post("/api/users/update-email", { email }),
+    updatePhone: (phone) =>
+      apiService.post("/api/users/update-phone", { phone }),
   },
 
   // 維修請求相關 API
@@ -313,6 +317,17 @@ export const apiService = {
     deleteUser: (userId) =>
       apiService.post(`/api/admin/delete/users/${userId}`, true),
   },
+
+  verification: {
+    sendEmailVerification: async (email) =>
+      apiService.post("/api/verification/send-email", { email }),
+    sendPhoneVerification: async (phone) =>
+      apiService.post("/api/verification/send-phone", { phone }),
+    verifyEmail: async (code) => 
+      apiService.post("/api/verification/verify-email", { code }),
+    verifyPhone: async (code) =>
+      apiService.post("/api/verification/verify-phone", { code }),
+  }
 };
 
 // 生成隨機狀態碼防止CSRF攻擊
