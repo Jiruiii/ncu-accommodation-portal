@@ -256,7 +256,7 @@ export const apiService = {
     updateProfile: (data) => apiService.put("/api/users/profile", data),
     changePassword: (data) =>
       apiService.post("/api/users/change-password", data),
-    verifyStudent: (data) => apiService.post("/api/users/verify-student", data),
+    unbindPortal: () => apiService.post("/api/users/unbind-portal"),
   },
 
   // 維修請求相關 API

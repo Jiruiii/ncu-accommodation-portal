@@ -310,7 +310,12 @@
               <span class="verified-tag" v-if="user.has_portal_id"
                 >學生身分認證</span
               >
-              <button class="settings-btn" @click="bindPortalAccount">
+              <button
+                class="settings-btn"
+                @click="bindPortalAccount"
+                :disabled="isProcessingPortal"
+              >
+                <span v-if="isProcessingPortal" class="loading-spinner"></span>
                 {{ user.has_portal_id ? "取消綁定" : "立即綁定" }}
               </button>
             </div>
@@ -514,6 +519,7 @@
       const showEditModal = ref(false);
       const showPasswordModal = ref(false);
       const showBindPortalModal = ref(false);
+      const isProcessingPortal = ref(false);
 
       // 個人資料編輯表單
       const editForm = reactive({
@@ -730,8 +736,51 @@
       };
 
       // 綁定 Portal 帳號
-      const bindPortalAccount = () => {
-        window.location.href = apiService.auth.portal.getBindingUrl();
+      const bindPortalAccount = async () => {
+        if (user.value.has_portal_id) {
+          // 用戶已綁定 Portal，執行解除綁定操作
+          if (
+            !confirm("確定要解除 Portal 綁定嗎？這將移除您的學生身分認證。")
+          ) {
+            return; // 用戶取消操作
+          }
+
+          isProcessingPortal.value = true;
+
+          try {
+            const response = await apiService.users.unbindPortal();
+
+            if (response && response.success) {
+              user.value.has_portal_id = false;
+              user.value.school_email = null;
+
+              try {
+                const userStr = localStorage.getItem("user");
+                if (userStr) {
+                  const userData = JSON.parse(userStr);
+                  userData.has_portal_id = false;
+                  userData.school_email = null;
+                  localStorage.setItem("user", JSON.stringify(userData));
+                }
+              } catch (e) {
+                console.error("更新本地存儲失敗:", e);
+              }
+
+              alert("已成功解除綁定 Portal 帳號");
+            } else {
+              throw new Error(response.message || "解除綁定失敗");
+            }
+          } catch (err) {
+            console.error("解除綁定 Portal 失敗:", err);
+            alert(`解除綁定失敗: ${err.message || "未知錯誤"}`);
+          } finally {
+            isProcessingPortal.value = false;
+          }
+        } else {
+          // 導向 Portal 授權頁面
+          isProcessingPortal.value = true;
+          window.location.href = apiService.auth.portal.getBindingUrl();
+        }
       };
 
       // 刪除帳戶
@@ -769,6 +818,7 @@
         studentInfo,
         formatDate,
         loading,
+        isProcessingPortal,
         error,
         showEditModal,
         showPasswordModal,
@@ -1141,7 +1191,6 @@
   }
 
   .active {
-    background-color: #28a745;
     color: white;
   }
 
@@ -1256,6 +1305,8 @@
 
   .settings-item {
     display: flex;
+    align-items: center;
+    gap: 20px;
     padding: 15px 0;
     border-bottom: 1px solid #f5f5f5;
   }
@@ -1297,6 +1348,11 @@
   .settings-btn.highlight {
     background-color: #007bff;
     color: white;
+  }
+
+  .settings-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 
   .switch {
@@ -1514,5 +1570,22 @@
   .login-status.failed {
     background-color: #fee2e2;
     color: #b91c1c;
+  }
+
+  .loading-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 5px;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>

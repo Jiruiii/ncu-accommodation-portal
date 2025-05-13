@@ -292,3 +292,43 @@ def delete_account():
         print(f"刪除帳戶錯誤: {str(e)}")
         print(traceback.format_exc())
         return jsonify({"message": f"刪除帳戶失敗: {str(e)}"}), 500
+    
+# 取消Portal授權
+@api_bp.route('/users/unbind-portal', methods=['POST'])
+@login_required
+def unbind_portal():
+    try:
+        user_id = session.get('user_id')
+        user = User.query.get_or_404(user_id)
+        
+        if not user:
+            return jsonify({
+                "success": False,
+                "message": "找不到用戶資訊"
+            }), 404
+        
+        # 檢查用戶是否已綁定Portal
+        if not user.portal_id:
+            return jsonify({"message": "用戶未綁定Portal"}), 400
+        
+        # 解除綁定
+        user.portal_id = None
+        user.school_email = None
+        user.is_verified = False
+        user.updated_at = datetime.datetime.utcnow()
+
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "Portal授權已取消"
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"取消Portal授權錯誤: {str(e)}")
+        print(traceback.format_exc())
+        
+        return jsonify({
+            "success": False,
+            "message": f"取消Portal授權失敗: {str(e)}"
+        }), 500
