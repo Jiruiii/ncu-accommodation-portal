@@ -55,15 +55,32 @@
             class="favorite-btn"
             @click.stop="toggleFavorite(property.編碼 || index)"
           >
-            <i
+            <div
               :class="
                 isFavorite(property.編碼 || index)
                   ? 'heart-filled'
                   : 'heart-outline'
               "
-            >
-              {{ isFavorite(property.編碼 || index) ? "❤️" : "🤍" }}
-            </i>
+            ></div>
+          </button>
+
+          <div class="no-photo-notice" v-if="!hasPhotos(property)">
+            屋主尚未更新照片
+          </div>
+          <div class="price-tag">
+            NT$ {{ formatPrice(property.房租 || "0") }}/月
+          </div>
+          <button
+            class="favorite-btn"
+            @click.stop="toggleFavorite(property.編碼 || index)"
+          >
+            <div
+              :class="
+                isFavorite(property.編碼 || index)
+                  ? 'heart-filled'
+                  : 'heart-outline'
+              "
+            ></div>
           </button>
         </div>
         <div class="property-info">
@@ -234,6 +251,13 @@
             }"
           ></div>
 
+          <div
+            class="no-photo-notice large"
+            v-if="!hasPhotos(selectedProperty)"
+          >
+            屋主尚未更新照片
+          </div>
+
           <button
             v-if="hasMultiplePhotos(selectedProperty)"
             class="gallery-nav prev-btn"
@@ -378,7 +402,13 @@
               @click.stop="toggleFavorite(selectedProperty.編碼 || 0)"
             >
               {{ isFavorite(selectedProperty.編碼 || 0) ? "取消收藏" : "收藏" }}
-              <i>{{ isFavorite(selectedProperty.編碼 || 0) ? "❤️" : "🤍" }}</i>
+              <div
+                :class="
+                  isFavorite(selectedProperty.編碼 || 0)
+                    ? 'heart-filled'
+                    : 'heart-outline'
+                "
+              ></div>
             </button>
           </div>
         </div>
@@ -522,31 +552,54 @@ export default {
         Array.isArray(property.房屋照片) &&
         property.房屋照片.length > 0
       ) {
-        if (index >= 0 && index < property.房屋照片.length) {
-          try {
-            // 使用 require 動態引入圖片
-            const imageUrl = property.房屋照片[index];
-            // 判斷照片路徑是否存在，如果不存在則使用預設圖片
-            try {
-              return `url(${require("@/" + imageUrl)})`;
-            } catch (e) {
-              return `url(https://picsum.photos/id/${
-                (((property.編碼 || 0) * 13) % 100) + 1000
-              }/600/400)`;
-            }
-          } catch (error) {
-            console.error("圖片載入錯誤:", error);
+        // 檢查圖片並找到可用的
+        let attempts = 0;
+        let currentIndex = index;
+        const maxAttempts = property.房屋照片.length;
+
+        // 遞迴查找可用圖片
+        const findValidImage = (idx) => {
+          // 防止無限循環
+          if (attempts >= maxAttempts) {
             return `url(https://picsum.photos/id/${
               (((property.編碼 || 0) * 13) % 100) + 1000
             }/600/400)`;
           }
-        }
+
+          attempts++;
+
+          // 確保索引在範圍內
+          if (idx >= property.房屋照片.length) {
+            idx = 0; // 循環回到第一張
+          }
+
+          const imageUrl = property.房屋照片[idx];
+
+          // 嘗試載入圖片
+          try {
+            const loadedImg = require("@/" + imageUrl);
+
+            // 檢查實際載入後的圖片URL是否包含"-1.49632716"
+            if (
+              loadedImg &&
+              typeof loadedImg === "string" &&
+              loadedImg.includes("-1.49632716")
+            ) {
+              return findValidImage(idx + 1);
+            }
+
+            return `url(${loadedImg})`;
+          } catch (e) {
+            return findValidImage(idx + 1);
+          }
+        };
+
+        // 開始查找有效圖片
+        return findValidImage(currentIndex);
       }
 
-      // 無照片時使用預設圖片（根據編碼產生不同圖片）
-      return `url(https://picsum.photos/id/${
-        (((property.編碼 || 0) * 13) % 100) + 1000
-      }/600/400)`;
+      // 無照片時使用預設圖片
+      return 'url(\'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1"%3E%3Crect width="1" height="1" fill="%23f5f5f5"/%3E%3C/svg%3E\')';
     },
 
     // 新增方法 - 顯示房源詳細資訊
@@ -768,12 +821,22 @@ export default {
   background: rgba(255, 255, 255, 1);
 }
 
+.heart-outline,
+.heart-filled {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  display: inline-block;
+}
+
 .heart-outline {
-  color: #777;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke='%23777' fill='none' stroke-width='2'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
 }
 
 .heart-filled {
-  color: #ff4757;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff4757'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
 }
 
 .property-info {
@@ -965,7 +1028,7 @@ export default {
   display: flex;
   flex-direction: column;
   position: relative;
-  margin:15px 0 30px 0;
+  margin: 15px 0 30px 0;
   max-height: none;
 }
 
@@ -1153,6 +1216,31 @@ export default {
   color: #333;
 }
 
+.favorite-action .heart-outline,
+.favorite-action .heart-filled {
+  margin-left: 8px;
+}
+
+.no-photo-notice {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.no-photo-notice.large {
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
 /* 響應式設計 */
 @media (max-width: 1200px) {
   .property-list {
@@ -1189,15 +1277,14 @@ export default {
     align-items: flex-start;
     padding: 5px;
   }
-  
+
   .property-detail-content {
     margin: 10px 0 20px 0;
   }
-  
+
   .property-detail-gallery {
     height: 250px;
   }
-
 
   .gallery-image {
     height: 250px;
@@ -1219,18 +1306,18 @@ export default {
   .property-detail-modal {
     padding: 0;
   }
-  
+
   .property-detail-content {
     width: 100%;
     margin: 0;
     border-radius: 0; /* 移除圓角 */
     height: 100%; /* 佔滿整個螢幕 */
   }
-  
+
   .property-detail-gallery {
     height: 180px;
   }
-  
+
   .close-btn {
     top: 10px;
     right: 10px;
@@ -1239,7 +1326,7 @@ export default {
     background: rgba(0, 0, 0, 0.6);
     color: white;
   }
-  
+
   .gallery-nav {
     width: 36px;
     height: 36px;
@@ -1252,5 +1339,4 @@ export default {
   }
 }
 </style>
-
 
