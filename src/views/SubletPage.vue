@@ -71,7 +71,7 @@
           </div>
           
           <div class="modal-body">
-            <form @submit.prevent="submitSublet">
+            <form @submit.prevent="submitSublet" novalidate>
               <div class="form-group">
                 <label class="required">標題</label>
                 <input 
@@ -250,6 +250,13 @@
               <!-- 簡易輪播實現 -->
               <div class="gallery-main">
                 <img :src="selectedSublet.images ? selectedSublet.images[currentImageIndex] : selectedSublet.image" alt="房源照片">
+                <!-- 添加左右導航按鈕 -->
+                <div class="gallery-nav prev" @click="prevImage" v-if="selectedSublet.images && selectedSublet.images.length > 1">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
+                <div class="gallery-nav next" @click="nextImage" v-if="selectedSublet.images && selectedSublet.images.length > 1">
+                  <i class="fas fa-chevron-right"></i>
+                </div>
               </div>
               <div class="gallery-thumbs" v-if="selectedSublet.images && selectedSublet.images.length > 1">
                 <div 
@@ -325,6 +332,23 @@
   export default {
     name: 'SubletPage',
     setup() {
+
+      const prevImage = () => {
+      if (currentImageIndex.value > 0) {
+        currentImageIndex.value--;
+      } else {
+        currentImageIndex.value = selectedSublet.value.images.length - 1;
+      }
+    };
+
+const nextImage = () => {
+  if (currentImageIndex.value < selectedSublet.value.images.length - 1) {
+    currentImageIndex.value++;
+  } else {
+    currentImageIndex.value = 0;
+  }
+};
+
     //   const store = useStore();
       const searchTerm = ref('');
       const filters = ref({
@@ -489,36 +513,175 @@
       
       // 提交轉租表單
       const submitSublet = () => {
-        // 模擬表單提交
-        const submittedSublet = {
-          ...newSublet.value,
-          id: sublets.value.length + 1,
-          postedDate: new Date(),
-          isVerified: false,
-          userName: '我',
-          userAvatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
-          image: uploadedFiles.value.length > 0 ? filePreview(uploadedFiles.value[0]) : 'https://via.placeholder.com/300x200?text=No+Image'
-        };
-        
-        // 將新轉租資訊加入列表
-        sublets.value.unshift(submittedSublet);
-        
-        // 關閉表單
-        togglePostForm();
-        
-        // 顯示成功信息
-        Swal.fire({
-          title: '發布成功',
-          text: '轉租資訊已發布，審核通過後將會顯示在列表中',
-          icon: 'success',
-          confirmButtonColor: '#3085d6',
-          timer: 3000,
-          timerProgressBar: true,
-          showConfirmButton: false,
-          width: '320px',
-          padding: '15px',
-        });
-      };
+  // 檢查必填欄位
+  if (!newSublet.value.title) {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'warning',
+      title: '請填寫標題',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      width: '300px'
+    });
+    return;
+  }
+
+  if (!newSublet.value.price) {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'warning',
+      title: '請填寫租金',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      width: '300px'
+    });
+    return;
+  }
+
+  if (!newSublet.value.duration) {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'warning',
+      title: '請選擇租期',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      width: '300px'
+    });
+    return;
+  }
+
+  if (!newSublet.value.address) {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'warning',
+      title: '請填寫地址',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      width: '300px'
+    });
+    return;
+  }
+
+  if (!newSublet.value.roomType) {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'warning',
+      title: '請選擇房型',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      width: '300px'
+    });
+    return;
+  }
+
+  if (!newSublet.value.availableDate) {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'warning',
+      title: '請選擇可入住日期',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      width: '300px'
+    });
+    return;
+  }
+
+  if (!newSublet.value.description) {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'warning',
+      title: '請填寫房源描述',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      width: '300px'
+    });
+    return;
+  }
+
+  if (!newSublet.value.contact) {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'warning',
+      title: '請填寫聯絡方式',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      width: '300px'
+    });
+    return;
+  }
+
+  if (uploadedFiles.value.length === 0) {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'warning',
+      title: '請至少上傳一張照片',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      width: '300px'
+    });
+    return;
+  }
+
+  if (!newSublet.value.verified) {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'warning',
+      title: '請同意隱私政策與使用條款',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      width: '300px'
+    });
+    return;
+  }
+
+  // 如果驗證都通過，則提交表單
+  const submittedSublet = {
+    ...newSublet.value,
+    id: sublets.value.length + 1,
+    postedDate: new Date(),
+    isVerified: false,
+    userName: '我',
+    userAvatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
+    image: uploadedFiles.value.length > 0 ? filePreview(uploadedFiles.value[0]) : 'https://via.placeholder.com/300x200?text=No+Image'
+  };
+  
+  // 將新轉租資訊加入列表
+  sublets.value.unshift(submittedSublet);
+  togglePostForm();
+  
+  // 顯示成功信息
+  Swal.fire({
+    title: '發布成功',
+    text: '轉租資訊已發布，審核通過後將會顯示在列表中',
+    icon: 'success',
+    confirmButtonColor: '#3085d6',
+    timer: 3000,
+    timerProgressBar: true,
+    showConfirmButton: false,
+    width: '320px',
+    padding: '15px',
+  });
+};
       
       // 查看轉租詳情
       const viewSubletDetail = (sublet) => {
@@ -691,7 +854,9 @@
         getTimeAgo,
         isRecent,
         getDurationText,
-        truncateText
+        truncateText,
+        prevImage,
+        nextImage,
       };
     }
   }
@@ -1334,10 +1499,7 @@
   }
   
   .gallery-main {
-    height: 400px;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 15px;
+    position: relative;
   }
   
   .gallery-main img {
@@ -1352,7 +1514,57 @@
     overflow-x: auto;
     padding-bottom: 10px;
   }
-  
+
+  .gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  /* 添加以下效果增強樣式 */
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.gallery-nav:hover {
+  background: rgba(0,0,0,0.7);
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* 添加左右導航按鈕的位置定位 */
+.gallery-nav.prev {
+  left: 15px;
+}
+
+.gallery-nav.next {
+  right: 15px;
+}
+
+.gallery-nav::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+}
+
+.gallery-nav.prev::before {
+  transform: rotate(135deg);
+  margin-right: -4px;
+}
+
+.gallery-nav.next::before {
+  transform: rotate(-45deg);
+  margin-left: -4px;
+}
+
   .thumb-item {
     width: 80px;
     height: 60px;
@@ -1544,8 +1756,5 @@
       align-self: flex-start;
     }
     
-    .gallery-main {
-      height: 300px;
-    }
   }
   </style>
