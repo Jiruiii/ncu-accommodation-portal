@@ -30,7 +30,6 @@
     width: 120px;
     font-weight: 500;
     color: #555;
-    padding-top: 5px;
   }
   
   .settings-content {

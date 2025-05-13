@@ -247,155 +247,148 @@
               alt="房屋照片"
               class="post-image"
             />
-            <div class="post-details">
-              <h3>急轉！中央大學旁套房</h3>
-              <div class="post-info">
-                <div><i>📅</i> 發布日期：2023/12/15</div>
-                <div><i>👁️</i> 瀏覽次數：152</div>
-                <div><i>☎️</i> 聯絡人數：5</div>
-              </div>
-              <div class="post-address"><i>📍</i> 中壢區中大路300號附近</div>
-              <div class="post-price">
-                <div class="original">原價：NT$ 8,500/月</div>
-                <div class="transfer">轉租價：NT$ 7,800/月</div>
-              </div>
-              <div class="post-period">可承租期間：2024/02/01 - 2025/01/31</div>
+            <div class="post-details"></div>
+            <h3>急轉！中央大學旁套房</h3>
+            <div class="post-info">
+              <div><i>📅</i> 發布日期：2023/12/15</div>
+              <div><i>👁️</i> 瀏覽次數：152</div>
+              <div><i>☎️</i> 聯絡人數：5</div>
             </div>
-            <div class="post-actions">
-              <button class="post-btn edit">編輯</button>
-              <button class="post-btn deactivate">下架</button>
-              <button class="post-btn delete">刪除</button>
+            <div class="post-address"><i>📍</i> 中壢區中大路300號附近</div>
+            <div class="post-price">
+              <div class="original">原價：NT$ 8,500/月</div>
+              <div class="transfer">轉租價：NT$ 7,800/月</div>
             </div>
+            <div class="post-period">可承租期間：2024/02/01 - 2025/01/31</div>
           </div>
+          <div class="post-actions">
+            <button class="post-btn edit">編輯</button>
+            <button class="post-btn deactivate">下架</button>
+            <button class="post-btn delete">刪除</button>
+          </div>
+        </div>
 
-          <div class="post-item">
-            <div class="post-status inactive">已下架</div>
-            <img
-              src="https://picsum.photos/id/1036/300/180"
-              alt="房屋照片"
-              class="post-image"
-            />
-            <div class="post-details">
-              <h3>近夜市雅房轉租</h3>
-              <div class="post-info">
-                <div><i>📅</i> 發布日期：2023/10/05</div>
-                <div><i>👁️</i> 瀏覽次數：97</div>
-                <div><i>☎️</i> 聯絡人數：3</div>
-              </div>
-              <div class="post-address"><i>📍</i> 中壢區中央西路二段</div>
-              <div class="post-price">
-                <div class="original">原價：NT$ 6,000/月</div>
-                <div class="transfer">轉租價：NT$ 5,500/月</div>
-              </div>
-              <div class="post-period">可承租期間：2023/11/01 - 2024/10/31</div>
+        <div class="post-item">
+          <div class="post-status inactive">已下架</div>
+          <img
+            src="https://picsum.photos/id/1036/300/180"
+            alt="房屋照片"
+            class="post-image"
+          />
+          <div class="post-details">
+            <h3>近夜市雅房轉租</h3>
+            <div class="post-info">
+              <div><i>📅</i> 發布日期：2023/10/05</div>
+              <div><i>👁️</i> 瀏覽次數：97</div>
+              <div><i>☎️</i> 聯絡人數：3</div>
             </div>
-            <div class="post-actions">
-              <button class="post-btn edit">編輯</button>
-              <button class="post-btn activate">重新上架</button>
-              <button class="post-btn delete">刪除</button>
+            <div class="post-address"><i>📍</i> 中壢區中央西路二段</div>
+            <div class="post-price">
+              <div class="original">原價：NT$ 6,000/月</div>
+              <div class="transfer">轉租價：NT$ 5,500/月</div>
             </div>
+            <div class="post-period">可承租期間：2023/11/01 - 2024/10/31</div>
+          </div>
+          <div class="post-actions">
+            <button class="post-btn edit">編輯</button>
+            <button class="post-btn activate">重新上架</button>
+            <button class="post-btn delete">刪除</button>
           </div>
         </div>
       </div>
 
       <!-- 我的帳戶設置 -->
       <div v-if="activeTab === 'settings'" class="account-settings">
-        <div class="settings-section">
-          <h2>帳戶安全</h2>
-          <div class="settings-item">
-            <div class="settings-label">中央大學 Portal 綁定</div>
-            <div class="settings-content">
-              <span v-if="user.has_portal_id">已綁定</span>
-              <span v-else>未綁定</span>
-              <span class="verified-tag" v-if="user.has_portal_id"
-                >學生身分認證</span
+        <!-- 帳戶安全區塊 -->
+        <settings-section title="帳戶安全">
+          <!-- Portal 綁定 -->
+          <settings-item label="中央大學 Portal">
+            <div class="field-action-group">
+              <editable-field
+                :value="user.has_portal_id ? '已綁定' : '未綁定'"
+                :editable="false"
+                :show-badge="user.has_portal_id"
+                badge="已驗證"
+                badge-type="verified"
               >
+                <template v-slot:editor></template>
+              </editable-field>
               <button
                 class="settings-btn"
                 @click="bindPortalAccount"
                 :disabled="isProcessingPortal"
               >
-                <span v-if="isProcessingPortal" class="loading-spinner"></span>
                 {{ user.has_portal_id ? "取消綁定" : "立即綁定" }}
               </button>
             </div>
-          </div>
+          </settings-item>
 
-          <div class="settings-item">
-            <div class="settings-label">電子郵件</div>
-            <div class="settings-content">
-              <span>{{ user.email }}</span>
-              <span
-                class="verification-tag"
-                :class="{ verified: user.is_email_verified }"
+          <!-- 電子郵件 -->
+          <settings-item label="電子郵件">
+            <div class="field-action-group">
+              <editable-field
+                :value="user.email"
+                :display-value="user.email"
+                :editable="true"
+                edit-button-text="修改"
+                :show-badge="true"
+                :badge="user.is_email_verified ? '已驗證' : '未驗證'"
+                :badge-type="user.is_email_verified ? 'verified' : 'unverified'"
+                @save="handleShowEmailChange"
               >
-                {{ user.is_email_verified ? "已驗證" : "未驗證" }}
-              </span>
+              </editable-field>
               <button
                 v-if="!user.is_email_verified"
-                class="settings-btn"
+                class="settings-btn verify-btn"
                 @click="showEmailVerificationModal = true"
               >
                 驗證郵箱
               </button>
             </div>
-          </div>
+          </settings-item>
 
-          <div class="settings-item">
-            <div class="settings-label">校園郵箱</div>
-            <div class="settings-content">
-              <span v-if="user.school_email">{{ user.school_email }}</span>
-              <span v-else>未綁定</span>
-            </div>
-          </div>
+          <!-- 校園郵箱 -->
+          <settings-item label="校園郵箱">
+            <span v-if="user.school_email">{{ user.school_email }}</span>
+            <span v-else>未綁定</span>
+          </settings-item>
 
-          <div class="settings-item">
-            <div class="settings-label">手機號碼</div>
-            <div class="settings-content">
-              <span>{{ user.phone || "尚未設置" }}</span>
-              <span
-                v-if="user.phone"
-                class="verification-tag"
-                :class="{ verified: user.is_phone_verified }"
+          <!-- 手機號碼 -->
+          <settings-item label="手機號碼">
+            <div class="field-action-group">
+              <editable-field
+                :value="user.phone"
+                :display-value="user.phone || '尚未設置'"
+                :editable="true"
+                :edit-button-text="user.phone ? '修改' : '設置'"
+                :show-badge="!!user.phone"
+                :badge="user.is_phone_verified ? '已驗證' : '未驗證'"
+                :badge-type="user.is_phone_verified ? 'verified' : 'unverified'"
+                @save="handleShowPhoneChange"
               >
-                {{ user.is_phone_verified ? "已驗證" : "未驗證" }}
-              </span>
+              </editable-field>
               <button
-                v-if="!user.is_phone_verified && user.phone"
-                class="settings-btn"
+                v-if="user.phone && !user.is_phone_verified"
+                class="settings-btn verify-btn"
                 @click="showPhoneVerificationModal = true"
               >
                 驗證手機
               </button>
-              <button
-                v-if="!user.phone"
-                class="settings-btn"
-                @click="showPhoneModal = true"
-              >
-                設置手機
-              </button>
             </div>
-          </div>
+          </settings-item>
 
-          <div class="settings-item">
-            <div class="settings-label">密碼</div>
-            <div class="settings-content">
-              <span>••••••••</span>
-              <span class="last-updated">定期更新密碼可提高帳戶安全性</span>
-              <button class="settings-btn" @click="showPasswordModal = true">
-                修改
-              </button>
-            </div>
-          </div>
-
-          <div class="settings-item">
-            <div class="settings-label">雙重驗證</div>
-            <div class="settings-content">
-              <span>未啟用</span>
-              <button class="settings-btn highlight">啟用</button>
-            </div>
-          </div>
-        </div>
+          <!-- 密碼 -->
+          <settings-item label="密碼">
+            <editable-field
+              value="••••••••"
+              :display-value="'••••••••'"
+              :editable="true"
+              edit-button-text="修改"
+              @save="handleShowPasswordChange"
+            >
+            </editable-field>
+          </settings-item>
+        </settings-section>
 
         <div class="settings-section">
           <h2>通知設定</h2>
@@ -557,12 +550,18 @@
   import EmailVerificationModal from "@/components/verification/EmailVerificationModal.vue";
   import PhoneVerificationModal from "@/components/verification/PhoneVerificationModal.vue";
   import VerificationService from "@/utils/verification";
+  import EditableField from "@/components/common/EditableField.vue";
+  import SettingsSection from "@/components/profile/SettingsSection.vue";
+  import SettingsItem from "@/components/profile/SettingsItem.vue";
 
   export default {
     name: "ProfilePage",
     components: {
       EmailVerificationModal,
       PhoneVerificationModal,
+      EditableField,
+      SettingsSection,
+      SettingsItem,
     },
     setup() {
       const router = useRouter();
@@ -1148,6 +1147,36 @@
     color: #333;
   }
 
+  .field-action-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .field-action-group .editable-field {
+    flex: 1;
+  }
+
+  .verify-btn {
+    background-color: #4caf50;
+    color: white;
+    white-space: nowrap;
+  }
+
+  .verify-btn:hover {
+    background-color: #43a047;
+  }
+
+  .settings-btn {
+    height: 32px;
+    background-color: #007bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 15px;
+  }
+
   .current-housing {
     margin-bottom: 40px;
   }
@@ -1490,7 +1519,6 @@
 
   .settings-btn {
     padding: 5px 15px;
-    background-color: #f0f0f0;
     border: none;
     border-radius: 4px;
     cursor: pointer;
