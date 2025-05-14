@@ -38,15 +38,15 @@
 
           <!-- 驗證警告提示 -->
           <div v-if="showVerificationWarning" class="verification-warning">
-            <i class="warning-icon">⚠️</i>
+            <span class="material-symbols-outlined warning-icon"> warning </span>
             <span>修改{{ fieldLabel }}後，您需要重新進行驗證</span>
           </div>
 
           <!-- 操作結果提示 -->
           <div v-if="statusMessage" :class="['status-message', statusType]">
-            <i class="status-icon">{{
-              statusType === "success" ? "✓" : "⚠️"
-            }}</i>
+            <span class="material-symbols-outlined" :class="statusType === 'success' ? 'status-icon' : 'warning-icon'">
+              {{ statusType === "success" ? "check_circle" : "warning" }}
+            </span>
             <span>{{ statusMessage }}</span>
           </div>
         </div>

@@ -21,11 +21,11 @@
         <verification-code-input v-model="verificationCode" placeholder="請輸入6位數驗證碼" />
         <div class="countdown" v-if="countdown > 0">{{ countdown }}秒後可重新發送</div>
         <div v-if="successMessage" class="success-message">
-          <i class="success-icon">✓</i>
+          <span class="material-symbols-outlined success-icon"> check_circle </span>
           <span>{{ successMessage }}</span>
         </div>
         <div v-if="errorMessage" class="error-message">
-          <i class="error-icon">⚠️</i>
+          <span class="material-symbols-outlined error-icon"> warning </span>
           <span>{{ errorMessage }}</span>
         </div>
         <div class="modal-buttons">
