@@ -9,12 +9,12 @@
         <div class="filters">
           <h3>快速篩選</h3>
           <div class="filter-chips">
-            <div class="chip active">全部</div>
-            <div class="chip">5000以下</div>
-            <div class="chip">5000-8000</div>
-            <div class="chip">8000以上</div>
-            <div class="chip">限學生</div>
-            <div class="chip">可養寵物</div>
+            <div class="chip" @click="filterOff('全部')" :class="{active : activeChip === '全部'}">全部</div>
+            <div class="chip" @click="filterChips(0, 5000, '5000以下')" :class="{active : activeChip === '5000以下'}">5000以下</div>
+            <div class="chip" @click="filterChips(5000, 8000, '5000-8000')" :class="{active : activeChip === '5000-8000'}">5000-8000</div>
+            <div class="chip" @click="filterChips(8000, Infinity, '8000以上')" :class="{active : activeChip === '8000以上'}">8000以上</div>
+            <div class="chip" @click="filterChips_boolean('限學生')" :class="{active : activeChip === '限學生'}">限學生</div>
+            <div class="chip" @click="filterChips_boolean('可養寵物')" :class="{active : activeChip === '可養寵物'}">可養寵物</div>
           </div>
         </div>
         
@@ -22,7 +22,7 @@
           <h3>搜尋結果 <span class="result-count">(12)</span></h3>
           <div class="result-list">
             <div 
-              v-for="property in searchResults" 
+              v-for="property in rightIds" 
               :key="property.id" 
               class="result-item"
               :class="{ active: selectedProperty === property.id }"
@@ -50,11 +50,15 @@
       <div class="map-container">
         <!-- 這裡會放置實際的地圖，採用顯示範例圖片 -->
         <div class="map-placeholder">
+          <!--
           <img src="https://developers.google.com/static/maps/images/landing/hero_maps_static_api.png" alt="地圖示例" />
+          -->
+
+          <div id="map" style="height: 100%; width: 100%"></div>
           
           <!-- 地圖標記點示例 -->
           <div 
-            v-for="marker in mapMarkers" 
+            v-for="marker in mapMarkers.value" 
             :key="marker.id" 
             class="map-marker"
             :class="{ active: selectedProperty === marker.id }"
@@ -100,6 +104,9 @@
   </template>
   
   <script>
+  import { ref, onMounted } from "vue";
+  import L from "leaflet";
+
   export default {
     name: "MapSearch",
     data() {
@@ -116,6 +123,8 @@
             bedrooms: 1,
             bathrooms: 1,
             size: 8,
+            student: true,
+            pet: false,
             image: "https://picsum.photos/id/1026/300/150"
           },
           {
@@ -127,6 +136,8 @@
             bedrooms: 0,
             bathrooms: 1,
             size: 5,
+            student: true,
+            pet: false,
             image: "https://picsum.photos/id/1027/300/150"
           },
           {
@@ -138,6 +149,8 @@
             bedrooms: 3,
             bathrooms: 2,
             size: 25,
+            student: false,
+            pet: true,
             image: "https://picsum.photos/id/1028/300/150"
           },
           {
@@ -149,16 +162,98 @@
             bedrooms: 1,
             bathrooms: 1,
             size: 12,
+            student: true,
+            pet: false,
             image: "https://picsum.photos/id/1029/300/150"
           }
         ],
-        mapMarkers: [
-          { id: 1, x: 35, y: 45, price: "7.5K" },
-          { id: 2, x: 50, y: 60, price: "4.8K" },
-          { id: 3, x: 40, y: 50, price: "15K" },
-          { id: 4, x: 60, y: 40, price: "8.8K" }
-        ]
+        rightIds: [],
+        activeChip: '全部',
       };
+    },
+    setup() {
+      const convertToXY = (lat, lng) => {
+        return {
+          x: ((lng - 121.18) / (121.22 - 121.18)) * 100,
+          y: ((24.96 - lat) / (24.97 - 24.96)) * 100,
+        };
+      };
+
+      const mapMarkers = ref([
+        { id: 1, lat: 24.96798, lng: 121.19982, price: "7.5K", ...convertToXY(24.96798, 121.19982) },
+        { id: 2, lat: 24.96046, lng: 121.21435, price: "4.8K", ...convertToXY(24.96046, 121.21435) },
+        { id: 3, lat: 24.97034, lng: 121.18890, price: "15K", ...convertToXY(24.97034, 121.18890) },
+        { id: 4, lat: 24.96585, lng: 121.18702, price: "8.8K", ...convertToXY(24.96585, 121.18702) },
+      ]); 
+      const selectedProperty = ref(null);
+      const map = ref(null);
+    
+      const selectProperty = (id) => {
+        selectedProperty.value = id;
+
+        // 找到對應的標記
+        const selectedMarker = mapMarkers.value.find(m => m.id === id);
+
+        if (!selectedMarker) {
+          console.error("selectedMarker not found for id:", id);
+          return;
+        }
+
+        // 讓地圖平移到標記並彈出對話框
+        if (map.value) {
+          map.value.setView([selectedMarker.lat, selectedMarker.lng], 18);
+          selectedMarker.leafletMarker.openPopup();
+        }
+      };
+
+      const closeInfoWindow = () => {
+        selectedProperty.value = null;
+      };
+
+      const getInfoWindowPosition = () => {
+        const marker = mapMarkers.value.find(m => m.id === selectedProperty.value);
+        if (!marker) return {};
+        return {
+          left: marker.x + "%",
+          top: (marker.y - 15) + "%"
+        };
+      };
+
+      onMounted(() => {
+        // 初始化 Leaflet 地圖
+        map.value = L.map("map").setView([24.96847, 121.19518], 15);
+
+        // 載入 OpenStreetMap 圖層
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+        }).addTo(map.value);
+
+        // 自定義標記樣式
+        const customIcon = L.icon({
+          iconUrl: require("@/assets/icons/marker4.png"),
+          iconSize: [32, 32],
+        });
+
+        // 加入標記
+        mapMarkers.value.forEach((marker) => {
+          const leafletMarker = L.marker([marker.lat, marker.lng], { icon: customIcon })
+            .addTo(map.value)
+            .bindPopup(`<div style="color: #007bff; font-size: 16px; font-weight: bold; text-align: center">${marker.price}</div>`);
+
+          marker.leafletMarker = leafletMarker;
+        });
+      });
+
+      return {
+        mapMarkers,
+        selectedProperty,
+        selectProperty,
+        closeInfoWindow,
+        getInfoWindowPosition,
+      };
+    },
+    mounted (){
+      this.rightIds = this.searchResults;
     },
     computed: {
       selectedPropertyDetails() {
@@ -166,21 +261,41 @@
       }
     },
     methods: {
-      selectProperty(id) {
-        this.selectedProperty = id;
-      },
       closeInfoWindow() {
         this.selectedProperty = null;
       },
       getInfoWindowPosition() {
-        const marker = this.mapMarkers.find(m => m.id === this.selectedProperty);
+        if (!this.selectedProperty || !this.mapMarkers?.value) return {};
+
+        const marker = this.mapMarkers.value.find(m => m.id === this.selectedProperty);
         if (!marker) return {};
         
         return {
           left: marker.x + "%",
           top: (marker.y - 15) + "%"
         };
-      }
+      },
+      filterOff(label){
+        this.activeChip = label;
+        this.rightIds = this.searchResults;
+      },
+      filterChips(min, max, label) {
+        this.activeChip = label;
+        const rightProperties = this.searchResults.filter(p => p.price < max && p.price > min);
+        this.rightIds = rightProperties;
+      },
+      filterChips_boolean(type){
+        if (type === "限學生"){
+          this.activeChip = type;
+          const rightProperties = this.searchResults.filter(p => p.student === true);
+          this.rightIds = rightProperties;
+        }else{
+          this.activeChip = type;
+          const rightProperties = this.searchResults.filter(p => p.pet === true);
+          this.rightIds = rightProperties;
+        }
+      },
+      
     }
   };
   </script>
@@ -373,7 +488,7 @@
     transform: translate(-50%, -100%);
     cursor: pointer;
   }
-  
+
   .marker-price {
     background: #007bff;
     color: white;
@@ -410,7 +525,7 @@
     position: absolute;
     width: 300px;
     transform: translate(-50%, -100%);
-    z-index: 100;
+    z-index: 1000;
   }
   
   .info-content {
