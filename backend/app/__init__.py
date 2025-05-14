@@ -7,8 +7,9 @@ from app.extensions import db, migrate, jwt
 from dotenv import load_dotenv
 import os 
 
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
+
 def create_app(config_name='default'):
-    load_dotenv()
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     

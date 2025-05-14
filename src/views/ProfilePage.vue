@@ -314,7 +314,10 @@
                 <template v-slot:editor></template>
               </editable-field>
               <button
-                class="settings-btn"
+                :class="[
+                  'settings-btn',
+                  user.has_portal_id ? 'danger-btn' : '',
+                ]"
                 @click="bindPortalAccount"
                 :disabled="isProcessingPortal"
               >
@@ -327,12 +330,16 @@
           <settings-item label="電子郵件">
             <div class="field-action-group">
               <editable-field
+                ref="emailField"
                 :value="user.email"
                 :display-value="user.email"
                 :editable="true"
                 edit-button-text="修改"
                 :show-badge="true"
                 :badge="user.is_email_verified ? '已驗證' : '未驗證'"
+                field-label="電子郵件"
+                modal-title="修改電子郵件"
+                :show-verification-warning="user.is_email_verified"
                 :badge-type="user.is_email_verified ? 'verified' : 'unverified'"
                 @save="handleShowEmailChange"
               >
@@ -357,6 +364,7 @@
           <settings-item label="手機號碼">
             <div class="field-action-group">
               <editable-field
+                ref="phoneField"
                 :value="user.phone"
                 :display-value="user.phone || '尚未設置'"
                 :editable="true"
@@ -526,8 +534,7 @@
           :show="showEmailVerificationModal"
           :email="user.email"
           @close="showEmailVerificationModal = false"
-          @send="handleSendEmailVerification"
-          @verify="handleVerifyEmail"
+          @verification-success="handleEmailVerificationSuccess"
         />
 
         <!-- 手機驗證彈窗 -->
@@ -580,7 +587,6 @@
         username: "",
         email: "",
         phone: "",
-        bio: "",
       });
 
       // 密碼修改表單
@@ -714,28 +720,6 @@
         showEditModal.value = true;
       };
 
-      // 提交個人資料更新
-      const submitProfileUpdate = async () => {
-        try {
-          const response = await apiService.users.updateProfile({
-            username: editForm.username,
-            email: editForm.email,
-            phone: editForm.phone,
-            bio: editForm.bio,
-          });
-
-          if (response && response.user) {
-            user.value = { ...user.value, ...response.user };
-            alert("個人資料已更新");
-          }
-
-          showEditModal.value = false;
-        } catch (err) {
-          console.error("更新個人資料失敗:", err);
-          alert(`更新失敗: ${err.message || "未知錯誤"}`);
-        }
-      };
-
       // 上傳頭像
       const uploadAvatar = async (event) => {
         const file = event.target.files[0];
@@ -858,50 +842,14 @@
         }
       };
 
-      // 處理發送電子郵件驗證碼
-      const handleSendEmailVerification = async (email) => {
-        try {
-          const response = await VerificationService.sendEmailVerification(
-            email
-          );
-          if (response.success) {
-            alert(response.message || "驗證碼已發送到您的電子郵件");
-            return Promise.resolve();
-          } else {
-            alert(response.message || "發送驗證碼失敗");
-            return Promise.reject(new Error(response.message));
-          }
-        } catch (error) {
-          console.error("發送電子郵件驗證碼失敗:", error);
-          alert("發送驗證碼時發生錯誤，請稍後再試");
-          return Promise.reject(error);
-        }
-      };
+      const handleEmailVerificationSuccess = () => {
+        // 更新用戶資訊
+        user.value.is_email_verified = true;
 
-      // 處理驗證電子郵件
-      const handleVerifyEmail = async (code) => {
-        try {
-          const response = await VerificationService.verifyEmail(code);
-          if (response.success) {
-            // 更新用戶資訊
-            user.value.is_email_verified = true;
-
-            // 更新本地存儲的用戶資訊
-            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-            storedUser.is_email_verified = true;
-            localStorage.setItem("user", JSON.stringify(storedUser));
-
-            alert("電子郵件驗證成功");
-            return Promise.resolve();
-          } else {
-            alert(response.message || "驗證失敗");
-            return Promise.reject(new Error(response.message));
-          }
-        } catch (error) {
-          console.error("驗證電子郵件失敗:", error);
-          alert("驗證時發生錯誤，請稍後再試");
-          return Promise.reject(error);
-        }
+        // 更新本地存儲的用戶資訊
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        storedUser.is_email_verified = true;
+        localStorage.setItem("user", JSON.stringify(storedUser));
       };
 
       // 處理發送手機驗證碼
@@ -950,6 +898,82 @@
         }
       };
 
+      const handleShowEmailChange = async (newValue, callbacks = {}) => {
+        const tempNewEmail = newValue;
+
+        // 驗證電子郵件格式
+        if (!tempNewEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(tempNewEmail)) {
+          if (callbacks.error) callbacks.error("請輸入有效的電子郵件地址");
+          return;
+        }
+
+        try {
+          const response = await apiService.users.updateEmail(tempNewEmail);
+
+          if (response.success) {
+            // 更新用戶資訊
+            user.value.email = tempNewEmail;
+            user.value.is_email_verified = false;
+
+            // 更新本地存儲
+            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+            storedUser.email = tempNewEmail;
+            storedUser.is_email_verified = false;
+            localStorage.setItem("user", JSON.stringify(storedUser));
+
+            // 通知 EditableField 儲存成功
+            if (callbacks.success) callbacks.success();
+          } else {
+            if (callbacks.error) callbacks.error();
+          }
+        } catch (error) {
+          console.error("更新電子郵件失敗:", error);
+          if (callbacks.error) callbacks.error();
+        }
+      };
+
+      const handleShowPhoneChange = async (newValue, callbacks = {}) => {
+        const tempNewPhone = newValue;
+
+        // 驗證手機號碼格式
+        if (!tempNewPhone || !/^09\d{8}$/.test(tempNewPhone)) {
+          if (callbacks.error)
+            callbacks.error("請輸入有效的手機號碼（格式：09xxxxxxxx）");
+          return;
+        }
+
+        try {
+          const response = await apiService.users.updatePhone(tempNewPhone);
+
+          if (response.success) {
+            // 更新用戶資訊
+            user.value.phone = tempNewPhone;
+            user.value.is_phone_verified = false;
+
+            // 更新本地存儲
+            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+            storedUser.phone = tempNewPhone;
+            storedUser.is_phone_verified = false;
+            localStorage.setItem("user", JSON.stringify(storedUser));
+
+            // 通知 EditableField 儲存成功
+            if (callbacks.success) callbacks.success();
+          } else {
+            if (callbacks.error)
+              callbacks.error(response.message || "更新手機號碼失敗");
+          }
+        } catch (error) {
+          console.error("更新手機號碼失敗:", error);
+          if (callbacks.error)
+            callbacks.error(error.message || "更新失敗，請稍後再試");
+        }
+      };
+
+      const handleShowPasswordChange = (newValue, callbacks = {}) => {
+        showPasswordModal.value = true;
+        if (callbacks.success) callbacks.success();
+      };
+
       onMounted(() => {
         fetchUserData();
       });
@@ -973,7 +997,6 @@
         editForm,
         passwordForm,
         openEditModal,
-        submitProfileUpdate,
         uploadAvatar,
         changePassword,
         bindPortalAccount,
@@ -981,10 +1004,12 @@
         goToAdminDashboard,
         goToUserManagement,
         goToAnalytics,
-        handleSendEmailVerification,
-        handleVerifyEmail,
+        handleEmailVerificationSuccess,
         handleSendPhoneVerification,
         handleVerifyPhone,
+        handleShowEmailChange,
+        handleShowPhoneChange,
+        handleShowPasswordChange,
       };
     },
   };
@@ -1171,6 +1196,7 @@
   .settings-btn {
     height: 32px;
     background-color: #007bff;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1523,6 +1549,7 @@
     border-radius: 4px;
     cursor: pointer;
     margin-left: auto;
+    transition: background-color 0.2s;
   }
 
   .settings-btn.highlight {
@@ -1602,12 +1629,17 @@
   }
 
   .danger-btn {
-    padding: 10px 20px;
     background-color: #dc3545;
-    color: white;
+    padding: 5px 15px;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
+    margin-left: auto;
+    transition: background-color 0.2s;
+  }
+
+  .danger-btn:hover {
+    background-color: #c82333;
   }
 
   /* 添加管理員相關樣式 */

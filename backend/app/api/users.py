@@ -332,3 +332,72 @@ def unbind_portal():
             "success": False,
             "message": f"取消Portal授權失敗: {str(e)}"
         }), 500
+        
+@api_bp.route('/users/update-email', methods=['POST'])
+@login_required
+def update_email():
+    try:
+        user_id = session.get('user_id')
+        user = User.query.get_or_404(user_id)
+        
+        data = request.get_json()
+        
+        # 檢查必要欄位
+        if 'email' not in data:
+            return jsonify({"message": "缺少必要欄位"}), 400
+            
+        # 檢查電子郵件唯一性
+        existing_user = User.query.filter_by(email=data['email']).first()
+        if existing_user:
+            return jsonify({"message": "此電子郵件已被使用"}), 400
+        
+        # 更新電子郵件
+        user.email = data['email']
+        user.updated_at = datetime.datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "電子郵件已更新",
+            "email": user.email
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"更新電子郵件錯誤: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({
+            "success" : False,
+            "message": f"更新電子郵件失敗: {str(e)}"
+        }), 500
+
+@api_bp.route('/users/update-phone', methods=['POST'])
+@login_required
+def update_phone():
+    try:
+        user_id = session.get('user_id')
+        user = User.query.get_or_404(user_id)
+        
+        data = request.get_json()
+        
+        # 檢查必要欄位
+        if 'phone' not in data:
+            return jsonify({"message": "缺少必要欄位"}), 400
+            
+        # 更新電話號碼
+        user.phone = data['phone']
+        user.updated_at = datetime.datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "電話號碼已更新",
+            "phone": user.phone,
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"更新電話號碼錯誤: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({
+            "success": False,
+            "message": f"更新電話號碼失敗: {str(e)}"
+        }), 500
