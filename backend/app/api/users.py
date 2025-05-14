@@ -49,6 +49,8 @@ def get_profile():
                 "profile_image": user.profile_image,
                 "user_role": user.user_role,
                 "is_verified": user.is_verified,
+                "is_email_verified": user.is_email_verified,
+                "is_phone_verified": user.is_phone_verified,
                 "created_at": user.created_at.isoformat() if user.created_at else None,
                 "last_login": user.last_login.isoformat() if user.last_login else None,
                 "has_portal_id": bool(user.portal_id), 
@@ -191,7 +193,10 @@ def change_password():
         user.updated_at = datetime.datetime.utcnow()
         db.session.commit()
         
-        return jsonify({"message": "密碼已更新"})
+        return jsonify({
+            "success":True,
+            "message": "密碼已更新"
+        })
     except Exception as e:
         db.session.rollback()
         print(f"更新密碼錯誤: {str(e)}")

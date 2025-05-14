@@ -76,7 +76,7 @@ def send_email_verification():
         print(traceback.format_exc())
         return jsonify({'success': False, 'message': f'發送失敗: {str(e)}'}), 500
 
-@api_bp.route('/verification/send-sms', methods=['POST'])
+@api_bp.route('/verification/send-phone', methods=['POST'])
 def send_phone_verification():
     data = request.json
     phone = data.get('phone')

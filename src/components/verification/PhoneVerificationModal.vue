@@ -1,104 +1,178 @@
 <template>
-    <div v-if="show" class="modal-overlay">
-      <div class="modal-content">
-        <h3>驗證您的手機號碼</h3>
-        <div v-if="!codeSent">
-          <p>我們將發送驗證碼到您的手機：{{ phone }}</p>
-          <div class="modal-buttons">
-            <button @click="sendCode" :disabled="isProcessing" class="action-btn">
-              <span v-if="isProcessing" class="loading-spinner"></span>
-              {{ isProcessing ? '發送中...' : '發送驗證碼' }}
-            </button>
-            <button @click="cancel" class="cancel-btn">取消</button>
-          </div>
+  <div v-if="show" class="modal-overlay">
+    <div class="modal-content">
+      <h3>驗證您的手機號碼</h3>
+      <div v-if="!codeSent">
+        <p>我們將發送驗證碼到您的手機：{{ phone }}</p>
+        <div v-if="errorMessage" class="error-message">
+          <i class="error-icon">⚠️</i>
+          <span>{{ errorMessage }}</span>
         </div>
-        <div v-else>
-          <p>驗證碼已發送到您的手機，請查收並在下方輸入：</p>
-          <verification-code-input v-model="verificationCode" placeholder="請輸入6位數驗證碼" />
-          <div class="countdown" v-if="countdown > 0">{{ countdown }}秒後可重新發送</div>
-          <div class="modal-buttons">
-            <button v-if="countdown === 0" @click="sendCode" :disabled="isProcessing" class="secondary-btn">
-              <span v-if="isProcessing" class="loading-spinner"></span>
-              重新發送
-            </button>
-            <button @click="verify" :disabled="!verificationCode || isVerifying" class="action-btn">
-              <span v-if="isVerifying" class="loading-spinner"></span>
-              {{ isVerifying ? '驗證中...' : '驗證' }}
-            </button>
-            <button @click="cancel" class="cancel-btn">取消</button>
-          </div>
+        <div class="modal-buttons">
+          <button @click="sendCode" :disabled="isProcessing" class="action-btn">
+            <span v-if="isProcessing" class="loading-spinner"></span>
+            {{ isProcessing ? "發送中..." : "發送驗證碼" }}
+          </button>
+          <button @click="cancel" class="cancel-btn">取消</button>
+        </div>
+      </div>
+      <div v-else>
+        <p>驗證碼已發送到您的手機，請查收並在下方輸入：</p>
+        <verification-code-input
+          v-model="verificationCode"
+          placeholder="請輸入6位數驗證碼"
+        />
+
+        <div class="countdown" v-if="countdown > 0">
+          {{ countdown }}秒後可重新發送
+        </div>
+        <div v-if="successMessage" class="success-message">
+          <i class="success-icon">✓</i>
+          <span>{{ successMessage }}</span>
+        </div>
+        <div v-if="errorMessage" class="error-message">
+          <i class="error-icon">⚠️</i>
+          <span>{{ errorMessage }}</span>
+        </div>
+        <div class="modal-buttons">
+          <button
+            v-if="countdown === 0"
+            @click="sendCode"
+            :disabled="isProcessing"
+            class="secondary-btn"
+          >
+            <span v-if="isProcessing" class="loading-spinner"></span>
+            重新發送
+          </button>
+          <button
+            @click="verify"
+            :disabled="!verificationCode || isVerifying"
+            class="action-btn"
+          >
+            <span v-if="isVerifying" class="loading-spinner"></span>
+            {{ isVerifying ? "驗證中..." : "驗證" }}
+          </button>
+          <button @click="cancel" class="cancel-btn">取消</button>
         </div>
       </div>
     </div>
-  </template>
-  
-  <script>
-  import VerificationCodeInput from '@/components/common/VerificationCodeInput.vue';
-  
+  </div>
+</template>
+
+<script>
+  import VerificationCodeInput from "@/components/common/VerificationCodeInput.vue";
+  import { apiService } from "@/services/api.js";
+
   export default {
-    name: 'PhoneVerificationModal',
+    name: "PhoneVerificationModal",
     components: {
-      VerificationCodeInput
+      VerificationCodeInput,
     },
     props: {
       show: {
         type: Boolean,
-        default: false
+        default: false,
       },
       phone: {
         type: String,
-        required: true
-      }
+        required: true,
+      },
     },
     data() {
       return {
         codeSent: false,
-        verificationCode: '',
+        verificationCode: "",
         isProcessing: false,
         isVerifying: false,
         countdown: 0,
-        timer: null
+        timer: null,
+        errorMessage: "",
+        successMessage: "",
+        debugCodes: [],
       };
     },
     methods: {
-      sendCode() {
+      async sendCode() {
         this.isProcessing = true;
-        
-        // 發送驗證碼 API 調用
-        this.$emit('send', this.phone)
-          .then(() => {
+        this.errorMessage = "";
+        this.successMessage = "";
+
+        try {
+          const response = await apiService.verification.sendPhoneVerification(
+            this.phone
+          );
+
+          if (response && response.success) {
+            this.successMessage = "驗證碼已發送，請查收您的手機";
             this.codeSent = true;
             this.startCountdown();
-          })
-          .catch(() => {
-            // 錯誤處理由父組件負責
-          })
-          .finally(() => {
-            this.isProcessing = false;
-          });
+          } else {
+            this.errorMessage =
+              response?.message || "發送驗證碼失敗，請稍後再試";
+          }
+        } catch (error) {
+          console.error("發送手機驗證碼錯誤:", error);
+          this.errorMessage = error.message || "發送過程中出現錯誤，請稍後再試";
+        } finally {
+          this.isProcessing = false;
+        }
       },
-      verify() {
-        if (!this.verificationCode) return;
-        
+
+      async verify() {
+        if (!this.verificationCode) {
+          this.errorMessage = "請輸入驗證碼";
+          return;
+        }
+
+        // 檢查驗證碼格式
+        if (!/^\d{6}$/.test(this.verificationCode)) {
+          console.warn("驗證碼格式不正確，應為6位數字");
+          this.errorMessage = "驗證碼應為6位數字";
+          return;
+        }
+
         this.isVerifying = true;
-        
-        // 驗證碼驗證 API 調用
-        this.$emit('verify', this.verificationCode)
-          .then(() => {
-            this.reset();
-            this.$emit('close');
-          })
-          .catch(() => {
-            // 錯誤處理由父組件負責
-          })
-          .finally(() => {
-            this.isVerifying = false;
-          });
+        this.errorMessage = "";
+        this.successMessage = "";
+
+        try {
+          const response = await apiService.verification.verifyPhone(
+            this.verificationCode
+          );
+
+          if (response && response.success) {
+            this.successMessage = "驗證成功！";
+
+            // 更新用戶資訊（通過父組件的事件）
+            this.$emit("verification-success");
+
+            // 延遲關閉彈窗，讓用戶看到成功消息
+            setTimeout(() => {
+              this.reset();
+              this.$emit("close");
+            }, 1500);
+          } else {
+            this.errorMessage =
+              response?.message || "驗證失敗，請確認驗證碼是否正確";
+          }
+        } catch (error) {
+          console.error("驗證手機驗證碼錯誤:", error);
+          if (error.message === "驗證碼錯誤") {
+            this.errorMessage = "驗證碼不正確，請仔細檢查您收到的驗證碼";
+          } else {
+            this.errorMessage =
+              error.message || "驗證過程中出現錯誤，請稍後再試";
+          }
+        } finally {
+          this.isVerifying = false;
+        }
       },
+
       cancel() {
         this.reset();
-        this.$emit('close');
+        this.$emit("close");
       },
+
       startCountdown() {
         this.countdown = 60;
         clearInterval(this.timer);
@@ -109,20 +183,23 @@
           }
         }, 1000);
       },
+
       reset() {
         this.codeSent = false;
-        this.verificationCode = '';
+        this.verificationCode = "";
+        this.errorMessage = "";
+        this.successMessage = "";
         this.countdown = 0;
         clearInterval(this.timer);
-      }
+      },
     },
     beforeUnmount() {
       clearInterval(this.timer);
-    }
+    },
   };
-  </script>
-  
-  <style scoped>
+</script>
+
+<style scoped>
   .modal-overlay {
     position: fixed;
     top: 0;
@@ -135,7 +212,7 @@
     align-items: center;
     z-index: 1000;
   }
-  
+
   .modal-content {
     background-color: white;
     padding: 30px;
@@ -144,32 +221,58 @@
     width: 100%;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   }
-  
+
   h3 {
     margin-top: 0;
     margin-bottom: 20px;
     color: #333;
     font-size: 1.5rem;
   }
-  
+
   p {
     margin-bottom: 20px;
     color: #555;
   }
-  
+
   .countdown {
     color: #666;
     font-size: 14px;
     margin: 10px 0;
   }
-  
+
+  /* 添加錯誤和成功訊息樣式 */
+  .error-message,
+  .success-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 4px;
+    margin: 15px 0;
+  }
+
+  .error-message {
+    background-color: #ffebee;
+    border-left: 4px solid #f44336;
+  }
+
+  .success-message {
+    background-color: #e6f7e6;
+    border-left: 4px solid #4caf50;
+  }
+
+  .error-icon,
+  .success-icon {
+    font-size: 1.2rem;
+  }
+
   .modal-buttons {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
   }
-  
+
   button {
     padding: 10px 20px;
     border: none;
@@ -181,40 +284,40 @@
     align-items: center;
     justify-content: center;
   }
-  
+
   button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }
-  
+
   .action-btn {
     background-color: #4a90e2;
     color: white;
   }
-  
+
   .action-btn:hover:not(:disabled) {
     background-color: #3a80d2;
   }
-  
+
   .secondary-btn {
     background-color: #f0f0f0;
     color: #333;
   }
-  
+
   .secondary-btn:hover:not(:disabled) {
     background-color: #e0e0e0;
   }
-  
+
   .cancel-btn {
     background-color: transparent;
     color: #666;
     border: 1px solid #ddd;
   }
-  
+
   .cancel-btn:hover {
     background-color: #f5f5f5;
   }
-  
+
   .loading-spinner {
     display: inline-block;
     width: 14px;
@@ -225,10 +328,10 @@
     margin-right: 8px;
     animation: spin 1s linear infinite;
   }
-  
+
   @keyframes spin {
     to {
       transform: rotate(360deg);
     }
   }
-  </style>
+</style>

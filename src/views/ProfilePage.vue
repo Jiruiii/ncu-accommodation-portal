@@ -369,32 +369,32 @@
                 :display-value="user.phone || '尚未設置'"
                 :editable="true"
                 :edit-button-text="user.phone ? '修改' : '設置'"
-                :show-badge="!!user.phone"
+                :show-badge="false"
                 :badge="user.is_phone_verified ? '已驗證' : '未驗證'"
+                field-label="手機號碼"
+                modal-title="修改手機號碼"
                 :badge-type="user.is_phone_verified ? 'verified' : 'unverified'"
                 @save="handleShowPhoneChange"
               >
               </editable-field>
-              <button
+              <!-- <button
                 v-if="user.phone && !user.is_phone_verified"
                 class="settings-btn verify-btn"
                 @click="showPhoneVerificationModal = true"
               >
                 驗證手機
-              </button>
+              </button> -->
             </div>
           </settings-item>
 
           <!-- 密碼 -->
           <settings-item label="密碼">
-            <editable-field
-              value="••••••••"
-              :display-value="'••••••••'"
-              :editable="true"
-              edit-button-text="修改"
-              @save="handleShowPasswordChange"
-            >
-            </editable-field>
+            <div class="password-field">
+              <div class="masked-password">••••••••</div>
+              <button class="settings-btn highlight" @click="showPasswordModal = true">
+                修改密碼
+              </button>
+            </div>
           </settings-item>
         </settings-section>
 
@@ -542,8 +542,20 @@
           :show="showPhoneVerificationModal"
           :phone="user.phone"
           @close="showPhoneVerificationModal = false"
-          @send="handleSendPhoneVerification"
-          @verify="handleVerifyPhone"
+          @verification-success="handlePhoneVerificationSuccess"
+        />
+
+        <password-change-modal
+          :show="showPasswordModal"
+          @close="showPasswordModal = false"
+          @success="handlePasswordChangeSuccess"
+          @forgot-password="showForgotPasswordModal = true"
+        />
+
+        <forgot-password-modal
+          :show="showForgotPasswordModal"
+          @close="showForgotPasswordModal = false"
+          @go-to-login="goToLogin"
         />
       </div>
     </div>
@@ -556,10 +568,11 @@
   import apiService from "@/services/api";
   import EmailVerificationModal from "@/components/verification/EmailVerificationModal.vue";
   import PhoneVerificationModal from "@/components/verification/PhoneVerificationModal.vue";
-  import VerificationService from "@/utils/verification";
   import EditableField from "@/components/common/EditableField.vue";
   import SettingsSection from "@/components/profile/SettingsSection.vue";
   import SettingsItem from "@/components/profile/SettingsItem.vue";
+  import PasswordChangeModal from "@/components/profile/PasswordChangeModal.vue";
+  import ForgotPasswordModal from "@/components/profile/ForgotPasswordModal.vue";
 
   export default {
     name: "ProfilePage",
@@ -569,6 +582,8 @@
       EditableField,
       SettingsSection,
       SettingsItem,
+      PasswordChangeModal,
+      ForgotPasswordModal,
     },
     setup() {
       const router = useRouter();
@@ -577,6 +592,7 @@
       const error = ref(null);
       const showEditModal = ref(false);
       const showPasswordModal = ref(false);
+      const showForgotPasswordModal = ref(false);
       const showBindPortalModal = ref(false);
       const showEmailVerificationModal = ref(false);
       const showPhoneVerificationModal = ref(false);
@@ -664,16 +680,6 @@
         router.push("/admin");
       };
 
-      // 導航到用戶管理頁面
-      const goToUserManagement = () => {
-        router.push("/admin/users");
-      };
-
-      // 導航到數據分析頁面
-      const goToAnalytics = () => {
-        router.push("/admin/analytics");
-      };
-
       // 獲取用戶資料
       const fetchUserData = async () => {
         try {
@@ -682,7 +688,6 @@
 
           // 從API獲取用戶資料
           const response = await apiService.users.getProfile();
-          console.log("獲取用戶資料:", response);
 
           if (response && response.user) {
             user.value = response.user;
@@ -741,38 +746,6 @@
         }
       };
 
-      // 修改密碼
-      const changePassword = async () => {
-        // 驗證密碼
-        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-          alert("兩次輸入的密碼不一致");
-          return;
-        }
-
-        if (passwordForm.newPassword.length < 8) {
-          alert("新密碼長度不得少於8個字符");
-          return;
-        }
-
-        try {
-          await apiService.users.changePassword({
-            current_password: passwordForm.currentPassword,
-            new_password: passwordForm.newPassword,
-          });
-
-          alert("密碼已成功修改");
-          showPasswordModal.value = false;
-
-          // 清空表單
-          passwordForm.currentPassword = "";
-          passwordForm.newPassword = "";
-          passwordForm.confirmPassword = "";
-        } catch (err) {
-          console.error("修改密碼失敗:", err);
-          alert(`修改失敗: ${err.message || "未知錯誤"}`);
-        }
-      };
-
       // 綁定 Portal 帳號
       const bindPortalAccount = async () => {
         if (user.value.has_portal_id) {
@@ -803,8 +776,6 @@
               } catch (e) {
                 console.error("更新本地存儲失敗:", e);
               }
-
-              alert("已成功解除綁定 Portal 帳號");
             } else {
               throw new Error(response.message || "解除綁定失敗");
             }
@@ -846,56 +817,20 @@
         // 更新用戶資訊
         user.value.is_email_verified = true;
 
-        // 更新本地存儲的用戶資訊
+        // 更新本地存儲
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         storedUser.is_email_verified = true;
         localStorage.setItem("user", JSON.stringify(storedUser));
       };
 
-      // 處理發送手機驗證碼
-      const handleSendPhoneVerification = async (phone) => {
-        try {
-          const response = await VerificationService.sendPhoneVerification(
-            phone
-          );
-          if (response.success) {
-            alert(response.message || "驗證碼已發送到您的手機");
-            return Promise.resolve();
-          } else {
-            alert(response.message || "發送驗證碼失敗");
-            return Promise.reject(new Error(response.message));
-          }
-        } catch (error) {
-          console.error("發送手機驗證碼失敗:", error);
-          alert("發送驗證碼時發生錯誤，請稍後再試");
-          return Promise.reject(error);
-        }
-      };
+      const handlePhoneVerificationSuccess = () => {
+        // 更新用戶資訊
+        user.value.is_phone_verified = true;
 
-      // 處理驗證手機
-      const handleVerifyPhone = async (code) => {
-        try {
-          const response = await VerificationService.verifyPhone(code);
-          if (response.success) {
-            // 更新用戶資訊
-            user.value.is_phone_verified = true;
-
-            // 更新本地存儲的用戶資訊
-            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-            storedUser.is_phone_verified = true;
-            localStorage.setItem("user", JSON.stringify(storedUser));
-
-            alert("手機驗證成功");
-            return Promise.resolve();
-          } else {
-            alert(response.message || "驗證失敗");
-            return Promise.reject(new Error(response.message));
-          }
-        } catch (error) {
-          console.error("驗證手機失敗:", error);
-          alert("驗證時發生錯誤，請稍後再試");
-          return Promise.reject(error);
-        }
+        // 更新本地存儲
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        storedUser.is_phone_verified = true;
+        localStorage.setItem("user", JSON.stringify(storedUser));
       };
 
       const handleShowEmailChange = async (newValue, callbacks = {}) => {
@@ -924,7 +859,8 @@
             // 通知 EditableField 儲存成功
             if (callbacks.success) callbacks.success();
           } else {
-            if (callbacks.error) callbacks.error();
+            if (callbacks.error)
+              callbacks.error(response.message || "更新電子郵件失敗");
           }
         } catch (error) {
           console.error("更新電子郵件失敗:", error);
@@ -974,6 +910,14 @@
         if (callbacks.success) callbacks.success();
       };
 
+      const handlePasswordChangeSuccess = () => {
+        showPasswordModal.value = false;
+      };
+
+      const goToLogin = () => {
+        router.push("/login");
+      };
+
       onMounted(() => {
         fetchUserData();
       });
@@ -994,19 +938,18 @@
         showBindPortalModal,
         showEmailVerificationModal,
         showPhoneVerificationModal,
+        showForgotPasswordModal,
         editForm,
         passwordForm,
         openEditModal,
         uploadAvatar,
-        changePassword,
         bindPortalAccount,
         deleteAccount,
         goToAdminDashboard,
-        goToUserManagement,
-        goToAnalytics,
+        goToLogin,
         handleEmailVerificationSuccess,
-        handleSendPhoneVerification,
-        handleVerifyPhone,
+        handlePhoneVerificationSuccess,
+        handlePasswordChangeSuccess,
         handleShowEmailChange,
         handleShowPhoneChange,
         handleShowPasswordChange,
@@ -1237,6 +1180,19 @@
     gap: 5px;
     color: #666;
     margin-bottom: 15px;
+  }
+
+  .password-field {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+  }
+  
+  .masked-password {
+    flex: 1;
+    letter-spacing: 2px;
+    font-weight: bold;
   }
 
   .lease-details {

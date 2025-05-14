@@ -110,7 +110,6 @@
   
         this.isProcessing = true;
   
-        // 執行修改 API 調用
         this.$emit("change", {
           newPhone: this.newPhone,
           password: this.password
@@ -125,7 +124,6 @@
             } else if (error.type === "password") {
               this.passwordError = error.message;
             } else {
-              // 顯示通用錯誤
               this.$emit("error", error.message);
             }
           })
