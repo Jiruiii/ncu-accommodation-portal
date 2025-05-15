@@ -21,11 +21,11 @@
         <verification-code-input v-model="verificationCode" placeholder="請輸入6位數驗證碼" />
         <div class="countdown" v-if="countdown > 0">{{ countdown }}秒後可重新發送</div>
         <div v-if="successMessage" class="success-message">
-          <i class="success-icon">✓</i>
+          <span class="material-symbols-outlined success-icon"> check_circle </span>
           <span>{{ successMessage }}</span>
         </div>
         <div v-if="errorMessage" class="error-message">
-          <i class="error-icon">⚠️</i>
+          <span class="material-symbols-outlined error-icon"> warning </span>
           <span>{{ errorMessage }}</span>
         </div>
         <div class="modal-buttons">
@@ -84,8 +84,6 @@ export default {
       try {
         const response = await apiService.verification.sendEmailVerification(this.email);
         
-        console.log('發送驗證碼回應:', response);
-        
         if (response && response.success) {
           this.successMessage = '驗證碼已發送，請查收您的郵箱';
           this.codeSent = true;
@@ -110,8 +108,6 @@ export default {
       
       try {
         const response = await apiService.verification.verifyEmail(this.verificationCode);
-        
-        console.log('驗證碼驗證回應:', response);
         
         if (response && response.success) {
           this.successMessage = '驗證成功！';

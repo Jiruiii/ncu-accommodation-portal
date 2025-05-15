@@ -65,7 +65,6 @@
                 :class="passwordStrength.class"
               ></div>
             </div>
-            
           </div>
         </div>
 
@@ -75,7 +74,7 @@
           <div class="password-input-container">
             <input
               id="confirm-password"
-              type='password'
+              type="password"
               v-model="confirmPassword"
               placeholder="請再次輸入新密碼"
               class="password-input"
@@ -92,18 +91,6 @@
           <h4>密碼須符合以下條件:</h4>
           <ul>
             <li :class="{ 'rule-met': passwordRules.length }">至少 8 個字元</li>
-            <li :class="{ 'rule-met': passwordRules.hasLowercase }">
-              至少一個小寫字母
-            </li>
-            <li :class="{ 'rule-met': passwordRules.hasUppercase }">
-              至少一個大寫字母
-            </li>
-            <li :class="{ 'rule-met': passwordRules.hasNumber }">
-              至少一個數字
-            </li>
-            <li :class="{ 'rule-met': passwordRules.hasSpecial }">
-              至少一個特殊符號
-            </li>
           </ul>
         </div>
 
@@ -114,13 +101,13 @@
 
         <!-- 錯誤訊息 -->
         <div v-if="errorMessage" class="error-message">
-          <i class="error-icon">⚠️</i>
+          <span class="material-symbols-outlined error-icon"> warning </span>
           <span>{{ errorMessage }}</span>
         </div>
 
         <!-- 成功訊息 -->
         <div v-if="successMessage" class="success-message">
-          <i class="success-icon">✓</i>
+          <span class="material-symbols-outlined success-icon"> check_circle </span>
           <span>{{ successMessage }}</span>
         </div>
 
@@ -306,8 +293,6 @@
             current_password: this.currentPassword,
             new_password: this.newPassword,
           });
-
-          console.log("修改密碼回應:", response);
 
           if (response && response.success) {
             this.successMessage = "密碼已成功修改";

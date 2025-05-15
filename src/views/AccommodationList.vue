@@ -956,8 +956,8 @@ export default {
 
 .heart-outline,
 .heart-filled {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;

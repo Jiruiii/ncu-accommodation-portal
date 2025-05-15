@@ -555,7 +555,7 @@
         <forgot-password-modal
           :show="showForgotPasswordModal"
           @close="showForgotPasswordModal = false"
-          @go-to-login="goToLogin"
+          :user-email="user.email"
         />
       </div>
     </div>

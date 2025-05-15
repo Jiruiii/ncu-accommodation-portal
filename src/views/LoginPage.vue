@@ -315,8 +315,6 @@ export default {
           password: this.password,
         });
 
-        console.log("登入回應:", response);
-
         // const data = await response.json();
 
         if (response.success || (response.message && response.message === '登入成功')) {
@@ -333,7 +331,8 @@ export default {
 
           // 延遲導航，讓用戶看到成功訊息
           setTimeout(() => {
-            this.$router.push("/accommodation-list");
+            this.$router.push("/profile");
+            this.$store.commit("SET_CURRENTROUTE", "profile");
           }, 1000);
         } else {
           this.message = "登入失敗";
@@ -380,8 +379,6 @@ export default {
         }
 
         const response = await apiService.auth.register(registerData);
-
-        console.log("註冊回應:", response);
 
         if (response.success || (response.message && response.message === '註冊成功')) {
           // 清除暫存數據
