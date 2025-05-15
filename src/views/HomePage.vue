@@ -357,7 +357,7 @@
 </template>
 
 <script>
-  import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue";
+  import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
   import { useStore } from "vuex";
 
   export default {
