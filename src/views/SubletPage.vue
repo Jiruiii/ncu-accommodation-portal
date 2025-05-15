@@ -230,10 +230,24 @@
       
       <!-- 空狀態 -->
       <div class="empty-state" v-else>
-        <div class="empty-icon"></div>
+        <div class="empty-illustration">
+          <svg width="200" height="200" viewBox="0 0 24 24">
+            <path fill="#e0e0e0" d="M19 5v14H5V5h14m1.1-2H3.9c-.5 0-.9.4-.9.9v16.2c0 .4.4.9.9.9h16.2c.4 0 .9-.5.9-.9V3.9c0-.5-.5-.9-.9-.9zM11 7h6v2h-6V7zm0 4h6v2h-6v-2zm0 4h6v2h-6v-2zM7 7h2v2H7V7zm0 4h2v2H7v-2zm0 4h2v2H7v-2z"/>
+          </svg>
+          <div class="empty-animation"></div>
+        </div>
         <h3>目前沒有符合條件的轉租資訊</h3>
-        <p>調整搜尋條件或是發布自己的轉租資訊</p>
-        <button class="btn-primary" @click="togglePostForm">發布轉租資訊</button>
+        <p>試試調整搜尋條件，或是發布自己的轉租資訊</p>
+        <div class="empty-actions">
+          <button class="action-btn primary" @click="togglePostForm">
+            <i class="plus-icon"></i>
+            發布轉租資訊
+          </button>
+          <button class="action-btn secondary" @click.prevent="clearFilters">
+            <i class="refresh-icon"></i>
+            清除篩選條件
+          </button>
+        </div>
       </div>
       
       <!-- 轉租詳情模態框 -->
@@ -333,6 +347,31 @@
     name: 'SubletPage',
     setup() {
 
+      const clearFilters = (event) => {
+  // 阻止預設行為
+  event.preventDefault();
+  
+  // 清除篩選條件
+  searchTerm.value = '';
+  filters.value = {
+    duration: '',
+    price: '',
+    moveInDate: ''
+  };
+
+  // 使用 SweetAlert2 顯示提示
+  Swal.fire({
+    toast: true,
+    position: 'top',
+    icon: 'success',
+    title: '已清除所有篩選條件',
+    showConfirmButton: false,
+    timer: 1500,
+    timerProgressBar: true,
+    width: '300px'
+  });
+};
+      
       const prevImage = () => {
       if (currentImageIndex.value > 0) {
         currentImageIndex.value--;
@@ -857,6 +896,7 @@ const nextImage = () => {
         truncateText,
         prevImage,
         nextImage,
+        clearFilters,
       };
     }
   }
@@ -1219,15 +1259,54 @@ const nextImage = () => {
   
   /* 空狀態樣式 */
   .empty-state {
-    max-width: 500px;
-    margin: 100px auto;
+    max-width: 600px;
+    margin: 60px auto;
     text-align: center;
-    padding: 40px;
+    padding: 40px 20px;
     background-color: white;
-    border-radius: 15px;
-    box-shadow: var(--card-shadow);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  }
+
+  .empty-illustration {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 30px;
   }
   
+  .empty-illustration svg {
+  position: relative;
+  z-index: 1;
+}
+
+.empty-animation {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 160px;
+  height: 160px;
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), rgba(var(--secondary-rgb), 0.1));
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.5;
+  }
+}
+
   .empty-icon {
     width: 80px;
     height: 80px;
@@ -1239,15 +1318,89 @@ const nextImage = () => {
   }
   
   .empty-state h3 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.empty-state p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0,123,255,0.2);
+}
+
+.action-btn.secondary {
+  background-color: #f8f9fa;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+.action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,123,255,0.3);
+}
+
+.action-btn.secondary:hover {
+  background-color: #f0f0f0;
+}
+
+.refresh-icon {
+  width: 16px;
+  height: 16px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23666"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>');
+}
+
+/* 添加響應式設計 */
+@media (max-width: 768px) {
+  .empty-illustration {
+    width: 160px;
+    height: 160px;
+  }
+
+  .empty-state h3 {
     font-size: 20px;
-    margin-bottom: 10px;
-    color: #555;
   }
-  
+
   .empty-state p {
-    color: #888;
-    margin-bottom: 25px;
+    font-size: 14px;
   }
+
+  .empty-actions {
+    flex-direction: column;
+  }
+
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
   
   /* 模態框樣式 */
   .modal {
