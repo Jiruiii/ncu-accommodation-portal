@@ -48,52 +48,60 @@
       </div>
       
       <div class="map-container">
-        <!-- 這裡會放置實際的地圖，採用顯示範例圖片 -->
-        <div class="map-placeholder">
-          <img src="https://developers.google.com/static/maps/images/landing/hero_maps_static_api.png" alt="地圖示例" />
+        <div class="static-map">
+          <img src="https://picsum.photos/1200/800" alt="Map background" class="map-bg" />
           
-          <!-- 地圖標記點示例 -->
-          <div 
-            v-for="marker in mapMarkers" 
-            :key="marker.id" 
+          <!-- 修改標記點部分 -->
+          <div
+            v-for="marker in staticMarkers"
+            :key="marker.id"
             class="map-marker"
-            :class="{ active: selectedProperty === marker.id }"
+            :class="{ active: selectedMarker === marker.id }"
             :style="{ left: marker.x + '%', top: marker.y + '%' }"
-            @click="selectProperty(marker.id)"
+            @click="showMarkerInfo(marker.id, $event)"
           >
-            <div class="marker-price">{{ marker.price }}</div>
-          </div>
-          
-          <!-- 選定項目資訊視窗 -->
-          <div class="info-window" v-if="selectedProperty" :style="getInfoWindowPosition()">
-            <div class="info-content">
-              <div class="info-header">
-                <h4>{{ selectedPropertyDetails.title }}</h4>
-                <button class="close-btn" @click="closeInfoWindow">×</button>
-              </div>
-              <img :src="selectedPropertyDetails.image" alt="Property" class="info-image" />
-              <div class="info-details">
-                <div class="info-price">NT$ {{ selectedPropertyDetails.price.toLocaleString() }}/月</div>
-                <div class="info-location">{{ selectedPropertyDetails.location }}</div>
-                <div class="info-amenities">
-                  <span>{{ selectedPropertyDetails.type }}</span> · 
-                  <span>{{ selectedPropertyDetails.size }}坪</span>
-                  <span v-if="selectedPropertyDetails.bedrooms > 0"> · {{ selectedPropertyDetails.bedrooms }}房</span>
-                  <span v-if="selectedPropertyDetails.bathrooms > 0"> · {{ selectedPropertyDetails.bathrooms }}衛</span>
+            <div class="marker-price">
+              NT$ {{ marker.price.toLocaleString() }}
+            </div>
+            
+            <!-- 資訊視窗 -->
+            <div
+              v-if="selectedMarker === marker.id"
+              class="info-window"
+              :class="{ 'show-below': shouldShowBelow }"
+            >
+              <!-- 修改資訊視窗內容部分 -->
+              <div class="info-content">
+                <div class="info-header">
+                  <button class="heart-btn" @click.stop="toggleFavorite(marker.id)">
+                    <span v-if="isFavorite(marker.id)">❤️</span>
+                    <span v-else>🤍</span>
+                  </button>
                 </div>
-                <div class="info-actions">
-                  <button class="view-btn">查看詳情</button>
-                  <button class="favorite-btn">❤️ 收藏</button>
+                <div class="info-body">
+                  <div class="image-container">
+                    <img :src="marker.property.image" class="info-image" alt="Property image" />
+                  </div>
+                  <div class="info-details">
+                    <h4 class="title-link" @click.stop="viewDetails(marker.id)">
+                      {{ marker.property.title }}
+                    </h4>
+                    <div class="info-price">NT$ {{ marker.property.price.toLocaleString() }}/月</div>
+                    <div class="info-amenities">
+                      <span>{{ marker.property.type }}</span> |
+                      <span>{{ marker.property.size }}坪</span>
+                      <template v-if="marker.property.bedrooms">
+                        | <span>{{ marker.property.bedrooms }}房</span>
+                      </template>
+                      <template v-if="marker.property.bathrooms">
+                        | <span>{{ marker.property.bathrooms }}衛</span>
+                      </template>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        
-        <div class="map-controls">
-          <button class="control-btn zoom-in">+</button>
-          <button class="control-btn zoom-out">-</button>
-          <button class="control-btn my-location">📍</button>
         </div>
       </div>
     </div>
@@ -116,7 +124,9 @@
             bedrooms: 1,
             bathrooms: 1,
             size: 8,
-            image: "https://picsum.photos/id/1026/300/150"
+            image: "https://picsum.photos/id/1026/300/150",
+            lat: 24.9683,
+            lng: 121.1945
           },
           {
             id: 2,
@@ -127,7 +137,9 @@
             bedrooms: 0,
             bathrooms: 1,
             size: 5,
-            image: "https://picsum.photos/id/1027/300/150"
+            image: "https://picsum.photos/id/1027/300/150",
+            lat: 24.9685,
+            lng: 121.1950
           },
           {
             id: 3,
@@ -138,7 +150,9 @@
             bedrooms: 3,
             bathrooms: 2,
             size: 25,
-            image: "https://picsum.photos/id/1028/300/150"
+            image: "https://picsum.photos/id/1028/300/150",
+            lat: 24.9687,
+            lng: 121.1948
           },
           {
             id: 4,
@@ -149,21 +163,78 @@
             bedrooms: 1,
             bathrooms: 1,
             size: 12,
-            image: "https://picsum.photos/id/1029/300/150"
+            image: "https://picsum.photos/id/1029/300/150",
+            lat: 24.9689,
+            lng: 121.1952
           }
         ],
-        mapMarkers: [
-          { id: 1, x: 35, y: 45, price: "7.5K" },
-          { id: 2, x: 50, y: 60, price: "4.8K" },
-          { id: 3, x: 40, y: 50, price: "15K" },
-          { id: 4, x: 60, y: 40, price: "8.8K" }
-        ]
+        mapMarkers: [],
+        map: null,
+        markers: [],
+        isMapLoaded: false,
+        mapLoadError: false,
+        selectedMarker: null,
+        staticMarkers: [
+          {
+            id: 1,
+            x: 30,
+            y: 40,
+            price: 7500,
+            property: {
+              title: "中央大學附近精美套房",
+              image: "https://picsum.photos/id/1026/300/150",
+              price: 7500,
+              location: "中壢區中大路300號附近",
+              type: "套房",
+              size: 8,
+              bedrooms: 1,
+              bathrooms: 1
+            }
+          },
+          {
+            id: 2,
+            x: 50,
+            y: 60,
+            price: 4800,
+            property: {
+              title: "近中壢夜市雅房",
+              image: "https://picsum.photos/id/1027/300/150",
+              price: 4800,
+              location: "中壢區五權里",
+              type: "雅房",
+              size: 5,
+              bedrooms: 0,
+              bathrooms: 1
+            }
+          },
+          {
+            id: 3,
+            x: 70,
+            y: 45,
+            price: 15000,
+            property: {
+              title: "中央大學旁整層出租",
+              image: "https://picsum.photos/id/1028/300/150",
+              price: 15000,
+              location: "中壢區中大路350號附近",
+              type: "整層住家",
+              size: 25,
+              bedrooms: 3,
+              bathrooms: 2
+            }
+          }
+        ],
+        shouldShowBelow: false
       };
     },
     computed: {
       selectedPropertyDetails() {
         return this.searchResults.find(p => p.id === this.selectedProperty) || {};
       }
+    },
+    mounted() {
+      // 載入 Google Maps API
+      this.loadGoogleMapsApi();
     },
     methods: {
       selectProperty(id) {
@@ -180,6 +251,152 @@
           left: marker.x + "%",
           top: (marker.y - 15) + "%"
         };
+      },
+      loadGoogleMapsApi() {
+        try {
+          const script = document.createElement('script');
+          script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY`;
+          script.async = true;
+          script.defer = true;
+
+          // 添加錯誤處理
+          script.onerror = () => {
+            console.error('Google Maps API 載入失敗');
+            this.mapLoadError = true;
+          };
+
+          script.onload = () => {
+            try {
+              this.initMap();
+            } catch (error) {
+              console.error('地圖初始化失敗:', error);
+              this.mapLoadError = true;
+            }
+          };
+
+          document.head.appendChild(script);
+        } catch (error) {
+          console.error('腳本加載失敗:', error);
+          this.mapLoadError = true;
+        }
+      },
+      initMap() {
+        if (this.mapLoadError) return;
+
+        try {
+          // 模擬地圖初始化
+          if (!window.google) {
+            this.createFallbackMap();
+            return;
+          }
+
+          const center = { lat: 24.9683, lng: 121.1945 };
+          this.map = new window.google.maps.Map(document.getElementById('google-map'), {
+            center: center,
+            zoom: 15,
+            styles: [],
+            disableDefaultUI: true,
+          });
+          this.initMarkers();
+          this.isMapLoaded = true;
+        } catch (error) {
+          console.error('Map initialization failed:', error);
+          this.createFallbackMap();
+        }
+      },
+      createFallbackMap() {
+        const mapContainer = document.getElementById('google-map');
+        if (!mapContainer) return;
+
+        // 創建後備地圖顯示
+        mapContainer.innerHTML = `
+          <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f5f5f5;">
+            <img src="https://picsum.photos/800/400" alt="Map placeholder" style="max-width: 100%; height: auto; margin-bottom: 20px;"/>
+            <p style="color: #666; text-align: center; padding: 20px;">
+              地圖暫時無法載入<br>
+              請稍後再試
+            </p>
+          </div>
+        `;
+        this.mapLoadError = true;
+      },
+      initMarkers() {
+        if (this.mapLoadError || !this.map) return;
+
+        // 清除現有標記
+        this.markers.forEach(marker => marker.setMap(null));
+        this.markers = [];
+
+        // 為每個物件建立標記
+        this.searchResults.forEach(property => {
+          const position = {
+            lat: property.lat,
+            lng: property.lng
+          };
+
+          const marker = new window.google.maps.Marker({
+            position: position,
+            map: this.map,
+            title: property.title,
+          });
+
+          // 加入點擊事件
+          marker.addListener('click', () => {
+            this.selectProperty(property.id);
+          });
+
+          this.markers.push(marker);
+        });
+      },
+      selectMarker(markerId) {
+        this.selectedMarker = this.selectedMarker === markerId ? null : markerId;
+      },
+      showMarkerInfo(markerId, event) {
+        this.selectedMarker = markerId;
+        // 檢查標記點在螢幕的位置
+        const marker = event.target;
+        const markerRect = marker.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        // 如果標記點在螢幕中線以上，資訊視窗往下開
+        this.shouldShowBelow = markerRect.top < (windowHeight / 2);
+      },
+      hideMarkerInfo() {
+        this.selectedMarker = null;
+      },
+      toggleFavorite(markerId) {
+        // 假設有一個 favorites 陣列來追蹤收藏的標記
+        if (!this.favorites) this.favorites = [];
+        const index = this.favorites.indexOf(markerId);
+        if (index === -1) {
+          this.favorites.push(markerId);
+        } else {
+          this.favorites.splice(index, 1);
+        }
+      },
+      isFavorite(markerId) {
+        return this.favorites && this.favorites.includes(markerId);
+      },
+      viewDetails(markerId) {
+        console.log(`Viewing details for marker ID: ${markerId}`);
+      }
+    },
+    watch: {
+      selectedProperty(newValue) {
+        if (this.mapLoadError || !this.map) return;
+
+        // 當選擇的物件改變時，更新地圖標記
+        this.markers.forEach(marker => {
+          const property = this.searchResults.find(p => 
+            p.lat === marker.getPosition().lat() && 
+            p.lng === marker.getPosition().lng()
+          );
+          if (property && property.id === newValue) {
+            marker.setAnimation(window.google.maps.Animation.BOUNCE);
+            this.map.panTo(marker.getPosition());
+          } else {
+            marker.setAnimation(null);
+          }
+        });
       }
     }
   };
@@ -372,152 +589,142 @@
     position: absolute;
     transform: translate(-50%, -100%);
     cursor: pointer;
+    z-index: 1;
   }
   
   .marker-price {
-    background: #007bff;
+    background: #6B5FF0; /* 更新為紫色系 */
     color: white;
-    padding: 5px 8px;
-    border-radius: 4px;
+    padding: 8px 12px;
+    border-radius: 8px;
     font-weight: bold;
-    font-size: 0.75rem;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
   
-  .marker-price::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 5px solid #007bff;
+  .map-marker.active {
+    z-index: 100;
   }
   
   .map-marker.active .marker-price {
-    background: #ff4757;
-    transform: scale(1.1);
-  }
-  
-  .map-marker.active .marker-price::after {
-    border-top-color: #ff4757;
+    background: #9747FF; /* 更亮的紫色 */
   }
   
   .info-window {
     position: absolute;
-    width: 300px;
-    transform: translate(-50%, -100%);
-    z-index: 100;
+    width: 400px; /* 增加寬度 */
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transform: translate(-50%, -120%);
+    z-index: 101;
+    overflow: hidden;
   }
   
-  .info-content {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  .info-window.show-below {
+    transform: translate(-50%, 20px);
   }
   
   .info-header {
-    padding: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #eee;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
   }
   
-  .info-header h4 {
-    margin: 0;
-    font-size: 1rem;
+  .title-link {
     color: #333;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    cursor: pointer;
+    text-decoration: none;
   }
   
-  .close-btn {
-    background: none;
+  .title-link:hover {
+    color: #6B5FF0;
+  }
+  
+  .heart-btn {
+    background: white;
     border: none;
-    font-size: 1.2rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 18px;
     cursor: pointer;
-    color: #777;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s;
+  }
+  
+  .heart-btn:hover {
+    transform: scale(1.1);
+  }
+  
+  .info-body {
+    display: flex;
+    align-items: stretch;
+  }
+  
+  .image-container {
+    width: 150px; /* 固定寬度 */
+    height: 150px; /* 固定高度，保持正方形 */
+    flex-shrink: 0;
   }
   
   .info-image {
     width: 100%;
-    height: 150px;
+    height: 100%;
     object-fit: cover;
   }
   
   .info-details {
+    flex: 1;
     padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
   
   .info-price {
+    color: #6B5FF0;
     font-weight: bold;
-    font-size: 1.1rem;
-    color: #007bff;
-    margin-bottom: 8px;
-  }
-  
-  .info-location {
-    color: #555;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
+    font-size: 18px;
   }
   
   .info-amenities {
-    color: #777;
-    font-size: 0.85rem;
-    margin-bottom: 15px;
-  }
-  
-  .info-actions {
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+    color: #666;
+    font-size: 14px;
   }
   
-  .view-btn {
-    flex: 1;
-    padding: 8px 0;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+  .close-btn {
+    display: none;
   }
   
-  .favorite-btn {
-    padding: 8px 15px;
-    background: #f1f1f1;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .map-controls {
+  .info-window::before {
+    content: '';
     position: absolute;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    border: 8px solid transparent;
   }
   
-  .control-btn {
-    width: 40px;
-    height: 40px;
-    background: white;
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    font-size: 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+  .info-window:not(.show-below)::before {
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: white;
   }
   
-  .control-btn:hover {
-    background: #f8f8f8;
+  .info-window.show-below::before {
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: white;
   }
   </style>
