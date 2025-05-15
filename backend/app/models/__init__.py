@@ -1,5 +1,5 @@
 # 導入所有模型以便於在 Flask shell 中使用
-from app.models.user import User, VerificationCode
+from app.models.user import User, VerificationCode, PasswordReset
 from app.models.accommodation import (
     Accommodation, AccommodationImage, Amenity, 
     AccommodationAmenity, Favorite

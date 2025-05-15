@@ -84,8 +84,6 @@ export default {
       try {
         const response = await apiService.verification.sendEmailVerification(this.email);
         
-        console.log('發送驗證碼回應:', response);
-        
         if (response && response.success) {
           this.successMessage = '驗證碼已發送，請查收您的郵箱';
           this.codeSent = true;
@@ -110,8 +108,6 @@ export default {
       
       try {
         const response = await apiService.verification.verifyEmail(this.verificationCode);
-        
-        console.log('驗證碼驗證回應:', response);
         
         if (response && response.success) {
           this.successMessage = '驗證成功！';

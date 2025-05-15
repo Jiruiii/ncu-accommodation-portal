@@ -294,8 +294,6 @@
             new_password: this.newPassword,
           });
 
-          console.log("修改密碼回應:", response);
-
           if (response && response.success) {
             this.successMessage = "密碼已成功修改";
 

@@ -12,6 +12,7 @@ const AdminDashboard = () => import("@/views/admin/AdminDashboard.vue");
 const TableView = () => import("@/components/admin/TableView.vue");
 const UserManagement = () => import("@/components/admin/UserManagement.vue");
 const AdminLoginPage = () => import("@/views/admin/AdminLoginPage.vue");
+const ResetPasswordPage = () => import("@/views/ResetPasswordPage.vue");
 const NotFound = () => import("@/views/NotFound.vue");
 
 const routes = [
@@ -61,9 +62,13 @@ const routes = [
     path: "/auth/callback",
     name: "AuthCallback",
     component: AuthCallback,
-    meta: {
-      requiresAuth: false,
-    },
+    meta: { requiresAuth: false },
+  },
+  {
+    path: "/reset-password",
+    name: "ResetPassword",
+    component: ResetPasswordPage,
+    meta: { title: "重設密碼", requiresAuth: false },
   },
 
   // 管理員登入
@@ -165,7 +170,7 @@ router.beforeEach(async (to, from, next) => {
     } catch (error) {
       console.error("檢查管理員權限時發生錯誤:", error);
       next("/admin/login");
-      return; 
+      return;
     }
   } else {
     // 非管理員頁面，正常繼續
