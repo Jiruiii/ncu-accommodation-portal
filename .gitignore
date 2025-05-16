@@ -22,3 +22,9 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
+
+__pycache__/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/**/__pycache__/
+backend/**/**/**/__pycache__/

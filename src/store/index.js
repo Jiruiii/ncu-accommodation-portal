@@ -31,7 +31,85 @@ export default createStore({
     // 地圖狀態
     mapView: false,
     mapCenter: { lat: 24.9680, lng: 121.1944 }, // 中央大學座標
-    mapZoom: 15
+    mapZoom: 15,
+
+    // 新增：房源評論資料
+    comments: {
+      // 預設假資料，使用房源編碼作為 key
+      "1": [
+        {
+          id: 1,
+          userId: "user123",
+          userName: "張小明",
+          content: "房東人很好，環境也很乾淨！浴室有暖氣，住起來很舒適。",
+          rating: 5,
+          date: "2025-05-10",
+          likes: 3
+        },
+        {
+          id: 2,
+          userId: "user456",
+          userName: "林小華",
+          content: "地點很方便，走路到中央大學只要10分鐘。附近有超商也很方便。",
+          rating: 4,
+          date: "2025-05-08",
+          likes: 1
+        }
+      ],
+      "2": [
+        {
+          id: 3,
+          userId: "user789",
+          userName: "王小美",
+          content: "冷氣很涼，房間隔音還不錯。唯一缺點是洗衣機共用，要排隊。",
+          rating: 4,
+          date: "2025-05-05",
+          likes: 2
+        }
+      ],
+      "3": [
+        {
+          id: 4,
+          userId: "user321",
+          userName: "黃小傑",
+          content: "價格合理，房間採光佳。房東定期打掃公共區域，環境很乾淨。",
+          rating: 5,
+          date: "2025-05-12",
+          likes: 4
+        },
+        {
+          id: 5,
+          userId: "user654",
+          userName: "陳小玉",
+          content: "整體不錯，但廁所有點小。夏天熱水不太穩定，其他都還可以。",
+          rating: 3,
+          date: "2025-05-03",
+          likes: 0
+        }
+      ],
+      "5": [
+        {
+          id: 6,
+          userId: "user111",
+          userName: "李大明",
+          content: "停車方便，房間明亮。不過走廊燈晚上有點太亮，需要厚窗簾。",
+          rating: 4,
+          date: "2025-05-01",
+          likes: 2
+        }
+      ],
+      "8": [
+        {
+          id: 7,
+          userId: "user222",
+          userName: "吳小芳",
+          content: "網路很快，管理員人很親切。缺點是附近施工，早上有點吵。",
+          rating: 3,
+          date: "2025-04-28",
+          likes: 1
+        }
+      ]
+    }
   },
 
   mutations: {
@@ -107,6 +185,33 @@ export default createStore({
 
     SET_MAP_CENTER(state, center) {
       state.mapCenter = center;
+    },
+
+    // 新增：評論相關 mutations
+    ADD_COMMENT(state, { propertyId, comment }) {
+      if (!state.comments[propertyId]) {
+        state.comments[propertyId] = [];
+      }
+      state.comments[propertyId].unshift(comment);
+      
+      // 更新 localStorage
+      localStorage.setItem('propertyComments', JSON.stringify(state.comments));
+    },
+    
+    LIKE_COMMENT(state, { propertyId, commentId }) {
+      const comment = state.comments[propertyId]?.find(c => c.id === commentId);
+      if (comment) {
+        comment.likes += 1;
+        
+        // 更新 localStorage
+        localStorage.setItem('propertyComments', JSON.stringify(state.comments));
+      }
+    },
+    
+    LOAD_COMMENTS(state, comments) {
+      if (comments) {
+        state.comments = comments;
+      }
     }
   },
 
@@ -222,12 +327,73 @@ export default createStore({
       }
 
       commit('SET_FILTERED_ACCOMMODATIONS', filtered);
+
+      
     },
 
     // 設置路由並觸發動畫
     navigateTo({ commit }, route) {
       commit('SET_CURRENTROUTE', route);
     },
+
+    addComment({ commit, state }, { propertyId, content, rating }) {
+      // 產生新評論
+      const newComment = {
+        id: Date.now(),
+        userId: state.user?.id || "guest",
+        userName: state.user?.name || "訪客",
+        content,
+        rating,
+        date: new Date().toISOString().split('T')[0],
+        likes: 0
+      };
+      
+      // 提交 mutation
+      commit('ADD_COMMENT', { propertyId, comment: newComment });
+    },
+    
+    likeComment({ commit }, { propertyId, commentId }) {
+      commit('LIKE_COMMENT', { propertyId, commentId });
+    },
+    
+    // 從 localStorage 加載評論
+    loadComments({ commit }) {
+      try {
+        const savedComments = localStorage.getItem('propertyComments');
+        if (savedComments) {
+          commit('LOAD_COMMENTS', JSON.parse(savedComments));
+        }
+      } catch (error) {
+        console.error('無法載入評論:', error);
+      }
+    },
+    
+    // 初始化資料時同時加載評論
+    // async fetchAccommodations({ commit, dispatch }) {
+    //   try {
+    //     // 原有的加載邏輯...
+    //     const validAccommodations = accommodationData.filter(property =>
+    //       property &&
+    //       property.編碼 &&
+    //       property.標題 &&
+    //       property.房租
+    //     );
+
+    //     commit('SET_ACCOMMODATIONS', validAccommodations);
+
+    //     const savedFavorites = localStorage.getItem('favoriteAccommodations');
+    //     const favoriteIds = savedFavorites ? JSON.parse(savedFavorites) : [];
+    //     commit('SET_FAVORITE_IDS', favoriteIds);
+        
+    //     // 新增：載入評論
+    //     dispatch('loadComments');
+
+    //     dispatch('applyFiltersAndSort');
+    //   } catch (error) {
+    //     console.error('Failed to fetch accommodations:', error);
+    //   }
+    // }
+    
   },
 
   getters: {
@@ -238,9 +404,26 @@ export default createStore({
     selectedAccommodation: state => state.selectedAccommodation,
     favoriteIds: state => state.favoriteIds,
     favoriteProperties: (state) => {
-      return state.accommodations.filter(property => 
+      return state.accommodations.filter(property =>
         state.favoriteIds.includes(property.編碼 || 0)
       );
+    },
+    getPropertyComments: (state) => (propertyId) => {
+      return state.comments[propertyId] || [];
+    },
+    
+    // 計算每個房源的平均評分
+    getPropertyRating: (state) => (propertyId) => {
+      const comments = state.comments[propertyId] || [];
+      if (comments.length === 0) return 0;
+      
+      const sum = comments.reduce((total, comment) => total + comment.rating, 0);
+      return (sum / comments.length).toFixed(1);
+    },
+    
+    // 計算每個房源的評論數量
+    getPropertyCommentCount: (state) => (propertyId) => {
+      return (state.comments[propertyId] || []).length;
     }
   }
 })
