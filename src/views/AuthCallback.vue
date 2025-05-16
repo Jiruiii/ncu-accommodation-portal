@@ -10,11 +10,13 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import apiService from '@/services/api';
 
 export default {
   setup() {
     const router = useRouter();
+    const store = useStore();
     const message = ref('驗證身份中，請稍候...');
     
     onMounted(async () => {
@@ -78,6 +80,7 @@ export default {
         message.value = 'Portal 快速登入成功，正在跳轉...';
         setTimeout(() => {
           router.push('/profile');
+          store.commit('SET_CURRENTROUTE', 'profile');
         }, 1000);
       } else {
         // 登入失敗
