@@ -49,7 +49,14 @@
           <label :for="`favorite-${item.id}`"></label>
         </div>
         <div class="card-image" @click="viewDetail(item.id)">
-          <img :src="item.imageUrl" :alt="item.title" />
+          <img
+            v-if="item.hasPhotos"
+            :src="getPropertyImage(item.originalProperty)"
+            :alt="item.title"
+          />
+          <div v-else class="no-image-placeholder">
+            <div class="no-photo-notice">屋主尚未更新照片</div>
+          </div>
           <span class="card-price"
             >NT$ {{ item.price.toLocaleString() }} <small>/月</small></span
           >
@@ -92,22 +99,38 @@
 
     <div class="pagination" v-if="totalPages > 1">
       <button
+        class="page-btn prev"
         :disabled="currentPage === 1"
         @click="changePage(currentPage - 1)"
       >
-        上一頁
+        &laquo; 上一頁
       </button>
-      <span>{{ currentPage }} / {{ totalPages }}</span>
+
+      <div class="page-numbers">
+        <template v-for="(page, index) in pageNumbers" :key="index">
+          <button
+            v-if="page !== '...'"
+            :class="['page-number', { active: currentPage === page }]"
+            @click="changePage(page)"
+          >
+            {{ page }}
+          </button>
+          <span v-else class="page-ellipsis">{{ page }}</span>
+        </template>
+      </div>
+
       <button
+        class="page-btn next"
         :disabled="currentPage === totalPages"
         @click="changePage(currentPage + 1)"
       >
-        下一頁
+        下一頁 &raquo;
       </button>
     </div>
   </div>
 </template>
   
+
 <script>
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
@@ -122,7 +145,180 @@ export default {
     const selectedItems = ref([]);
     const sortBy = ref("date");
     const currentPage = ref(1);
-    const itemsPerPage = 6;
+    // 修改为每頁顯示24個项目
+    const itemsPerPage = 24;
+
+    // 解析最低價格 (修正 extractMinPrice undefined)
+    const extractMinPrice = (priceStr) => {
+      try {
+        // 處理價格範圍，例如 "8000-10000"
+        if (typeof priceStr === "string" && priceStr.includes("-")) {
+          const prices = priceStr
+            .split("-")
+            .map((p) => parseInt(p.trim().replace(/[^\d]/g, "")));
+          return prices[0] || 0;
+        }
+        // 處理單一價格，轉換為數字
+        return parseInt(priceStr.toString().replace(/[^\d]/g, "")) || 0;
+      } catch (error) {
+        console.error("解析價格時出錯:", error);
+        return 0;
+      }
+    };
+
+    // 檢查是否有照片
+    const hasPhotos = (property) => {
+      if (
+        !property ||
+        !property.房屋照片 ||
+        !Array.isArray(property.房屋照片)
+      ) {
+        return false;
+      }
+      return property.房屋照片.length > 0;
+    };
+
+    // 獲取房源圖片 (與 AccommodationList 保持一致的實現)
+    // 獲取房源圖片 (與 AccommodationList 保持一致的實現)
+    const getPropertyImage = (property) => {
+      if (!property) return "";
+
+      // 有照片時顯示真實照片
+      if (
+        property.房屋照片 &&
+        Array.isArray(property.房屋照片) &&
+        property.房屋照片.length > 0
+      ) {
+        // 嘗試找到不包含特殊哈希值的圖片
+        for (let i = 0; i < property.房屋照片.length; i++) {
+          try {
+            const imageUrl = property.房屋照片[i];
+            const loadedImg = require("@/" + imageUrl);
+
+            // 使用 match 檢查是否包含特殊哈希值
+            if (!loadedImg.match(/-1\.49632716/)) {
+              return loadedImg;
+            }
+          } catch (e) {
+            console.error("載入圖片失敗:", e);
+            // 繼續嘗試下一張
+          }
+        }
+      }
+
+      // 無照片或所有照片都不符合要求時使用預設圖片
+      return `https://picsum.photos/id/${
+        (((property.編碼 || 0) * 13) % 100) + 1000
+      }/400/300`;
+    };
+
+    // 獲取房源面積 (修正 getPropertyArea undefined)
+    const getPropertyArea = (property) => {
+      try {
+        if (
+          property.出租房數 &&
+          property.出租房數.套房 &&
+          property.出租房數.套房.坪數
+        ) {
+          return parseFloat(property.出租房數.套房.坪數) || 0;
+        }
+        return 0;
+      } catch (error) {
+        console.error("獲取面積時出錯:", error);
+        return 0;
+      }
+    };
+
+    // 獲取房源房間數 (修正 getPropertyRooms undefined)
+    const getPropertyRooms = (property) => {
+      try {
+        let totalRooms = 0;
+        if (property.出租房數) {
+          if (property.出租房數.套房 && property.出租房數.套房.總數) {
+            totalRooms += parseInt(property.出租房數.套房.總數) || 0;
+          }
+          if (property.出租房數.雅房 && property.出租房數.雅房.總數) {
+            totalRooms += parseInt(property.出租房數.雅房.總數) || 0;
+          }
+        }
+        return totalRooms || 1;
+      } catch (error) {
+        console.error("獲取房間數時出錯:", error);
+        return 1;
+      }
+    };
+
+    // 獲取房源標籤 (修正 getPropertyTags undefined)
+    const getPropertyTags = (property) => {
+      const tags = [];
+
+      try {
+        // 添加房型標籤
+        if (property.房型) {
+          tags.push(property.房型);
+        } else if (
+          property.出租房數 &&
+          property.出租房數.套房 &&
+          property.出租房數.套房.總數
+        ) {
+          tags.push("套房");
+        } else if (
+          property.出租房數 &&
+          property.出租房數.雅房 &&
+          property.出租房數.雅房.總數
+        ) {
+          tags.push("雅房");
+        }
+
+        // 添加租金包含項目
+        if (property.租金包含) {
+          if (property.租金包含.水費) tags.push("含水費");
+          if (property.租金包含.電費) tags.push("含電費");
+          if (property.租金包含.網路) tags.push("含網路");
+        }
+
+        // 添加特色標籤
+        if (property.特色) {
+          if (property.特色.陽台) tags.push("有陽台");
+          if (property.特色.廚房) tags.push("有廚房");
+          if (property.特色.冷氣) tags.push("有冷氣");
+          if (property.特色.電梯) tags.push("有電梯");
+          if (property.特色.停車位) tags.push("有停車位");
+        }
+      } catch (error) {
+        console.error("獲取標籤時出錯:", error);
+      }
+
+      // 最多返回3個標籤
+      return tags.slice(0, 3);
+    };
+
+    // 查看詳情 (修正 viewDetail undefined)
+    const viewDetail = (id) => {
+      router.push({
+        name: "home",
+        query: { propertyId: id },
+      });
+    };
+
+    // 聯繫房東 (修正 contactLandlord undefined)
+    const contactLandlord = (id) => {
+      const property = store.getters.favoriteProperties.find(
+        (p) => p.編碼 === id
+      );
+      if (property && property.聯絡資訊 && property.聯絡資訊.電話) {
+        window.open(`tel:${property.聯絡資訊.電話}`);
+      } else {
+        // 如果沒有電話，返回詳情頁
+        viewDetail(id);
+        alert("此房源未提供聯繫電話，請查看詳情頁獲取更多聯絡方式。");
+      }
+    };
+
+    // 前往租屋列表 (修正 goToList undefined)
+    const goToList = () => {
+      router.push({ name: "home" });
+    };
 
     // 從 Vuex 獲取收藏房源列表
     const favoriteItems = computed(() => {
@@ -135,11 +331,10 @@ export default {
           area: getPropertyArea(property),
           bedrooms: getPropertyRooms(property),
           bathrooms: 1, // 假設所有房源都有1間衛浴
-          imageUrl: `https://picsum.photos/id/${
-            (((property.編碼 || 0) * 13) % 100) + 1000
-          }/400/300`,
           tags: getPropertyTags(property),
           dateAdded: new Date(), // 由於沒有收藏時間，使用當前時間
+          originalProperty: property, // 保存原始屬性對象
+          hasPhotos: hasPhotos(property), // 檢查是否有照片
         }));
       } catch (error) {
         console.error("Error processing favorite properties:", error);
@@ -181,6 +376,7 @@ export default {
       }
     });
 
+    // 計算總頁數，每頁24個項目
     const totalPages = computed(() =>
       Math.ceil(favoriteItems.value.length / itemsPerPage)
     );
@@ -219,144 +415,45 @@ export default {
       }
     };
 
-    const viewDetail = (id) => {
-      // 導航到詳情頁
-      router.push({
-        name: "accommodation-detail",
-        params: { id },
+    // 翻頁控制
+    const changePage = (page) => {
+      currentPage.value = page;
+      // 添加滾動到頁面頂部
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
       });
     };
 
-    const contactLandlord = (id) => {
-      try {
-        // 獲取該房源的聯絡資訊
-        const property = store.state.accommodations.find((p) => p.編碼 === id);
-        if (property && property.聯絡資訊) {
-          alert(`聯繫房東: ${property.聯絡資訊}`);
-        } else {
-          alert("無法獲取房東聯絡資訊");
-        }
-      } catch (error) {
-        console.error("Error contacting landlord:", error);
-        alert("處理請求時發生錯誤");
-      }
-    };
-
-    const changePage = (page) => {
-      currentPage.value = page;
-    };
-
-    const goToList = () => {
-      store.commit("SET_CURRENTROUTE", "accommodation-list");
-
-      store.commit("CLOSE_NAV");
-      
-      router.push({ name: "accommodation-list" });
-    };
-
-    // 輔助函數: 獲取房源面積
-    function getPropertyArea(property) {
-      if (!property || !property.出租房數) return 0;
-
-      let area = 0;
-      try {
-        if (property.出租房數.套房 && property.出租房數.套房.坪數) {
-          const match = property.出租房數.套房.坪數.match(/\d+/);
-          if (match) area = parseInt(match[0]);
-        } else if (property.出租房數.雅房 && property.出租房數.雅房.坪數) {
-          const match = property.出租房數.雅房.坪數.match(/\d+/);
-          if (match) area = parseInt(match[0]);
-        }
-      } catch (error) {
-        console.error("Error getting property area:", error);
+    // 優化分頁控制，显示更多页码
+    const pageNumbers = computed(() => {
+      const maxPageButtons = 5; // 最多顯示的頁碼按鈕數量
+      if (totalPages.value <= maxPageButtons) {
+        // 如果總頁數少於等於最大按鈕數，顯示所有頁碼
+        return Array.from({ length: totalPages.value }, (_, i) => i + 1);
       }
 
-      return area || 5; // 默認面積
-    }
+      const halfWay = Math.ceil(maxPageButtons / 2);
 
-    // 輔助函數: 獲取房間數量
-    function getPropertyRooms(property) {
-      if (!property || !property.出租房數) return 1;
-
-      let rooms = 0;
-      try {
-        if (
-          property.出租房數.套房 &&
-          typeof property.出租房數.套房.總數 === "number"
-        ) {
-          rooms += property.出租房數.套房.總數;
-        }
-        if (
-          property.出租房數.雅房 &&
-          typeof property.出租房數.雅房.總數 === "number"
-        ) {
-          rooms += property.出租房數.雅房.總數;
-        }
-      } catch (error) {
-        console.error("Error getting property rooms:", error);
+      // 如果當前頁碼靠近開始
+      if (currentPage.value <= halfWay) {
+        return [1, 2, 3, "...", totalPages.value];
       }
 
-      return rooms || 1; // 至少一間房
-    }
-
-    // 輔助函數: 獲取房源標籤
-    function getPropertyTags(property) {
-      if (!property) return [];
-
-      const tags = [];
-
-      // 添加屋況說明為標籤 - 確保是陣列
-      try {
-        if (
-          property.屋況說明 &&
-          Array.isArray(property.屋況說明) &&
-          property.屋況說明.length > 0
-        ) {
-          property.屋況說明.forEach((desc) => {
-            if (desc && typeof desc === "string") {
-              if (desc.includes("安全評核")) tags.push("安全認證");
-              if (desc.includes("消防")) tags.push("消防合格");
-              if (desc.includes("聯誼會")) tags.push("房東聯盟");
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Error processing property descriptions:", error);
-      }
-
-      // 添加設備標籤 (最多3個)
-      try {
-        const allEquipments = [
-          ...(property.屋內設備 && Array.isArray(property.屋內設備)
-            ? property.屋內設備.slice(0, 2)
-            : []),
-          ...(property.公共設施 && Array.isArray(property.公共設施)
-            ? property.公共設施.slice(0, 1)
-            : []),
+      // 如果當前頁碼靠近結束
+      if (currentPage.value > totalPages.value - halfWay) {
+        return [
+          1,
+          "...",
+          totalPages.value - 2,
+          totalPages.value - 1,
+          totalPages.value,
         ];
-
-        tags.push(...allEquipments);
-      } catch (error) {
-        console.error("Error processing property equipments:", error);
       }
 
-      return tags.slice(0, 3); // 最多返回3個標籤
-    }
-
-    // 輔助函數: 提取最低價格
-    function extractMinPrice(priceString) {
-      if (!priceString || typeof priceString !== "string") return 0;
-
-      try {
-        const prices = priceString.match(/\d+/g);
-        if (!prices || prices.length === 0) return 0;
-
-        return Math.min(...prices.map((p) => parseInt(p)));
-      } catch (error) {
-        console.error("價格提取錯誤:", error);
-        return 0;
-      }
-    }
+      // 當前頁碼在中間
+      return [1, "...", currentPage.value, "...", totalPages.value];
+    });
 
     return {
       favoriteItems,
@@ -364,8 +461,9 @@ export default {
       sortBy,
       currentPage,
       totalPages,
+      pageNumbers,
       sortedFavorites,
-      paginatedFavorites, // 添加這個
+      paginatedFavorites,
       isSelected,
       removeFavorite,
       compareSelected,
@@ -373,6 +471,12 @@ export default {
       contactLandlord,
       changePage,
       goToList,
+      extractMinPrice,
+      getPropertyArea,
+      getPropertyRooms,
+      getPropertyTags,
+      hasPhotos,
+      getPropertyImage,
     };
   },
 };
@@ -595,6 +699,31 @@ export default {
   object-fit: cover;
 }
 
+/* 無圖片佔位符樣式 */
+.no-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.no-photo-notice {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
 /* 價格標籤樣式，與 AccommodationList 保持一致 */
 .card-price {
   position: absolute;
@@ -745,26 +874,61 @@ export default {
   justify-content: center;
   align-items: center;
   margin-top: 30px;
-  gap: 20px;
+  gap: 10px;
 }
 
-.pagination button {
-  padding: 8px 16px;
-  background: #f5f5f5;
+.page-btn {
+  padding: 8px 15px;
+  background: white;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s;
+  font-size: 0.9rem;
 }
 
-.pagination button:not(:disabled):hover {
-  background: #eee;
+.page-btn:not(:disabled):hover {
+  background: #f5f5f5;
 }
 
-.pagination button:disabled {
-  background: #f0f0f0;
-  color: #aaa;
+.page-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.page-number {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: white;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.page-number:hover:not(.active) {
+  background: #f5f5f5;
+}
+
+.page-number.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.page-ellipsis {
+  color: #666;
+  font-size: 0.9rem;
 }
 
 /* 響應式設計，與 AccommodationList 保持一致 */
