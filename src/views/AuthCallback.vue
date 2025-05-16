@@ -77,7 +77,7 @@ export default {
         
         message.value = 'Portal 快速登入成功，正在跳轉...';
         setTimeout(() => {
-          router.push('/accommodation-list');
+          router.push('/profile');
         }, 1000);
       } else {
         // 登入失敗
