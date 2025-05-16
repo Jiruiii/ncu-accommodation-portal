@@ -13,6 +13,7 @@ const TableView = () => import("@/components/admin/TableView.vue");
 const UserManagement = () => import("@/components/admin/UserManagement.vue");
 const AdminLoginPage = () => import("@/views/admin/AdminLoginPage.vue");
 const ResetPasswordPage = () => import("@/views/ResetPasswordPage.vue");
+const ChatRoom = () => import("@/components/ChatRoom.vue");
 const NotFound = () => import("@/views/NotFound.vue");
 
 const routes = [
@@ -70,13 +71,22 @@ const routes = [
     component: ResetPasswordPage,
     meta: { title: "重設密碼", requiresAuth: false },
   },
-
+  
   // 管理員登入
   {
     path: "/admin/login",
     name: "AdminLogin",
     component: AdminLoginPage,
     meta: { requiresAdmin: false },
+  },
+
+  {
+    path: "/chatroom",
+    name: "ChatRoom",
+    component: ChatRoom,
+    meta: {
+      requiresAuth: false,
+    },
   },
 
   // 管理後台路由
