@@ -16,10 +16,9 @@
                 style="border-radius: 0; height: 50px; cursor: default; pointer-events: none;"
               />
             </div>
-            <div class="search-button" style="border-radius: 0; cursor: default;">立即開始</div>
+            <div class="search-button" style="border-radius: 0;" @click="navigateToLogin">立即開始</div>
         </div>
       </div>
-
 </div>
 
 <!-- 介紹版塊 -->
@@ -359,11 +358,14 @@
 <script>
   import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
   import { useStore } from "vuex";
+  import { useRouter } from "vue-router";
 
   export default {
     name: "HomePage",
     setup() {
       const store = useStore();
+      const router = useRouter();
+      
       const searchQuery = ref("");
       
       // 統計資訊 (目標值)
@@ -385,6 +387,10 @@
         subject: "",
         message: ""
       });
+
+      const navigateToLogin = () => {
+        router.push("/login");
+      };
 
       // 提交聯絡表單
       const submitForm = () => {
@@ -870,6 +876,7 @@
         testimonialContainer,
         nextTestimonial,
         prevTestimonial,
+        navigateToLogin,
         goToTestimonial,
         // 本月精選輪播
         currentListing,
