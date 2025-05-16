@@ -11,7 +11,7 @@
           alt="用戶頭像"
         />
         <button class="edit-avatar-btn">
-          <i>📷</i>
+          <i class="fa-solid fa-camera"></i>
         </button>
         <input
           type="file"
@@ -495,6 +495,7 @@
           <button class="danger-btn">刪除帳戶</button>
         </div>
       </div>
+      <ChatRoom />
     </div>
   </div>
 </template>
@@ -503,9 +504,13 @@
   import { ref, computed, onMounted, reactive } from "vue";
   import { useRouter } from "vue-router";
   import apiService from "@/services/api";
+  import ChatRoom from "@/views/admin/ChatRoom.vue";
 
   export default {
     name: "ProfilePage",
+    components: {
+      ChatRoom,
+    },
     setup() {
       const router = useRouter();
       const activeTab = ref("housing");
@@ -547,6 +552,7 @@
         const baseTabs = [
           { id: "housing", name: "我的租屋資訊" },
           { id: "settings", name: "帳戶設置" },
+          { id: "chatroom", name: "聊天室" },
         ];
 
         // 如果用户有發佈權限則添加「我的發布」標籤
@@ -832,13 +838,17 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background-color: #007bff;
+    background-color: #C4E1FF;
     color: white;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+  }
+
+  i{
+    color: black;
   }
 
   .profile-info {
@@ -1141,7 +1151,7 @@
   }
 
   .active {
-    background-color: #28a745;
+    background-color: #C4E1FF;
     color: white;
   }
 

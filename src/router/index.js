@@ -12,6 +12,7 @@ const AdminDashboard = () => import("@/views/admin/AdminDashboard.vue");
 const TableView = () => import("@/components/admin/TableView.vue");
 const UserManagement = () => import("@/components/admin/UserManagement.vue");
 const AdminLoginPage = () => import("@/views/admin/AdminLoginPage.vue");
+const ChatRoom = () => import("@/views/admin/ChatRoom.vue");
 const NotFound = () => import("@/views/NotFound.vue");
 
 const routes = [
@@ -65,13 +66,22 @@ const routes = [
       requiresAuth: false,
     },
   },
-
+  
   // 管理員登入
   {
     path: "/admin/login",
     name: "AdminLogin",
     component: AdminLoginPage,
     meta: { requiresAdmin: false },
+  },
+
+  {
+    path: "/chatroom",
+    name: "ChatRoom",
+    component: ChatRoom,
+    meta: {
+      requiresAuth: false,
+    },
   },
 
   // 管理後台路由
