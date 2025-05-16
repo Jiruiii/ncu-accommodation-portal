@@ -412,6 +412,101 @@
             </button>
           </div>
         </div>
+        <div class="detail-section comments-section">
+          <h3>
+            房客評論
+            <span
+              class="comment-stats"
+              v-if="getPropertyCommentCount(selectedProperty.編碼)"
+            >
+              <span class="avg-rating">{{
+                getPropertyRating(selectedProperty.編碼)
+              }}</span>
+              / 5
+              <span class="total-comments"
+                >({{
+                  getPropertyCommentCount(selectedProperty.編碼)
+                }}
+                則評論)</span
+              >
+            </span>
+          </h3>
+
+          <!-- 新增評論表單 -->
+          <div class="add-comment">
+            <h4>分享您的住房體驗</h4>
+            <div class="rating-input">
+              <span>評分：</span>
+              <div class="star-rating">
+                <span
+                  v-for="n in 5"
+                  :key="n"
+                  @click="newRating = n"
+                  :class="{ active: n <= newRating }"
+                >
+                  ★
+                </span>
+              </div>
+            </div>
+            <textarea
+              v-model="newComment"
+              placeholder="請分享您對這間房屋的評價、建議或經驗..."
+              rows="3"
+            ></textarea>
+            <button
+              class="submit-comment"
+              @click="submitComment"
+              :disabled="!newComment.trim() || !newRating"
+            >
+              發表評論
+            </button>
+          </div>
+
+          <!-- 評論列表 -->
+          <div
+            class="comments-list"
+            v-if="getPropertyComments(selectedProperty.編碼).length"
+          >
+            <div
+              v-for="comment in getPropertyComments(selectedProperty.編碼)"
+              :key="comment.id"
+              class="comment-item"
+            >
+              <div class="comment-header">
+                <div class="comment-user">
+                  <div class="user-avatar">{{ comment.userName[0] }}</div>
+                  <div class="user-info">
+                    <div class="user-name">{{ comment.userName }}</div>
+                    <div class="comment-date">{{ comment.date }}</div>
+                  </div>
+                </div>
+                <div class="comment-rating">
+                  <span v-for="n in 5" :key="n" class="star">
+                    {{ n <= comment.rating ? "★" : "☆" }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="comment-content">{{ comment.content }}</div>
+
+              <div class="comment-actions">
+                <button
+                  class="like-btn"
+                  @click.stop="
+                    likePropertyComment(selectedProperty.編碼, comment.id)
+                  "
+                >
+                  <span class="like-icon">👍</span> {{ comment.likes }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 無評論時顯示 -->
+          <div class="no-comments" v-else>
+            目前還沒有評論，成為第一個評論的人吧！
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -435,13 +530,21 @@ export default {
       },
       selectedProperty: null,
       currentPhotoIndex: 0,
+      newComment: "", // 新評論內容
+      newRating: 0, // 新評論評分
     };
   },
   computed: {
     ...mapState({
       accommodations: (state) => state.accommodations,
     }),
-    ...mapGetters(["filteredAccommodations", "favoriteIds"]),
+    ...mapGetters([
+      "filteredAccommodations",
+      "favoriteIds",
+      "getPropertyComments",
+      "getPropertyRating",
+      "getPropertyCommentCount",
+    ]),
   },
   created() {
     // 從 Vuex store 載入房源資料
@@ -454,7 +557,12 @@ export default {
       "SET_FILTERS",
       "TOGGLE_FAVORITE",
     ]),
-    ...mapActions(["fetchAccommodations", "applyFiltersAndSort"]),
+    ...mapActions([
+      "fetchAccommodations",
+      "applyFiltersAndSort",
+      "addComment",
+      "likeComment",
+    ]),
 
     handleSearch() {
       this.SET_SEARCH_QUERY(this.searchQuery);
@@ -664,6 +772,31 @@ export default {
         return 0;
       }
       return property.房屋照片.length;
+    },
+    // 提交評論
+    submitComment() {
+      if (
+        !this.newComment.trim() ||
+        !this.newRating ||
+        !this.selectedProperty
+      ) {
+        return;
+      }
+
+      this.addComment({
+        propertyId: this.selectedProperty.編碼,
+        content: this.newComment.trim(),
+        rating: this.newRating,
+      });
+
+      // 清空表單
+      this.newComment = "";
+      this.newRating = 0;
+    },
+
+    // 點贊評論
+    likePropertyComment(propertyId, commentId) {
+      this.likeComment({ propertyId, commentId });
     },
   },
 };
@@ -1241,6 +1374,191 @@ export default {
   font-weight: 500;
 }
 
+.comments-section {
+  margin-top: 25px;
+}
+
+.comment-stats {
+  font-size: 0.9rem;
+  color: #666;
+  margin-left: 10px;
+  font-weight: normal;
+}
+
+.avg-rating {
+  color: #ff9800;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.comment-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.comment-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.comment-date {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.comment-rating {
+  color: #ff9800;
+  font-size: 1.1rem;
+}
+
+.comment-content {
+  color: #333;
+  line-height: 1.5;
+  margin: 10px 0;
+}
+
+.comment-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.like-btn {
+  background: none;
+  border: 1px solid #ddd;
+  padding: 5px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.like-btn:hover {
+  background: #f0f0f0;
+}
+
+.like-icon {
+  font-size: 1rem;
+}
+
+/* 新增評論表單 */
+.add-comment {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.add-comment h4 {
+  margin: 0 0 15px;
+  color: #333;
+  font-size: 1rem;
+}
+
+.rating-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.star-rating {
+  display: flex;
+  gap: 5px;
+  color: #ddd;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.star-rating span {
+  transition: color 0.2s;
+}
+
+.star-rating span:hover {
+  color: #ffcc00;
+}
+
+.star-rating span.active {
+  color: #ff9800;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.submit-comment {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.submit-comment:hover {
+  background: #0069d9;
+}
+
+.submit-comment:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.no-comments {
+  text-align: center;
+  color: #888;
+  padding: 20px;
+  font-style: italic;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
 /* 響應式設計 */
 @media (max-width: 1200px) {
   .property-list {
@@ -1293,6 +1611,15 @@ export default {
   .detail-room-info {
     flex-direction: column;
     gap: 10px;
+  }
+
+  .comment-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .comment-rating {
+    align-self: flex-start;
   }
 }
 
