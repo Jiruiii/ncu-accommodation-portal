@@ -175,80 +175,114 @@
 
 <!-- filepath: c:\Users\USER\Desktop\ncu-accommodation-portal\src\views\LoginPage.vue -->
 <script>
-import { ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { clearAuthData } from "@/utils/auth";
-import apiService from "@/services/api";
+  import { ref } from "vue";
+  import { useRoute, useRouter } from "vue-router";
+  import { clearAuthData } from "@/utils/auth";
+  import apiService from "@/services/api";
 
-export default {
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
-    
-    // Portal 狀態
-    const portalBound = ref(false);
-    const portalInfo = ref({});
+  export default {
+    setup() {
+      const route = useRoute();
+      const router = useRouter();
 
-    // 檢查是否從 Portal 綁定頁面返回，且是註冊流程
-    if (route.query.register === 'true') {
-      const isSignUp = ref(true);
-      
-      // 嘗試從 localStorage 獲取表單數據和 Portal 信息
-      if (localStorage.getItem('portalBound') === 'true') {
-        portalBound.value = true;
+      // Portal 狀態
+      const portalBound = ref(false);
+      const portalInfo = ref({});
+
+      // 檢查是否從 Portal 綁定頁面返回，且是註冊流程
+      if (route.query.register === "true") {
+        const isSignUp = ref(true);
+
+        // 嘗試從 localStorage 獲取表單數據和 Portal 信息
+        if (localStorage.getItem("portalBound") === "true") {
+          portalBound.value = true;
+          try {
+            portalInfo.value = JSON.parse(
+              localStorage.getItem("portalInfo") || "{}"
+            );
+          } catch (e) {
+            console.error("解析 Portal 信息失敗:", e);
+          }
+        }
+
+        // 嘗試恢復註冊表單數據
+        let formData = {};
         try {
-          portalInfo.value = JSON.parse(localStorage.getItem('portalInfo') || '{}');
+          formData = JSON.parse(
+            localStorage.getItem("registerFormData") || "{}"
+          );
         } catch (e) {
-          console.error('解析 Portal 信息失敗:', e);
+          console.error("解析註冊表單數據失敗:", e);
         }
+
+        return {
+          isSignUp,
+          portalBound,
+          portalInfo,
+          fullName: ref(formData.fullName || ""),
+          registerEmail: ref(formData.registerEmail || ""),
+          phone: ref(formData.phone || ""),
+          registerPassword: ref(formData.registerPassword || ""),
+          confirmPassword: ref(formData.confirmPassword || ""),
+          userRole: ref("student"),
+          agreeTerms: ref(false),
+          message: ref(""),
+          messageType: ref(""),
+          showForgotPassword: ref(false),
+          forgotEmail: ref(""),
+          showTerms: ref(false),
+          showPrivacy: ref(false),
+          handlePortalLogin: () => {
+            window.location.href = apiService.auth.portal.getLoginUrl();
+          },
+        };
       }
-      
-      // 嘗試恢復註冊表單數據
-      let formData = {};
-      try {
-        formData = JSON.parse(localStorage.getItem('registerFormData') || '{}');
-      } catch (e) {
-        console.error('解析註冊表單數據失敗:', e);
+
+      // 檢查是否有錯誤訊息
+      if (route.query.error) {
+        const message = ref(decodeURIComponent(route.query.error));
+        const messageType = ref("error");
+        router.replace({ path: route.path });
+
+        return {
+          message,
+          messageType,
+          portalBound,
+          portalInfo,
+          isSignUp: ref(false),
+          email: ref(""),
+          password: ref(""),
+          rememberMe: ref(false),
+          fullName: ref(""),
+          registerEmail: ref(""),
+          phone: ref(""),
+          registerPassword: ref(""),
+          confirmPassword: ref(""),
+          userRole: ref("student"),
+          agreeTerms: ref(false),
+          showForgotPassword: ref(false),
+          forgotEmail: ref(""),
+          showTerms: ref(false),
+          showPrivacy: ref(false),
+          handlePortalLogin: () => {
+            window.location.href = apiService.auth.portal.getLoginUrl();
+          },
+        };
       }
-      
-      return {
-        isSignUp,
-        portalBound,
-        portalInfo,
-        fullName: ref(formData.fullName || ''),
-        registerEmail: ref(formData.registerEmail || ''),
-        phone: ref(formData.phone || ''),
-        registerPassword: ref(formData.registerPassword || ''),
-        confirmPassword: ref(formData.confirmPassword || ''),
-        userRole: ref("student"),
-        agreeTerms: ref(false),
-        message: ref(''),
-        messageType: ref(''),
-        showForgotPassword: ref(false),
-        forgotEmail: ref(''),
-        showTerms: ref(false),
-        showPrivacy: ref(false),
-        handlePortalLogin: () => {
-          window.location.href = apiService.auth.portal.getLoginUrl();
-        }
+
+      // Portal 快速登入處理
+      const handlePortalLogin = () => {
+        window.location.href = apiService.auth.portal.getLoginUrl();
       };
-    }
-
-    // 檢查是否有錯誤訊息
-    if (route.query.error) {
-      const message = ref(decodeURIComponent(route.query.error));
-      const messageType = ref("error");
-      router.replace({ path: route.path });
 
       return {
-        message,
-        messageType,
-        portalBound,
-        portalInfo,
+        // 登入相關
         isSignUp: ref(false),
         email: ref(""),
         password: ref(""),
         rememberMe: ref(false),
+
+        // 註冊相關
         fullName: ref(""),
         registerEmail: ref(""),
         phone: ref(""),
@@ -256,227 +290,209 @@ export default {
         confirmPassword: ref(""),
         userRole: ref("student"),
         agreeTerms: ref(false),
+
+        // Portal 相關
+        portalBound,
+        portalInfo,
+
+        // 信息相關
+        message: ref(""),
+        messageType: ref("error"),
+
+        // 對話框控制
         showForgotPassword: ref(false),
         forgotEmail: ref(""),
         showTerms: ref(false),
         showPrivacy: ref(false),
-        handlePortalLogin: () => {
-          window.location.href = apiService.auth.portal.getLoginUrl();
-        }
+
+        handlePortalLogin,
       };
-    }
+    },
+    methods: {
+      async handleLogin() {
+        try {
+          // 清除之前的錯誤訊息
+          this.message = "";
 
-    // Portal 快速登入處理
-    const handlePortalLogin = () => {
-      window.location.href = apiService.auth.portal.getLoginUrl();
-    };
-    
-    return {
-      // 登入相關
-      isSignUp: ref(false),
-      email: ref(""),
-      password: ref(""),
-      rememberMe: ref(false),
+          const response = await apiService.auth.login({
+            email: this.email,
+            password: this.password,
+          });
 
-      // 註冊相關
-      fullName: ref(""),
-      registerEmail: ref(""),
-      phone: ref(""),
-      registerPassword: ref(""),
-      confirmPassword: ref(""),
-      userRole: ref("student"),
-      agreeTerms: ref(false),
-      
-      // Portal 相關
-      portalBound,
-      portalInfo,
+          // const data = await response.json();
 
-      // 信息相關
-      message: ref(""),
-      messageType: ref("error"),
+          if (
+            response.success ||
+            (response.message && response.message === "登入成功")
+          ) {
+            // 清除舊的認證資料
+            clearAuthData();
 
-      // 對話框控制
-      showForgotPassword: ref(false),
-      forgotEmail: ref(""),
-      showTerms: ref(false),
-      showPrivacy: ref(false),
+            // 儲存用戶資訊
+            if (this.rememberMe) {
+              // 長期記住用戶（瀏覽器關閉後仍然有效）
+              localStorage.setItem("user", JSON.stringify(response.user));
+            } else {
+              // 僅在當前會話中記住用戶（瀏覽器關閉後失效）
+              sessionStorage.setItem("user", JSON.stringify(response.user));
+            }
 
-      handlePortalLogin,
-    };
-  },
-  methods: {
-    async handleLogin() {
-      try {
-        // 清除之前的錯誤訊息
-        this.message = "";
+            this.message = "登入成功";
+            this.messageType = "success";
 
-        const response = await apiService.auth.login({
-          email: this.email,
-          password: this.password,
-        });
+            // 延遲導航，讓用戶看到成功訊息
+            setTimeout(() => {
+              this.$router.push("/profile");
+              this.$store.commit("SET_CURRENTROUTE", "profile");
+            }, 1000);
+          } else {
+            this.message = "登入失敗";
+            this.messageType = "error";
+          }
+        } catch (error) {
+          console.error("登入錯誤:", error);
+          this.message = error.message || "登入失敗，請稍後再試";
+          this.messageType = "error";
+        }
+      },
 
-        // const data = await response.json();
+      async handleRegister() {
+        // 驗證密碼是否匹配
+        if (this.registerPassword !== this.confirmPassword) {
+          this.message = "密碼不匹配";
+          this.messageType = "error";
+          return;
+        }
 
-        if (response.success || (response.message && response.message === '登入成功')) {
-          // 清除舊的認證資料
-          clearAuthData();
+        // 檢查密碼強度（至少8位，包含字母和數字）
+        const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+        if (!passwordPattern.test(this.registerPassword)) {
+          this.message = "密碼至少需要8位，且包含字母和數字";
+          this.messageType = "error";
+          return;
+        }
 
-          // 儲存用戶資訊
-          if (response.user) {
-            localStorage.setItem("user", JSON.stringify(response.user));
+        try {
+          const registerData = {
+            username: this.fullName,
+            email: this.registerEmail,
+            password: this.registerPassword,
+            phone: this.phone,
+            user_role: this.userRole,
+          };
+
+          // 如果已綁定 Portal，添加 Portal 相關資訊
+          if (this.portalBound && this.portalInfo.student_id) {
+            registerData.portal_id = this.portalInfo.student_id;
+            if (this.portalInfo.school_email) {
+              registerData.school_email = this.portalInfo.school_email;
+            }
           }
 
-          this.message = "登入成功";
-          this.messageType = "success";
+          const response = await apiService.auth.register(registerData);
 
-          // 延遲導航，讓用戶看到成功訊息
-          setTimeout(() => {
-            this.$router.push("/profile");
-            this.$store.commit("SET_CURRENTROUTE", "profile");
-          }, 1000);
-        } else {
-          this.message = "登入失敗";
-          this.messageType = "error";
-        }
-      } catch (error) {
-        console.error("登入錯誤:", error);
-        this.message = "登入時發生錯誤，請稍後再試";
-        this.messageType = "error";
-      }
-    },
+          if (
+            response.success ||
+            (response.message && response.message === "註冊成功")
+          ) {
+            // 清除暫存數據
+            localStorage.removeItem("registerFormData");
+            localStorage.removeItem("bindingForRegistration");
+            localStorage.removeItem("portalBound");
+            localStorage.removeItem("portalInfo");
 
-    async handleRegister() {
-      // 驗證密碼是否匹配
-      if (this.registerPassword !== this.confirmPassword) {
-        this.message = "密碼不匹配";
-        this.messageType = "error";
-        return;
-      }
+            this.message = "註冊成功，請登入";
+            this.messageType = "success";
+            this.isSignUp = false;
 
-      // 檢查密碼強度（至少8位，包含字母和數字）
-      const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-      if (!passwordPattern.test(this.registerPassword)) {
-        this.message = "密碼至少需要8位，且包含字母和數字";
-        this.messageType = "error";
-        return;
-      }
-
-      try {
-        const registerData = {
-          username: this.fullName,
-          email: this.registerEmail,
-          password: this.registerPassword,
-          phone: this.phone,
-          user_role: this.userRole,
-        };
-
-        // 如果已綁定 Portal，添加 Portal 相關資訊
-        if (this.portalBound && this.portalInfo.student_id) {
-          registerData.portal_id = this.portalInfo.student_id;
-          if (this.portalInfo.school_email) {
-            registerData.school_email = this.portalInfo.school_email;
+            // 清空註冊表單
+            this.clearRegistrationForm();
+            // 預填登入表單
+            this.email = this.registerEmail;
+          } else {
+            this.message = response.message || "註冊失敗";
+            this.messageType = "error";
           }
-        }
-
-        const response = await apiService.auth.register(registerData);
-
-        if (response.success || (response.message && response.message === '註冊成功')) {
-          // 清除暫存數據
-          localStorage.removeItem('registerFormData');
-          localStorage.removeItem('bindingForRegistration');
-          localStorage.removeItem('portalBound');
-          localStorage.removeItem('portalInfo');
-          
-          this.message = "註冊成功，請登入";
-          this.messageType = "success";
-          this.isSignUp = false;
-
-          // 清空註冊表單
-          this.clearRegistrationForm();
-          // 預填登入表單
-          this.email = this.registerEmail;
-        } else {
-          this.message = response.message || "註冊失敗";
+        } catch (error) {
+          console.error("註冊錯誤:", error);
+          this.message = "註冊時發生錯誤，請稍後再試";
           this.messageType = "error";
         }
-      } catch (error) {
-        console.error("註冊錯誤:", error);
-        this.message = "註冊時發生錯誤，請稍後再試";
-        this.messageType = "error";
-      }
-    },
+      },
 
-    bindPortal() {
-      // 儲存當前註冊表單資訊到 localStorage，以便綁定後能返回並繼續註冊流程
-      localStorage.setItem(
-        "registerFormData",
-        JSON.stringify({
-          fullName: this.fullName,
-          registerEmail: this.registerEmail,
-          phone: this.phone,
-          registerPassword: this.registerPassword,
-          confirmPassword: this.confirmPassword,
-        })
-      );
+      bindPortal() {
+        // 儲存當前註冊表單資訊到 localStorage，以便綁定後能返回並繼續註冊流程
+        localStorage.setItem(
+          "registerFormData",
+          JSON.stringify({
+            fullName: this.fullName,
+            registerEmail: this.registerEmail,
+            phone: this.phone,
+            registerPassword: this.registerPassword,
+            confirmPassword: this.confirmPassword,
+          })
+        );
 
-      // 標記為註冊時綁定，用於回調時識別
-      localStorage.setItem("bindingForRegistration", "true");
+        // 標記為註冊時綁定，用於回調時識別
+        localStorage.setItem("bindingForRegistration", "true");
 
-      // 導向 Portal 授權頁面
-      window.location.href = apiService.auth.portal.getInfoUrl();
-    },
+        // 導向 Portal 授權頁面
+        window.location.href = apiService.auth.portal.getInfoUrl();
+      },
 
-    async handleForgotPassword() {
-      if (!this.forgotEmail) {
-        this.message = "請輸入電子郵件";
-        this.messageType = "error";
-        return;
-      }
+      async handleForgotPassword() {
+        if (!this.forgotEmail) {
+          this.message = "請輸入電子郵件";
+          this.messageType = "error";
+          return;
+        }
 
-      try {
-        const response = await apiService.auth.forgotPassword(this.forgotEmail);
+        try {
+          const response = await apiService.auth.forgotPassword(
+            this.forgotEmail
+          );
 
-        if (response.success) {
-          this.message = "密碼重設連結已發送至您的信箱";
-          this.messageType = "success";
-          this.showForgotPassword = false;
-          this.forgotEmail = "";
-        } else {
-          this.message = response.message || "無法處理密碼重設請求";
+          if (response.success) {
+            this.message = "密碼重設連結已發送至您的信箱";
+            this.messageType = "success";
+            this.showForgotPassword = false;
+            this.forgotEmail = "";
+          } else {
+            this.message = response.message || "無法處理密碼重設請求";
+            this.messageType = "error";
+          }
+        } catch (error) {
+          console.error("密碼重設錯誤:", error);
+          this.message = "發送重設連結時發生錯誤";
           this.messageType = "error";
         }
-      } catch (error) {
-        console.error("密碼重設錯誤:", error);
-        this.message = "發送重設連結時發生錯誤";
-        this.messageType = "error";
+      },
+
+      // 清空註冊表單
+      clearRegistrationForm() {
+        this.fullName = "";
+        this.registerEmail = "";
+        this.phone = "";
+        this.registerPassword = "";
+        this.confirmPassword = "";
+        this.portalBound = false;
+        this.portalInfo = {};
+        this.userRole = "student";
+        this.agreeTerms = false;
+      },
+    },
+
+    // 組件卸載時清理，但保留註冊過程中的數據
+    beforeUnmount() {
+      // 如果不是在註冊頁面，或者不是從 Portal 綁定回來的，清理存儲的數據
+      if (!this.isSignUp || this.$route.query.register !== "true") {
+        localStorage.removeItem("registerFormData");
+        localStorage.removeItem("bindingForRegistration");
+        localStorage.removeItem("portalBound");
+        localStorage.removeItem("portalInfo");
       }
     },
-    
-    // 清空註冊表單
-    clearRegistrationForm() {
-      this.fullName = "";
-      this.registerEmail = "";
-      this.phone = "";
-      this.registerPassword = "";
-      this.confirmPassword = "";
-      this.portalBound = false;
-      this.portalInfo = {};
-      this.userRole = "student";
-      this.agreeTerms = false;
-    }
-  },
-  
-  // 組件卸載時清理，但保留註冊過程中的數據
-  beforeUnmount() {
-    // 如果不是在註冊頁面，或者不是從 Portal 綁定回來的，清理存儲的數據
-    if (!this.isSignUp || this.$route.query.register !== 'true') {
-      localStorage.removeItem('registerFormData');
-      localStorage.removeItem('bindingForRegistration');
-      localStorage.removeItem('portalBound');
-      localStorage.removeItem('portalInfo');
-    }
-  }
-};
+  };
 </script>
 
 <style scoped>
