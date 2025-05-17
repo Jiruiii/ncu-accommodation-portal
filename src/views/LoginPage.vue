@@ -28,7 +28,7 @@
               <input type="checkbox" v-model="rememberMe" />
               記住我
             </label>
-            <a href="#" @click.prevent="showForgotPassword = true"
+            <a href="#" @click.prevent="showForgotPasswordForm"
               >忘記密碼？</a
             >
           </div>
@@ -133,19 +133,18 @@
     </div>
 
     <!-- 忘記密碼對話框 -->
-    <div v-if="showForgotPassword" class="modal-overlay">
-      <div class="modal-content">
-        <h3>重設密碼</h3>
-        <p>請輸入您的電子郵件，我們將發送重設密碼連結給您</p>
-        <input type="email" v-model="forgotEmail" placeholder="電子郵件" />
-        <div class="modal-buttons">
-          <button @click="handleForgotPassword">送出</button>
-          <button @click="showForgotPassword = false" class="cancel-btn">
-            取消
-          </button>
-        </div>
-      </div>
-    </div>
+    <email-input-modal
+      v-if="showEmailInput"
+      @close="showEmailInput = false"
+      @confirm="confirmEmailAndShowForgotPassword"
+      :initial-email="forgotEmail"
+    />
+
+    <forgot-password-modal
+      :show="showForgotPassword"
+      :user-email="forgotEmail"
+      @close="closeForgotPasswordModal"
+    />
 
     <!-- 服務條款對話框 -->
     <div v-if="showTerms" class="modal-overlay">
@@ -179,8 +178,14 @@
   import { useRoute, useRouter } from "vue-router";
   import { clearAuthData } from "@/utils/auth";
   import apiService from "@/services/api";
+  import ForgotPasswordModal from "@/components/profile/ForgotPasswordModal.vue";
+  import EmailInputModal from "@/components/profile/EmailInputModal.vue";
 
   export default {
+    components: {
+      ForgotPasswordModal,
+      EmailInputModal,
+    },
     setup() {
       const route = useRoute();
       const router = useRouter();
@@ -229,6 +234,7 @@
           message: ref(""),
           messageType: ref(""),
           showForgotPassword: ref(false),
+          showEmailInput: ref(false),
           forgotEmail: ref(""),
           showTerms: ref(false),
           showPrivacy: ref(false),
@@ -261,6 +267,7 @@
           userRole: ref("student"),
           agreeTerms: ref(false),
           showForgotPassword: ref(false),
+          showEmailInput: ref(false),
           forgotEmail: ref(""),
           showTerms: ref(false),
           showPrivacy: ref(false),
@@ -304,6 +311,7 @@
         forgotEmail: ref(""),
         showTerms: ref(false),
         showPrivacy: ref(false),
+        showEmailInput: ref(false),
 
         handlePortalLogin,
       };
@@ -440,32 +448,32 @@
         window.location.href = apiService.auth.portal.getInfoUrl();
       },
 
-      async handleForgotPassword() {
-        if (!this.forgotEmail) {
-          this.message = "請輸入電子郵件";
-          this.messageType = "error";
-          return;
+      showForgotPasswordForm() {
+        // 如果輸入框已有值，直接顯示忘記密碼模態框
+        if (this.email && this.validateEmail(this.email)) {
+          this.forgotEmail = this.email;
+          this.showForgotPassword = true;
+        } else {
+          // 否則先顯示郵箱輸入模態框
+          this.showEmailInput = true;
         }
+      },
 
-        try {
-          const response = await apiService.auth.forgotPassword(
-            this.forgotEmail
-          );
+      validateEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      },
 
-          if (response.success) {
-            this.message = "密碼重設連結已發送至您的信箱";
-            this.messageType = "success";
-            this.showForgotPassword = false;
-            this.forgotEmail = "";
-          } else {
-            this.message = response.message || "無法處理密碼重設請求";
-            this.messageType = "error";
-          }
-        } catch (error) {
-          console.error("密碼重設錯誤:", error);
-          this.message = "發送重設連結時發生錯誤";
-          this.messageType = "error";
-        }
+      // 確認郵箱並顯示忘記密碼模態框
+      confirmEmailAndShowForgotPassword(email) {
+        this.forgotEmail = email;
+        this.showEmailInput = false;
+        this.showForgotPassword = true;
+      },
+
+      // 關閉忘記密碼模態框
+      closeForgotPasswordModal() {
+        this.showForgotPassword = false;
+        this.forgotEmail = "";
       },
 
       // 清空註冊表單

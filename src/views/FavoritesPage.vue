@@ -135,6 +135,7 @@
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
+import { apiService } from "@/services/api";
 
 export default {
   name: "FavoritesPage",
@@ -147,6 +148,45 @@ export default {
     const currentPage = ref(1);
     // 修改为每頁顯示24個项目
     const itemsPerPage = 24;
+    const isLoading = ref(false);
+    const favoriteItems = ref([]);
+
+    // 獲取收藏列表
+    const fetchFavorites = async () => {
+      isLoading.value = true;
+      try {
+        const response = await apiService.accommodation.favorites.getFavorites();
+
+        const data = await response.json();
+        favoriteItems.value = data.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: item.rent_price,
+          location: item.address,
+          area: item.area || 0,
+          bedrooms: item.room_count || 1,
+          bathrooms: item.bathroom_count || 1,
+          tags: generateTags(item),
+          dateAdded: new Date(item.created_at),
+          image_url: item.image_url,
+          district: item.district,
+          property_type: item.property_type
+        }));
+      } catch (error) {
+        console.error("獲取收藏列表失敗:", error);
+      } finally {
+        isLoading.value = false;
+      }
+    };
+
+    // 生成標籤
+    const generateTags = (item) => {
+      const tags = [];
+      if (item.property_type) tags.push(item.property_type);
+      if (item.district) tags.push(item.district);
+      if (item.area) tags.push(`${item.area}坪`);
+      return tags.slice(0, 3);
+    };
 
     // 解析最低價格 (修正 extractMinPrice undefined)
     const extractMinPrice = (priceStr) => {
@@ -321,26 +361,26 @@ export default {
     };
 
     // 從 Vuex 獲取收藏房源列表
-    const favoriteItems = computed(() => {
-      try {
-        return store.getters.favoriteProperties.map((property) => ({
-          id: property.編碼 || 0,
-          title: property.標題 || "無標題",
-          price: extractMinPrice(property.房租 || "0"),
-          location: property.地址 || "地址不詳",
-          area: getPropertyArea(property),
-          bedrooms: getPropertyRooms(property),
-          bathrooms: 1, // 假設所有房源都有1間衛浴
-          tags: getPropertyTags(property),
-          dateAdded: new Date(), // 由於沒有收藏時間，使用當前時間
-          originalProperty: property, // 保存原始屬性對象
-          hasPhotos: hasPhotos(property), // 檢查是否有照片
-        }));
-      } catch (error) {
-        console.error("Error processing favorite properties:", error);
-        return [];
-      }
-    });
+    // const favoriteItems = computed(() => {
+    //   try {
+    //     return store.getters.favoriteProperties.map((property) => ({
+    //       id: property.編碼 || 0,
+    //       title: property.標題 || "無標題",
+    //       price: extractMinPrice(property.房租 || "0"),
+    //       location: property.地址 || "地址不詳",
+    //       area: getPropertyArea(property),
+    //       bedrooms: getPropertyRooms(property),
+    //       bathrooms: 1, // 假設所有房源都有1間衛浴
+    //       tags: getPropertyTags(property),
+    //       dateAdded: new Date(), // 由於沒有收藏時間，使用當前時間
+    //       originalProperty: property, // 保存原始屬性對象
+    //       hasPhotos: hasPhotos(property), // 檢查是否有照片
+    //     }));
+    //   } catch (error) {
+    //     console.error("Error processing favorite properties:", error);
+    //     return [];
+    //   }
+    // });
 
     // 排序後的收藏
     const sortedFavorites = computed(() => {
@@ -383,25 +423,30 @@ export default {
 
     const isSelected = (id) => selectedItems.value.includes(id);
 
-    const removeFavorite = (id) => {
+    const removeFavorite = async (id) => {
       // 使用動畫效果
       const card = document.getElementById(`favorite-card-${id}`);
       if (card) {
         card.style.opacity = "0";
         card.style.transform = "scale(0.8)";
 
-        setTimeout(() => {
-          store.commit("TOGGLE_FAVORITE", id);
-          selectedItems.value = selectedItems.value.filter(
-            (itemId) => itemId !== id
-          );
-        }, 300); // 300ms 後執行刪除
-      } else {
-        // 如果找不到元素，直接執行
-        store.commit("TOGGLE_FAVORITE", id);
-        selectedItems.value = selectedItems.value.filter(
-          (itemId) => itemId !== id
-        );
+        try {
+          const response = await apiService.accommodation.favorites.removeFavorite(id);
+
+          if (!response.success) {
+            throw new Error('Failed to remove favorite');
+          }
+
+          setTimeout(() => {
+            store.commit("TOGGLE_FAVORITE", id);
+            favoriteItems.value = favoriteItems.value.filter(item => item.id !== id);
+            selectedItems.value = selectedItems.value.filter(itemId => itemId !== id);
+          }, 300);
+        } catch (error) {
+          console.error('Error removing favorite:', error);
+          card.style.opacity = "1";
+          card.style.transform = "scale(1)";
+        }
       }
     };
 
@@ -456,6 +501,7 @@ export default {
     });
 
     return {
+      fetchFavorites,
       favoriteItems,
       selectedItems,
       sortBy,

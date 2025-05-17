@@ -55,7 +55,7 @@ class VerificationCode(db.Model):
     __tablename__ = 'verification_codes'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=True)
     code = db.Column(db.String(10), nullable=False)
     type = db.Column(db.String(20), nullable=False)  # email 或 phone
     target = db.Column(db.String(100), nullable=False)  # 郵箱或手機號
@@ -68,7 +68,7 @@ class PasswordReset(db.Model):
     __tablename__ = 'password_resets'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=True)
     token = db.Column(db.String(100), nullable=False, unique=True)
     expiry = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
