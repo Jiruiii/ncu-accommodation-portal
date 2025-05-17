@@ -7,10 +7,10 @@
             </div>
             <i class="fa-solid fa-phone" style="color: black; font-size: 25px; cursor: pointer;"></i>
         </div>
-        <div class="chatroom">
-            <div class="msg-tenant">
-                <div class="time">4:15</div>
-                <div class="message-tenant">冷氣開機後無法正常製冷，可能是需要添加冷媒。</div>
+        <div class="chatroom" ref="chatContainer">
+            <div class="msg-tenant" v-if="checkmsg" v-for="msgTenant in msgsTenant">
+                <div class="time">{{msgTenant.time}}</div>
+                <div class="message-tenant">{{msgTenant.msg}}</div>
                 <img class="msg-tenant-image"  src="https://randomuser.me/api/portraits/women/65.jpg" />
             </div>
             <div class="msg-landlord">
@@ -18,29 +18,78 @@
                 <div class="message-landlord">已完成冷媒添加及系統清潔，冷氣已恢復正常運作。</div>
                 <div class="time">5:15</div>
             </div>
-            <div class="input-flame">
-                <input placeholder="請輸入文字..." />
-                <div class="send-button"><i class="fa-solid fa-paper-plane"></i></div>
-            </div>
+        </div>
+        <div class="input-flame">
+            <input placeholder="請輸入文字..." v-model.trim="msg" @keydown.enter="addMessages"/>
+            <div class="send-button" @click="addMessages"><i class="fa-solid fa-paper-plane"></i></div>
         </div>
     </div>
 </template>
 
 <script>
+    import { ref, onMounted, nextTick } from "vue";
+
     export default{
         name: "ChatRoom",
+        setup (){
+            const msgsTenant = ref([]);
+            const msg = ref("");
+            const time = ref("");
+            const checkmsg = ref(false);
+            const chatContainer = ref(null);
+
+            const addMessages = () => {
+                const now = new Date();
+                time.value = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
+                msgsTenant.value.push({ msg: msg.value, time: time.value });
+
+                msg.value = "";
+                checkMessage();  
+                nextTick(() => {
+                    if (chatContainer.value) {
+                        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+                    }
+                });
+            };
+
+            const checkMessage = () => {
+                checkmsg.value = msgsTenant.value.length > 0;
+            };
+
+            onMounted(() => {
+                nextTick(() => {
+                    if (chatContainer.value) {
+                        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+                    }
+                });
+            }); 
+
+            return { 
+                msgsTenant,
+                msg,
+                checkmsg,
+                addMessages,
+                checkMessage,
+                chatContainer,
+            };
+        },
     }
 </script>
 
 <style scoped>
     .chatroom-flame{
+        display: flex;
+        flex-direction: column;
         background-color: white;
         padding: 30px; 
+        height: 100vh;
     }
     .chatroom-title{
         background-color: #84C1FF;
         padding: 20px;
         border-bottom: 2px solid white;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -60,11 +109,11 @@
         font-weight: bold;
     }
     .chatroom{
-        height: 70%;
+        overflow-y: auto;
+        flex-grow: 1;  /* 占滿可用空間 */
         background-color: #C4E1FF;
         padding-top: 20px;
         display: flex;
-        justify-content: center;
         flex-direction: column;
     }
     .msg-landlord, .msg-tenant{
@@ -95,7 +144,10 @@
         margin: 5px;
     }
     .input-flame{
-        height: 100px;
+        height: 80px;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+        background-color: #C4E1FF;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -110,6 +162,10 @@
         padding: 10px;
         border: none;
         border-radius: 15px;
+    }
+    input:focus{
+        border: 2px solid #007bff;
+        outline: none;
     }
     .send-button{
         position: absolute;
