@@ -31,3 +31,4 @@ backend/**/**/**/__pycache__/
 
 # database files
 backend/data.sqlite
+backend/flask_session/
