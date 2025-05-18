@@ -5,21 +5,20 @@
       <div class="overlay"></div>
       <div class="hero-content">
         <h1>中央大學校外外宿網</h1>
-        <p>整合式的校外住宿資訊平台，讓你的找房體驗更輕鬆</p>
-        <div class="search-container" style="border-radius: 8px;">
-          <div class="search-input">
-            <i class="search-icon"></i>
-            <input
-              type="text"
-              placeholder="輸入地點、價格或房型..."
-              v-model="searchQuery"
-              style="border-radius: 0; height: 50px;"
-            />
-          </div>
-          <div class="search-button" style="border-radius: 0;" @click="quickSearch">快速搜尋</div>
+          <p>整合式的校外住宿資訊平台，讓你的找房體驗更輕鬆</p>
+          <div class="search-container" style="border-radius: 8px;">
+            <div class="search-input">
+              <i class="search-icon"></i>
+              <input
+                type="text"
+                placeholder="一站式找房，讓住宿不再煩惱"
+                readonly
+                style="border-radius: 0; height: 50px; cursor: default; pointer-events: none;"
+              />
+            </div>
+            <div class="search-button" style="border-radius: 0;" @click="navigateToLogin">立即開始</div>
         </div>
       </div>
-
 </div>
 
 <!-- 介紹版塊 -->
@@ -359,11 +358,14 @@
 <script>
   import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
   import { useStore } from "vuex";
+  import { useRouter } from "vue-router";
 
   export default {
     name: "HomePage",
     setup() {
       const store = useStore();
+      const router = useRouter();
+      
       const searchQuery = ref("");
       
       // 統計資訊 (目標值)
@@ -385,6 +387,10 @@
         subject: "",
         message: ""
       });
+
+      const navigateToLogin = () => {
+        router.push("/login");
+      };
 
       // 提交聯絡表單
       const submitForm = () => {
@@ -870,6 +876,7 @@
         testimonialContainer,
         nextTestimonial,
         prevTestimonial,
+        navigateToLogin,
         goToTestimonial,
         // 本月精選輪播
         currentListing,
@@ -1457,6 +1464,7 @@
     overflow: hidden;
     scroll-behavior: smooth;
     margin: 0 auto;
+    width: 100%;
   }
 
   .testimonial {
@@ -1468,13 +1476,7 @@
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     transition: all 0.5s ease;
     text-align: center;
-  }
-
-  /* Remove the scale and opacity differences between testimonials */
-  /* All testimonials will now have the same shadow appearance */
-  .testimonial:nth-child(1) {
-    transform: none;
-    opacity: 1;
+    box-sizing: border-box;
   }
 
   .testimonial-content {
@@ -1559,11 +1561,11 @@
   }
 
   .prev-arrow {
-    left: -22px;
+    left: 10px;
   }
 
   .next-arrow {
-    right: -22px;
+    right: 10px;
   }
 
   .arrow-icon {
@@ -1604,25 +1606,90 @@
   }
 
   @media (max-width: 768px) {
+    .testimonials {
+      padding: 60px 15px;
+    }
+    
+    .testimonial-carousel {
+      padding: 10px 0;
+      width: calc(100% - 20px);
+      margin: 0 auto;
+    }
+    
     .testimonial {
-      padding: 20px;
+      padding: 25px 15px;
+      border-radius: 12px;
+      min-width: 100%;
+      width: 100%;
     }
     
     .testimonial-content p {
-      font-size: 1rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    
+    .testimonial-author {
+      gap: 10px;
+    }
+    
+    .author-avatar {
+      width: 60px;
+      height: 60px;
+    }
+    
+    .author-info h4 {
+      font-size: 1.1rem;
+    }
+    
+    .author-info p {
+      font-size: 0.85rem;
     }
     
     .carousel-arrow {
       width: 36px;
       height: 36px;
     }
+  }
+
+  @media (max-width: 480px) {
+    .testimonials h2 {
+      font-size: 1.7rem;
+    }
+    
+    .testimonial-carousel {
+      width: 100%;
+    }
+    
+    .testimonial {
+      padding: 20px 12px;
+      width: 100%;
+    }
+    
+    .testimonial-content p {
+      font-size: 0.9rem;
+    }
+    
+    .author-avatar {
+      width: 50px;
+      height: 50px;
+    }
+    
+    .author-info h4 {
+      font-size: 1rem;
+    }
     
     .prev-arrow {
-      left: -10px;
+      left: 5px;
     }
     
     .next-arrow {
-      right: -10px;
+      right: 5px;
+    }
+    
+    .carousel-arrow {
+      width: 32px;
+      height: 32px;
+      background-color: rgba(255, 255, 255, 0.9);
     }
   }
 
@@ -2038,6 +2105,11 @@
     .search-button {
       height: 50px;
       border-radius: 0 0 16px 16px;
+    }
+    
+    /* Hide stats container on mobile */
+    .stats-container {
+      display: none;
     }
   }
 

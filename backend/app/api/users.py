@@ -139,7 +139,7 @@ def upload_profile_image():
         filename = secure_filename(file.filename)
         unique_filename = f"{uuid.uuid4().hex}_{filename}"
         
-        # 建立上傳路徑
+        # 建立上傳路徑 - 注意這裡不再拼接 'profiles'
         upload_folder = current_app.config['UPLOAD_FOLDER']
         profile_upload_path = os.path.join(upload_folder, 'profiles')
         
@@ -151,11 +151,12 @@ def upload_profile_image():
         file_path = os.path.join(profile_upload_path, unique_filename)
         file.save(file_path)
         
-        # 更新資料庫中的頭像路徑
+        # 更新資料庫中的頭像路徑 - 使用正確的相對路徑
         user.profile_image = f"/uploads/profiles/{unique_filename}"
         user.updated_at = datetime.datetime.utcnow()
         db.session.commit()
         
+        # 返回完整 URL 以便前端顯示
         return jsonify({
             "message": "頭像已更新",
             "profile_image": user.profile_image

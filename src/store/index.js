@@ -1,5 +1,6 @@
-import { createStore } from 'vuex';
-import accommodationData from '@/data.json';
+import { createStore } from "vuex";
+// import accommodationData from "@/data.json";
+import apiService from "@/services/api";
 
 export default createStore({
   state: {
@@ -9,7 +10,7 @@ export default createStore({
 
     // 導航狀態
     navigationOpen: false,
-    currentRoute: localStorage.getItem('currentRoute') || 'home',
+    currentRoute: localStorage.getItem("currentRoute") || "home",
     isNavOpen: false,
 
     // 房源資料
@@ -17,6 +18,8 @@ export default createStore({
     filteredAccommodations: [],
     selectedAccommodation: null,
     favoriteIds: [],
+    loading: false,
+    dataInitialized: false,
 
     // 搜尋和篩選條件
     searchQuery: "",
@@ -25,13 +28,91 @@ export default createStore({
       minPrice: null,
       maxPrice: null,
       types: [],
-      features: []
+      features: [],
     },
 
     // 地圖狀態
     mapView: false,
-    mapCenter: { lat: 24.9680, lng: 121.1944 }, // 中央大學座標
-    mapZoom: 15
+    mapCenter: { lat: 24.968, lng: 121.1944 }, // 中央大學座標
+    mapZoom: 15,
+
+    // 新增：房源評論資料
+    comments: {
+      // 預設假資料，使用房源編碼作為 key
+      1: [
+        {
+          id: 1,
+          userId: "user123",
+          userName: "張小明",
+          content: "房東人很好，環境也很乾淨！浴室有暖氣，住起來很舒適。",
+          rating: 5,
+          date: "2025-05-10",
+          likes: 3,
+        },
+        {
+          id: 2,
+          userId: "user456",
+          userName: "林小華",
+          content: "地點很方便，走路到中央大學只要10分鐘。附近有超商也很方便。",
+          rating: 4,
+          date: "2025-05-08",
+          likes: 1,
+        },
+      ],
+      2: [
+        {
+          id: 3,
+          userId: "user789",
+          userName: "王小美",
+          content: "冷氣很涼，房間隔音還不錯。唯一缺點是洗衣機共用，要排隊。",
+          rating: 4,
+          date: "2025-05-05",
+          likes: 2,
+        },
+      ],
+      3: [
+        {
+          id: 4,
+          userId: "user321",
+          userName: "黃小傑",
+          content: "價格合理，房間採光佳。房東定期打掃公共區域，環境很乾淨。",
+          rating: 5,
+          date: "2025-05-12",
+          likes: 4,
+        },
+        {
+          id: 5,
+          userId: "user654",
+          userName: "陳小玉",
+          content: "整體不錯，但廁所有點小。夏天熱水不太穩定，其他都還可以。",
+          rating: 3,
+          date: "2025-05-03",
+          likes: 0,
+        },
+      ],
+      5: [
+        {
+          id: 6,
+          userId: "user111",
+          userName: "李大明",
+          content: "停車方便，房間明亮。不過走廊燈晚上有點太亮，需要厚窗簾。",
+          rating: 4,
+          date: "2025-05-01",
+          likes: 2,
+        },
+      ],
+      8: [
+        {
+          id: 7,
+          userId: "user222",
+          userName: "吳小芳",
+          content: "網路很快，管理員人很親切。缺點是附近施工，早上有點吵。",
+          rating: 3,
+          date: "2025-04-28",
+          likes: 1,
+        },
+      ],
+    },
   },
 
   mutations: {
@@ -40,13 +121,17 @@ export default createStore({
       state.isAuthenticated = !!user;
     },
 
+    SET_AUTHENTICATED(state, value) {
+      state.isAuthenticated = value;
+    },
+
     TOGGLE_NAVIGATION(state) {
       state.navigationOpen = !state.navigationOpen;
     },
 
     SET_CURRENTROUTE(state, route) {
       state.currentRoute = route;
-      localStorage.setItem('currentRoute', route);
+      localStorage.setItem("currentRoute", route);
     },
 
     OPEN_NAV(state) {
@@ -64,6 +149,14 @@ export default createStore({
     SET_ACCOMMODATIONS(state, accommodations) {
       state.accommodations = accommodations;
       state.filteredAccommodations = accommodations;
+    },
+
+    SET_DATA_INITIALIZED(state, value) {
+      state.dataInitialized = value;
+    },
+
+    SET_LOADING(state, isLoading) {
+      state.loading = isLoading;
     },
 
     SET_FILTERED_ACCOMMODATIONS(state, accommodations) {
@@ -98,7 +191,22 @@ export default createStore({
         state.favoriteIds.splice(index, 1);
       }
       // 儲存到 localStorage
-      localStorage.setItem('favoriteAccommodations', JSON.stringify(state.favoriteIds));
+      localStorage.setItem(
+        "favoriteAccommodations",
+        JSON.stringify(state.favoriteIds)
+      );
+    },
+
+    REMOVE_FAVORITE(state, id) {
+      const index = state.favoriteIds.indexOf(id);
+      if (index !== -1) {
+        state.favoriteIds.splice(index, 1);
+      }
+      // 儲存到 localStorage
+      localStorage.setItem(
+        "favoriteAccommodations",
+        JSON.stringify(state.favoriteIds)
+      );
     },
 
     TOGGLE_MAP_VIEW(state) {
@@ -107,37 +215,345 @@ export default createStore({
 
     SET_MAP_CENTER(state, center) {
       state.mapCenter = center;
-    }
+    },
+
+    // 新增：評論相關 mutations
+    ADD_COMMENT(state, { propertyId, comment }) {
+      if (!state.comments[propertyId]) {
+        state.comments[propertyId] = [];
+      }
+      state.comments[propertyId].unshift(comment);
+
+      // 更新 localStorage
+      localStorage.setItem("propertyComments", JSON.stringify(state.comments));
+    },
+
+    LIKE_COMMENT(state, { propertyId, commentId }) {
+      const comment = state.comments[propertyId]?.find(
+        (c) => c.id === commentId
+      );
+      if (comment) {
+        comment.likes += 1;
+
+        // 更新 localStorage
+        localStorage.setItem(
+          "propertyComments",
+          JSON.stringify(state.comments)
+        );
+      }
+    },
+
+    LOAD_COMMENTS(state, comments) {
+      if (comments) {
+        state.comments = comments;
+      }
+    },
   },
 
   actions: {
-    // 獲取房源資料
-    async fetchAccommodations({ commit, dispatch }) {
+    // 初始化應用程式
+    async initializeApp({ commit, dispatch }) {
       try {
-        // 篩選有效資料
-        const validAccommodations = accommodationData.filter(property =>
-          property &&
-          property.編碼 &&
-          property.標題 &&
-          property.房租
-        );
+        // 嘗試從 localStorage 載入收藏
+        const savedFavorites = localStorage.getItem("favoriteAccommodations");
+        if (savedFavorites) {
+          commit("SET_FAVORITE_IDS", JSON.parse(savedFavorites));
+        }
 
-        commit('SET_ACCOMMODATIONS', validAccommodations);
+        // 嘗試從 localStorage 載入房源資料
+        const savedAccommodations = localStorage.getItem("accommodations");
+        if (savedAccommodations) {
+          const parsedData = JSON.parse(savedAccommodations);
+          commit("SET_ACCOMMODATIONS", parsedData);
+          commit("SET_LOADING", false);
+
+          // 如果有本地資料，先套用篩選和排序
+          dispatch("applyFiltersAndSort");
+
+          // 標記為已初始化
+          commit("SET_DATA_INITIALIZED", true);
+        }
+
+        // 檢查是否需要更新資料（如果資料太舊或不存在）
+        const lastUpdate = localStorage.getItem("accommodationsLastUpdated");
+        const now = new Date().getTime();
+        const dataAge = lastUpdate ? now - parseInt(lastUpdate) : Infinity;
+
+        // 如果資料不存在或太舊（超過1小時），則從API獲取
+        if (!savedAccommodations || dataAge > 3600000) {
+          console.log("Data is stale or missing, fetching from API...");
+          await dispatch("fetchAccommodations");
+        }
+
+        // 檢查用戶登入狀態
+        const userFromLocal = localStorage.getItem("user");
+        const userFromSession = sessionStorage.getItem("user");
+
+        if (userFromLocal || userFromSession) {
+          const userData = JSON.parse(userFromLocal || userFromSession);
+          commit("SET_USER", userData);
+          commit("SET_AUTHENTICATED", true);
+
+          // 如果用戶已登入，嘗試同步收藏
+          dispatch("syncFavorites");
+        }
+      } catch (error) {
+        console.error("Failed to initialize app:", error);
+
+        // 如果初始化失敗但有本地資料，仍標記為已初始化
+        if (localStorage.getItem("accommodations")) {
+          commit("SET_DATA_INITIALIZED", true);
+        }
+      }
+    },
+
+    // 獲取房源資料
+    async fetchAccommodations({ commit, dispatch, state }) {
+      try {
+        commit("SET_LOADING", true);
+
+        // 從 API 獲取房源資料
+        const response = await apiService.accommodations.getAccommodations();
+
+        if (
+          response &&
+          response.success === true &&
+          Array.isArray(response.items)
+        ) {
+          // 將 API 返回的資料格式轉換為前端使用的格式
+          const formattedData = response.items.map((item) => {
+            return {
+              編碼: item.accommodation_id,
+              標題: item.title,
+              房租: String(item.rent_price),
+              地址: item.address,
+              聯絡資訊: item.contact_info || "請聯絡房東",
+              屋內設備: item.amenities
+                ? item.amenities
+                    .filter(
+                      (a) =>
+                        a.category === "appliance" || a.category === "furniture"
+                    )
+                    .map((a) => a.name)
+                : [],
+              公共設施: item.amenities
+                ? item.amenities
+                    .filter(
+                      (a) => a.category === "utility" || a.category === "other"
+                    )
+                    .map((a) => a.name)
+                : [],
+              屋況說明: item.description
+                ? item.description.split(/[,，、。；;]/).filter((s) => s.trim())
+                : [],
+              出租房數: {
+                套房:
+                  item.studio_count > 0
+                    ? {
+                        總數: item.studio_count,
+                        空房: item.studio_available,
+                        坪數: item.studio_area
+                          ? `約${item.studio_area}坪`
+                          : item.area
+                          ? `約${item.area}坪`
+                          : "未提供",
+                      }
+                    : null,
+                雅房:
+                  item.single_count > 0
+                    ? {
+                        總數: item.single_count,
+                        空房: item.single_available,
+                        坪數: item.single_area
+                          ? `約${item.single_area}坪`
+                          : item.area
+                          ? `約${item.area}坪`
+                          : "未提供",
+                      }
+                    : null,
+              },
+              其他費用: item.deposit ? `押金：${item.deposit}元` : "無額外費用",
+              房屋照片: item.images ? item.images.map((img) => img.url) : [],
+              建立時間: item.created_at,
+              更新時間: item.updated_at,
+              latitude: item.latitude,
+              longitude: item.longitude,
+              distance_to_university: item.distance_to_university,
+            };
+          });
+
+          commit("SET_ACCOMMODATIONS", formattedData);
+
+          localStorage.setItem("accommodations", JSON.stringify(formattedData));
+          localStorage.setItem('accommodationsLastUpdated', new Date().getTime().toString());
+
+          commit('SET_DATA_INITIALIZED', true);
+
+          dispatch('applyFiltersAndSort');
+        } else {
+          console.error(
+            "Failed to fetch accommodations:",
+            response?.message || "Unknown error"
+          );
+          throw new Error("Failed to fetch accommodations");
+        }
 
         // 從 localStorage 載入收藏
-        const savedFavorites = localStorage.getItem('favoriteAccommodations');
+        const savedFavorites = localStorage.getItem("favoriteAccommodations");
         const favoriteIds = savedFavorites ? JSON.parse(savedFavorites) : [];
-        commit('SET_FAVORITE_IDS', favoriteIds);
+        commit("SET_FAVORITE_IDS", favoriteIds);
 
         // 應用初始篩選和排序
-        dispatch('applyFiltersAndSort');
+        dispatch("applyFiltersAndSort");
       } catch (error) {
-        console.error('Failed to fetch accommodations:', error);
+        console.error("Failed to fetch accommodations:", error);
+
+        // 錯誤處理：嘗試從本地 JSON 檔案獲取
+        const fallbackData = await import("@/data.json").catch((err) => {
+          console.error("Failed to load fallback data:", err);
+          return { default: [] };
+        });
+
+        if (state.accommodations.length > 0) {
+          commit('SET_DATA_INITIALIZED', true);
+        }
+
+        commit("SET_ACCOMMODATIONS", fallbackData.default || []);
+
+        // 應用初始篩選和排序
+        dispatch("applyFiltersAndSort");
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    },
+
+    // 獲取收藏房源
+    async fetchFavorites({ commit }) {
+      try {
+        const response =
+          await apiService.accommodations.favorites.getFavorites();
+
+        if (response) {
+          // 提取 accommodation_id，設置到 favoriteIds
+          const favoriteIds = response.map((item) => item.id);
+          commit("SET_FAVORITE_IDS", favoriteIds);
+
+          // 更新 localStorage
+          localStorage.setItem(
+            "favoriteAccommodations",
+            JSON.stringify(favoriteIds)
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch favorites:", error);
+        // 如果 API 請求失敗，可以保留本地的收藏資料
+      }
+    },
+
+    // 切換收藏狀態
+    async toggleFavoriteWithApi({ commit }, id) {
+      try {
+        const response =
+          await apiService.accommodations.favorites.toggleFavorite(id);
+
+        if (response && response.success) {
+          commit("TOGGLE_FAVORITE", id);
+          return true;
+        } else {
+          throw new Error("API failed to toggle favorite");
+        }
+      } catch (error) {
+        console.error("Failed to toggle favorite:", error);
+
+        commit("TOGGLE_FAVORITE", id);
+
+        console.warn("Changes are saved locally only");
+        return false;
+      }
+    },
+
+    // 從收藏中移除單個項目
+    async removeFavorite({ commit }, id) {
+      try {
+        // 嘗試使用 API 移除收藏
+        const response =
+          await apiService.accommodations.favorites.removeFavorite(id);
+
+        if (response && response.success) {
+          // API 成功，更新本地狀態
+          commit("REMOVE_FAVORITE", id);
+          return true;
+        } else {
+          throw new Error("API request failed");
+        }
+      } catch (error) {
+        console.error("Failed to remove favorite with API:", error);
+
+        // API 失敗，僅在本地移除收藏
+        commit("REMOVE_FAVORITE", id);
+
+        // 顯示提示
+        console.warn("Changes are saved locally only");
+        return false;
+      }
+    },
+
+    // 同步收藏列表與伺服器
+    async syncFavorites({ commit, state }) {
+      // 如果用戶已登入，則嘗試與伺服器同步收藏
+      if (state.isAuthenticated) {
+        try {
+          const response =
+            await apiService.accommodations.favorites.getFavorites();
+
+          // 從回應中提取房源 ID
+          const serverFavoriteIds = response.map((item) => item.id);
+
+          // 本地收藏 ID
+          const localFavoriteIds = state.favoriteIds;
+
+          if (JSON.stringify(serverFavoriteIds.sort()) === JSON.stringify(localFavoriteIds.sort())) {
+            return; 
+          }
+
+          // 找出需要添加到伺服器的本地收藏
+          const toAdd = localFavoriteIds.filter(
+            (id) => !serverFavoriteIds.includes(id)
+          );
+
+          // 找出需要從本地移除的伺服器收藏 (已在伺服器上移除)
+          const toRemove = serverFavoriteIds.filter(
+            (id) => !localFavoriteIds.includes(id)
+          );
+
+          // 同步添加
+          for (const id of toAdd) {
+            await apiService.accommodations.favorites.toggleFavorite(id);
+          }
+
+          // 同步移除
+          for (const id of toRemove) {
+            await apiService.accommodations.favorites.removeFavorite(id);
+          }
+
+          // 更新本地狀態為伺服器狀態
+          commit("SET_FAVORITE_IDS", serverFavoriteIds);
+
+          // 更新 localStorage
+          localStorage.setItem(
+            "favoriteAccommodations",
+            JSON.stringify(serverFavoriteIds)
+          );
+
+          console.log("Favorites synced with server");
+        } catch (error) {
+          console.error("Failed to sync favorites with server:", error);
+        }
       }
     },
 
     // 應用篩選和排序
-    applyFiltersAndSort({ commit, state }) {
+    async applyFiltersAndSort({ commit, state }) {
       let filtered = [...state.accommodations];
 
       // 套用搜尋
@@ -147,22 +563,28 @@ export default createStore({
           (property) =>
             (property.標題 && property.標題.toLowerCase().includes(query)) ||
             (property.地址 && property.地址.toLowerCase().includes(query)) ||
-            (property.屋內設備 && property.屋內設備.some(item => item.toLowerCase().includes(query))) ||
-            (property.公共設施 && property.公共設施.some(item => item.toLowerCase().includes(query)))
+            (property.屋內設備 &&
+              property.屋內設備.some((item) =>
+                item.toLowerCase().includes(query)
+              )) ||
+            (property.公共設施 &&
+              property.公共設施.some((item) =>
+                item.toLowerCase().includes(query)
+              ))
         );
       }
 
       // 套用價格過濾
       if (state.filters.minPrice) {
         filtered = filtered.filter((property) => {
-          const price = extractMinPrice(property.房租 || '0');
+          const price = extractMinPrice(property.房租 || "0");
           return price >= state.filters.minPrice;
         });
       }
 
       if (state.filters.maxPrice) {
         filtered = filtered.filter((property) => {
-          const price = extractMaxPrice(property.房租 || '0');
+          const price = extractMaxPrice(property.房租 || "0");
           return price <= state.filters.maxPrice;
         });
       }
@@ -200,13 +622,13 @@ export default createStore({
         case "priceAsc":
           filtered.sort(
             (a, b) =>
-              extractMinPrice(a.房租 || '0') - extractMinPrice(b.房租 || '0')
+              extractMinPrice(a.房租 || "0") - extractMinPrice(b.房租 || "0")
           );
           break;
         case "priceDesc":
           filtered.sort(
             (a, b) =>
-              extractMinPrice(b.房租 || '0') - extractMinPrice(a.房租 || '0')
+              extractMinPrice(b.房租 || "0") - extractMinPrice(a.房租 || "0")
           );
           break;
         case "distanceAsc":
@@ -221,29 +643,107 @@ export default createStore({
           break;
       }
 
-      commit('SET_FILTERED_ACCOMMODATIONS', filtered);
+      commit("SET_FILTERED_ACCOMMODATIONS", filtered);
     },
 
     // 設置路由並觸發動畫
     navigateTo({ commit }, route) {
-      commit('SET_CURRENTROUTE', route);
+      commit("SET_CURRENTROUTE", route);
     },
+
+    addComment({ commit, state }, { propertyId, content, rating }) {
+      // 產生新評論
+      const newComment = {
+        id: Date.now(),
+        userId: state.user?.id || "guest",
+        userName: state.user?.name || "訪客",
+        content,
+        rating,
+        date: new Date().toISOString().split("T")[0],
+        likes: 0,
+      };
+
+      // 提交 mutation
+      commit("ADD_COMMENT", { propertyId, comment: newComment });
+    },
+
+    likeComment({ commit }, { propertyId, commentId }) {
+      commit("LIKE_COMMENT", { propertyId, commentId });
+    },
+
+    // 從 localStorage 加載評論
+    loadComments({ commit }) {
+      try {
+        const savedComments = localStorage.getItem("propertyComments");
+        if (savedComments) {
+          commit("LOAD_COMMENTS", JSON.parse(savedComments));
+        }
+      } catch (error) {
+        console.error("無法載入評論:", error);
+      }
+    },
+
+    // 初始化資料時同時加載評論
+    // async fetchAccommodations({ commit, dispatch }) {
+    //   try {
+    //     // 原有的加載邏輯...
+    //     const validAccommodations = accommodationData.filter(property =>
+    //       property &&
+    //       property.編碼 &&
+    //       property.標題 &&
+    //       property.房租
+    //     );
+
+    //     commit('SET_ACCOMMODATIONS', validAccommodations);
+
+    //     const savedFavorites = localStorage.getItem('favoriteAccommodations');
+    //     const favoriteIds = savedFavorites ? JSON.parse(savedFavorites) : [];
+    //     commit('SET_FAVORITE_IDS', favoriteIds);
+
+    //     // 新增：載入評論
+    //     dispatch('loadComments');
+
+    //     dispatch('applyFiltersAndSort');
+    //   } catch (error) {
+    //     console.error('Failed to fetch accommodations:', error);
+    //   }
+    // }
   },
 
   getters: {
-    isLoggedIn: state => state.isAuthenticated,
-    currentUser: state => state.user,
-    allAccommodations: state => state.accommodations,
-    filteredAccommodations: state => state.filteredAccommodations,
-    selectedAccommodation: state => state.selectedAccommodation,
-    favoriteIds: state => state.favoriteIds,
+    isLoggedIn: (state) => state.isAuthenticated,
+    currentUser: (state) => state.user,
+    allAccommodations: (state) => state.accommodations,
+    filteredAccommodations: (state) => state.filteredAccommodations,
+    selectedAccommodation: (state) => state.selectedAccommodation,
+    favoriteIds: (state) => state.favoriteIds,
     favoriteProperties: (state) => {
-      return state.accommodations.filter(property => 
+      return state.accommodations.filter((property) =>
         state.favoriteIds.includes(property.編碼 || 0)
       );
-    }
-  }
-})
+    },
+    getPropertyComments: (state) => (propertyId) => {
+      return state.comments[propertyId] || [];
+    },
+
+    // 計算每個房源的平均評分
+    getPropertyRating: (state) => (propertyId) => {
+      const comments = state.comments[propertyId] || [];
+      if (comments.length === 0) return 0;
+
+      const sum = comments.reduce(
+        (total, comment) => total + comment.rating,
+        0
+      );
+      return (sum / comments.length).toFixed(1);
+    },
+
+    // 計算每個房源的評論數量
+    getPropertyCommentCount: (state) => (propertyId) => {
+      return (state.comments[propertyId] || []).length;
+    },
+  },
+});
 
 // 輔助函數
 function extractMinPrice(priceString) {
@@ -253,9 +753,9 @@ function extractMinPrice(priceString) {
     const prices = priceString.match(/\d+/g);
     if (!prices || prices.length === 0) return 0;
 
-    return Math.min(...prices.map(p => parseInt(p)));
+    return Math.min(...prices.map((p) => parseInt(p)));
   } catch (error) {
-    console.error('價格提取錯誤:', error);
+    console.error("價格提取錯誤:", error);
     return 0;
   }
 }
@@ -267,11 +767,9 @@ function extractMaxPrice(priceString) {
     const prices = priceString.match(/\d+/g);
     if (!prices || prices.length === 0) return 0;
 
-    return Math.max(...prices.map(p => parseInt(p)));
+    return Math.max(...prices.map((p) => parseInt(p)));
   } catch (error) {
-    console.error('價格提取錯誤:', error);
+    console.error("價格提取錯誤:", error);
     return 0;
   }
 }
-
-

@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS # type: ignore
 from flask_session import Session # type: ignore
 from datetime import timedelta
@@ -60,8 +60,30 @@ def create_app(config_name='default'):
     from app.api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
     
-    # 建立上傳資料夾
+    # 確保上傳目錄存在
+    app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
+    
+    # 確保 profiles 子目錄存在
+    profiles_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'profiles')
+    if not os.path.exists(profiles_dir):
+        os.makedirs(profiles_dir)
+    
+    # 修正靜態檔案路由
+    @app.route('/uploads/<path:filename>')
+    def serve_uploaded_file(filename):
+        # 添加調試信息
+        print(f"請求訪問檔案: {filename}")
+        print(f"檔案完整路徑: {os.path.join(app.config['UPLOAD_FOLDER'], filename)}")
+        
+        # 檢查檔案是否存在
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        if os.path.exists(file_path):
+            print(f"檔案存在，大小: {os.path.getsize(file_path)} bytes")
+        else:
+            print(f"檔案不存在!")
+        
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
     
     return app
