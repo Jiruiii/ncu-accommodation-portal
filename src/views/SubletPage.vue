@@ -1649,23 +1649,41 @@ const nextImage = () => {
   /* 詳情頁樣式 */
   .detail-gallery {
     margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   
   .gallery-main {
     position: relative;
+    width: 600px;  /* 固定寬度 */
+    height: 400px;  /* 固定高度 */
+    margin: 0 auto;  /* 水平置中 */
+    border-radius: 12px;
+    overflow: hidden;
   }
   
   .gallery-main img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
   }
   
   .gallery-thumbs {
     display: flex;
     gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+    max-width: 600px;
     overflow-x: auto;
-    padding-bottom: 10px;
+  }
+
+  @media (max-width: 768px) {
+    .gallery-main {
+      width: 100%;  /* 在手機上全寬 */
+      height: 300px;  /* 在手機上降低高度 */
+    }
   }
 
   .gallery-nav {
