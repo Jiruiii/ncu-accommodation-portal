@@ -1,23 +1,50 @@
 import json
 import importlib
 import os
-from datetime import datetime
+from datetime import datetime, date
+from decimal import Decimal
 from flask import current_app
 from sqlalchemy import inspect # type: ignore
 from app.extensions import db
+
+# 自定義 JSON 編碼器，處理特殊類型
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        # 處理 Decimal 類型
+        if isinstance(obj, Decimal):
+            return float(obj)
+        
+        # 處理日期和時間類型
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        
+        # 其他特殊類型處理可以在這裡添加
+        
+        # 默認行為
+        return super().default(obj)
 
 # 將模型對象轉換為可序列化字典
 def serialize_model(model):
     serialized = {}
     for column in inspect(model).mapper.column_attrs:
         value = getattr(model, column.key)
+        
+        # 處理不同類型的值
+        if value is None:
+            serialized[column.key] = None
         # 處理日期和時間格式
-        if isinstance(value, datetime):
+        elif isinstance(value, (datetime, date)):
             serialized[column.key] = value.isoformat()
-        elif hasattr(value, '__dict__'):  # 如果是嵌套對象，不進行序列化
+        # 處理 Decimal 類型
+        elif isinstance(value, Decimal):
+            serialized[column.key] = float(value)
+        # 如果是嵌套對象，不進行序列化
+        elif hasattr(value, '__dict__') and not isinstance(value, (str, int, float, bool)):
             continue
+        # 處理其他基本類型
         else:
             serialized[column.key] = value
+            
     return serialized
 
 # 將資料庫導出為 JSON
@@ -55,8 +82,8 @@ def export_db_to_json(filepath=None):
         'tables': list(data.keys())
     }
     
-    # 將數據轉換為 JSON
-    json_data = json.dumps(data, ensure_ascii=False, indent=2)
+    # 將數據轉換為 JSON，使用自定義編碼器
+    json_data = json.dumps(data, ensure_ascii=False, indent=2, cls=CustomJSONEncoder)
     
     # 如果指定了文件路徑，則保存到文件
     if filepath:
@@ -135,6 +162,11 @@ def import_db_from_json(filepath=None, json_data=None, clear_existing=False):
                             
                         # 嘗試設置屬性
                         if hasattr(record, key):
+                            # 處理特殊類型
+                            column_type = getattr(model_class, key).type.python_type
+                            if column_type == Decimal and isinstance(value, (int, float)):
+                                value = Decimal(str(value))
+                            
                             setattr(record, key, value)
                     
                     # 添加到會話

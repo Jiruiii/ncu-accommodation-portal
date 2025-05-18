@@ -1,4 +1,3 @@
-<!-- filepath: c:\Users\USER\Desktop\ncu-accommodation-portal\src\components\profile\PasswordChangeModal.vue -->
 <template>
   <div v-if="show" class="modal-overlay" @click.self="cancel">
     <div class="modal-content">
