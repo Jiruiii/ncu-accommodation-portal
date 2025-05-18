@@ -8,15 +8,15 @@
             <i class="fa-solid fa-phone" style="color: black; font-size: 25px; cursor: pointer;"></i>
         </div>
         <div class="chatroom" ref="chatContainer">
-            <div class="msg-tenant" v-if="checkmsg" v-for="msgTenant in msgsTenant">
+            <div class="msg-tenant" v-if="checkmsg_tenant" v-for="msgTenant in msgsTenant">
                 <div class="time">{{msgTenant.time}}</div>
                 <div class="message-tenant">{{msgTenant.msg}}</div>
                 <img class="msg-tenant-image"  src="https://randomuser.me/api/portraits/women/65.jpg" />
             </div>
-            <div class="msg-landlord">
+            <div class="msg-landlord" v-if="checkmsg_receive" v-for="msgReceive in msgsReceive">
                 <img class="msg-landlord-image" src="https://randomuser.me/api/portraits/men/42.jpg" />
-                <div class="message-landlord">已完成冷媒添加及系統清潔，冷氣已恢復正常運作。</div>
-                <div class="time">5:15</div>
+                <div class="message-landlord">{{msgReceive.msg}}</div>
+                <div class="time">{{msgReceive.time}}</div>
             </div>
         </div>
         <div class="input-flame">
@@ -28,49 +28,201 @@
 
 <script>
     import { ref, onMounted, nextTick } from "vue";
+    import { useRouter } from "vue-router";
+    import apiService from "@/services/api";
+    import { io } from "socket.io-client";
 
     export default{
         name: "ChatRoom",
         setup (){
+            const router = useRouter();
             const msgsTenant = ref([]);
             const msg = ref("");
             const time = ref("");
-            const checkmsg = ref(false);
+            const checkmsg_tenant = ref(false);
+            const checkmsg_receive = ref(false);
             const chatContainer = ref(null);
+            const jsonData = ref(null);
+            const user = ref([]); 
+            const userId = ref("");
+            const msgsReceive = ref([]);
+            const msg_receive = ref("");
+            const time_receive = ref("");
+            const targetUserId = ref(10);
 
+            // 添加訊息
             const addMessages = () => {
-                const now = new Date();
-                time.value = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
-                msgsTenant.value.push({ msg: msg.value, time: time.value });
+                time.value = new Date(); // 獲取時間
+                msgsTenant.value.push({ 
+                    msg: msg.value, 
+                    time: new Intl.DateTimeFormat("zh-TW", {
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true  // 讓時間顯示為 12 小時制（上午/下午）
+                    }).format(time.value)
+                });
 
-                msg.value = "";
-                checkMessage();  
+                msg.value = "";  // 清空輸入框
+
+                checkMessageTenant(); 
+
+                navigateMessages();
+
+                sendMessage();
+
+                // 有新訊息自動滾動到底部 
+                nextTick(() => {
+                    if (chatContainer.value) {
+                        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+                    }
+                });  
+            };
+
+            // 確認是否有訊息
+            const checkMessageTenant = () => {
+                checkmsg_tenant.value = msgsTenant.value.length > 0;
+            };
+
+            // 確認是否有訊息傳入
+            const checkMessageReceive = () => {
+                checkmsg_receive.value = msgsReceive.value.length > 0;
+            };
+
+            // 將新訊息傳遞到後端
+            const navigateMessages = () => {
+                if (msgsTenant.value.length > 0) {
+                    const latestMsg = msgsTenant.value[msgsTenant.value.length - 1].msg;
+                    const latestTime = new Intl.DateTimeFormat("zh-TW", {
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true
+                    }).format(new Date());
+
+                    // 發送 API 請求
+                    fetch("http://localhost:5000/api/chat", {
+                        method: "POST",
+                        mode: "cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                            message: latestMsg, 
+                            time: latestTime
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => console.log("後端回應：", data)) 
+                    .catch(err => console.error("請求失敗", err));
+
+                    console.log("訊息已送到後端:", latestMsg, latestTime);
+                } else {
+                    console.warn("沒有可推送的訊息！");
+                }
+            };
+
+            // 建立 WebSocket 連線
+            const socket = io("http://localhost:5000", {
+                transports: ["websocket"] 
+            });
+
+            socket.on("connect", () => {
+                console.log("WebSocket 連線成功！");  
+                socket.emit("join_room", { user_id: userId.value });
+            });
+
+            socket.on("connect_error", (err) => {
+                console.error("WebSocket 連線失敗！", err);
+            });
+
+            // 監聽訊息
+            socket.on("new_message", (data) => {
+                console.log(`收到來自 ${data.sender} 的訊息:`, data.message);
+
+                msgsReceive.value.push({ 
+                    msg_receive: data.message, 
+                    time_receive: new Intl.DateTimeFormat("zh-TW", {
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true  // 顯示上午/下午
+                    }).format(new Date())
+                });
+
+                // 有新訊息自動滾動到底部
                 nextTick(() => {
                     if (chatContainer.value) {
                         chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
                     }
                 });
+
+                checkMessageTenant();  
+            });
+
+            // 發送訊息到後端
+            const sendMessage = () => {
+                const latestMsg = msgsTenant.value[msgsTenant.value.length - 1].msg;
+
+                console.log("送出訊息:", latestMsg);  
+                socket.emit("new_message", { sender: userId.value, receiver: targetUserId.value, message: latestMsg });
             };
 
-            const checkMessage = () => {
-                checkmsg.value = msgsTenant.value.length > 0;
+            // 取德用戶的 id
+            const fetchData = async () => {
+                try {
+                    const response = await apiService.users.getProfile();
+                    user.value = response.user;
+
+                    userId.value = user.value.user_id;
+                    console.log("獲取的 ID:", userId.value);
+                } catch (error) {
+                    console.error("讀取 JSON 失敗:", error);
+                }
             };
+
+            /*const fetchHistory = async () => {
+                try {
+                    const response = await fetch(`http://localhost:5000/api/chat/history?sender_id=${userId.value}&receiver_id=${targetUserId.value}`);
+                    const history = await response.json();
+                    
+                    msgsTenant.value = history.map(msg => ({
+                        msg: msg.text, 
+                        time: new Date(msg.timestamp).toLocaleTimeString()
+                    }));
+                    checkMessageTenant();  // 確保更新 UI 狀態
+                } catch (error) {
+                    console.error("獲取歷史訊息失敗:", error);
+                }
+            };*/
 
             onMounted(() => {
+                // 先移除所有舊的監聽，避免累積事件
+                socket.off("new_message"); 
+
                 nextTick(() => {
                     if (chatContainer.value) {
                         chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
                     }
                 });
+
+                fetchData();
+                //fetchHistory();
             }); 
 
             return { 
                 msgsTenant,
                 msg,
-                checkmsg,
+                time,
+                checkmsg_tenant,
                 addMessages,
-                checkMessage,
+                checkMessageTenant,
+                checkMessageReceive,
                 chatContainer,
+                navigateMessages,
+                jsonData,
+                user,
+                userId,
+                msgsReceive,
+                msg_receive,
+                time_receive,
+                checkmsg_receive,
+                targetUserId,
             };
         },
     }
