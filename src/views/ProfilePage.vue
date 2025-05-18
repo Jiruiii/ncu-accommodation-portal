@@ -1,17 +1,11 @@
 <template>
   <div class="profile-page">
-    <!-- 保留現有的個人資料頭部 -->
     <div class="profile-header">
       <div class="profile-avatar">
-        <img
-          :src="
-            user.profile_image ||
-            'https://randomuser.me/api/portraits/women/65.jpg'
-          "
-          alt="用戶頭像"
-        />
-        <button class="edit-avatar-btn">
-          <i class="fa-solid fa-camera"></i>
+        <img :src="avatarUrl" alt="用戶頭像" />
+        <button class="edit-avatar-btn" @click="triggerFileInput" :disabled="isUploading">
+          <i class="fa-solid fa-camera" v-if="!isUploading"></i>
+          <i class="fa-solid fa-spinner fa-spin" v-else></i>
         </button>
         <input
           type="file"
@@ -20,7 +14,9 @@
           accept="image/*"
           @change="uploadAvatar"
         />
+        <div v-if="uploadError" class="upload-error">{{ uploadError }}</div>
       </div>
+      
       <div class="profile-info">
         <h1>
           {{ user.username }}
@@ -391,7 +387,10 @@
           <settings-item label="密碼">
             <div class="password-field">
               <div class="masked-password">••••••••</div>
-              <button class="settings-btn highlight" @click="showPasswordModal = true">
+              <button
+                class="settings-btn highlight"
+                @click="showPasswordModal = true"
+              >
                 修改密碼
               </button>
             </div>
@@ -590,16 +589,92 @@
     },
     setup() {
       const router = useRouter();
+
       const activeTab = ref("housing");
+
       const loading = ref(true);
       const error = ref(null);
+
       const showEditModal = ref(false);
       const showPasswordModal = ref(false);
       const showForgotPasswordModal = ref(false);
       const showBindPortalModal = ref(false);
       const showEmailVerificationModal = ref(false);
       const showPhoneVerificationModal = ref(false);
+
       const isProcessingPortal = ref(false);
+
+      const fileInput = ref(null);
+      const isUploading = ref(false);
+      const uploadError = ref(null);
+
+      const avatarUrl = computed(() => {
+        if (user.value && user.value.profile_image) {
+          // 如果已經是完整 URL（以 http 開頭），直接返回
+          if (user.value.profile_image.startsWith("http")) {
+            return user.value.profile_image;
+          }
+
+          // 否則拼接 API 基礎 URL
+          const baseApiUrl = process.env.VUE_APP_API_BASE_URL || "";
+          return `${baseApiUrl}${user.value.profile_image}`;
+        }
+
+        // 如果沒有頭像，返回預設頭像
+        return require("@/assets/default-avatar.jpg"); // 確保這個檔案存在
+      });
+
+      // 觸發文件選擇對話框
+      const triggerFileInput = () => {
+        fileInput.value.click();
+      };
+
+      // 上傳頭像
+      const uploadAvatar = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+          // 顯示上傳中狀態
+          isUploading.value = true;
+          uploadError.value = null;
+
+          const formData = new FormData();
+          formData.append("image", file);
+
+          const response = await apiService.users.uploadProfileImage(formData);
+
+          if (response && response.profile_image) {
+            // 更新用戶頭像
+            user.value.profile_image = response.profile_image;
+
+            // 更新本地儲存的用戶資訊
+            const userStr = localStorage.getItem("user");
+            if (userStr) {
+              const userData = JSON.parse(userStr);
+              userData.profile_image = response.profile_image;
+              localStorage.setItem("user", JSON.stringify(userData));
+            }
+
+            // 強制刷新頭像顯示
+            const timestamp = new Date().getTime();
+            const cachedAvatarUrl = avatarUrl.value;
+            if (cachedAvatarUrl.includes("?")) {
+              avatarUrl.value = `${
+                cachedAvatarUrl.split("?")[0]
+              }?t=${timestamp}`;
+            } else {
+              avatarUrl.value = `${cachedAvatarUrl}?t=${timestamp}`;
+            }
+          }
+        } catch (error) {
+          console.error("上傳頭像失敗:", error);
+          uploadError.value = error.message || "上傳失敗，請稍後再試";
+        } finally {
+          isUploading.value = false;
+          event.target.value = ""; // 清空檔案輸入框，以便可以再次選擇同一檔案
+        }
+      };
 
       // 個人資料編輯表單
       const editForm = reactive({
@@ -727,27 +802,6 @@
         editForm.phone = user.value.phone || "";
         editForm.bio = user.value.bio || "";
         showEditModal.value = true;
-      };
-
-      // 上傳頭像
-      const uploadAvatar = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append("image", file);
-
-        try {
-          const response = await apiService.users.uploadProfileImage(formData);
-
-          if (response && response.profile_image) {
-            user.value.profile_image = response.profile_image;
-            alert("頭像已更新");
-          }
-        } catch (err) {
-          console.error("上傳頭像失敗:", err);
-          alert(`上傳失敗: ${err.message || "未知錯誤"}`);
-        }
       };
 
       // 綁定 Portal 帳號
@@ -946,7 +1000,11 @@
         editForm,
         passwordForm,
         openEditModal,
+        fileInput,
+        avatarUrl,
+        triggerFileInput,
         uploadAvatar,
+        isUploading,
         bindPortalAccount,
         deleteAccount,
         goToAdminDashboard,
@@ -1005,7 +1063,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background-color: #C4E1FF;
+    background-color: #c4e1ff;
     color: white;
     border: none;
     display: flex;
@@ -1014,7 +1072,7 @@
     cursor: pointer;
   }
 
-  i{
+  i {
     color: black;
   }
 
@@ -1196,7 +1254,7 @@
     gap: 20px;
     width: 100%;
   }
-  
+
   .masked-password {
     flex: 1;
     letter-spacing: 2px;
@@ -1362,7 +1420,7 @@
   }
 
   .active {
-    background-color: #C4E1FF;
+    background-color: #c4e1ff;
     color: white;
   }
 
