@@ -30,4 +30,4 @@ backend/**/**/__pycache__/
 backend/**/**/**/__pycache__/
 
 # database files
-backend\data.sqlite
+backend/data.sqlite

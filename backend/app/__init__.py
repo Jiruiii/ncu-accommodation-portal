@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS # type: ignore
 from flask_session import Session # type: ignore
 from datetime import timedelta
@@ -63,5 +63,15 @@ def create_app(config_name='default'):
     # 建立上傳資料夾
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
+        
+    # 建立 profiles 子目錄
+    profile_upload_path = os.path.join(app.config['UPLOAD_FOLDER'], 'profiles')
+    if not os.path.exists(profile_upload_path):
+        os.makedirs(profile_upload_path)
+    
+    # 註冊 uploads 路徑為靜態檔案目錄
+    @app.route('/uploads/<path:filename>')
+    def uploaded_file(filename):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
     
     return app
