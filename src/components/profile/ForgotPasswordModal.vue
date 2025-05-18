@@ -94,8 +94,6 @@ export default {
         // 使用當前用戶的電子郵件
         const response = await apiService.auth.forgotPassword(this.userEmail);
         
-        console.log('密碼重設請求回應:', response);
-        
         if (response && response.success) {
           this.step = "emailSent";
           this.startCountdown();

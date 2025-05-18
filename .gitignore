@@ -21,3 +21,13 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# python cache
+__pycache__/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/**/__pycache__/
+backend/**/**/**/__pycache__/
+
+# database files
+backend\data.sqlite
