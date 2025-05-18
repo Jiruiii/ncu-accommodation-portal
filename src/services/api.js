@@ -259,14 +259,7 @@ export const apiService = {
   users: {
     getProfile: () => apiService.get("/api/users/profile"),
     updateProfile: (data) => apiService.put("/api/users/profile", data),
-    uploadProfileImage: (formData) => {
-      // 注意使用 POST 方法，並且不設置 Content-Type，讓瀏覽器自動處理
-      return fetch(`${API_BASE_URL}/api/users/profile/image`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include', // 包含 cookies
-      });
-    },
+    uploadProfileImage: (formData) => apiService.post("/api/users/profile/image", formData),
     changePassword: (data) =>
       apiService.post("/api/users/change-password", data),
     unbindPortal: () => apiService.post("/api/users/unbind-portal"),
