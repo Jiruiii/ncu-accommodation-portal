@@ -551,8 +551,16 @@
       ]),
     },
     created() {
-      // 從 Vuex store 載入房源資料
-      this.fetchAccommodations();
+      // 檢查資料是否已初始化，避免重複請求
+      if (
+        !this.$store.getters.isDataInitialized &&
+        this.accommodations.length === 0
+      ) {
+        this.fetchAccommodations();
+      } else {
+        // 如果已有資料，僅應用篩選和排序
+        this.applyFiltersAndSort();
+      }
     },
     methods: {
       ...mapMutations([
@@ -611,7 +619,7 @@
           });
         }
       },
-      
+
       isFavorite(id) {
         return this.favoriteIds.includes(id);
       },
@@ -647,11 +655,11 @@
         let sizes = [];
 
         if (property.出租房數.套房 && property.出租房數.套房.坪數) {
-          sizes.push(property.出租房數.套房.坪數);
+          sizes.push(`套房${property.出租房數.套房.坪數}`);
         }
 
         if (property.出租房數.雅房 && property.出租房數.雅房.坪數) {
-          sizes.push(property.出租房數.雅房.坪數);
+          sizes.push(`雅房${property.出租房數.雅房.坪數}`);
         }
 
         return sizes.length > 0 ? sizes.join(" / ") : "大小不詳";

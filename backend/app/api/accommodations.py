@@ -240,6 +240,8 @@ def get_accommodation_detail(id):
         'single_available': acc.single_available,
         'contact_info': acc.contact_info,
         'area': acc.area,
+        'studio_area': float(acc.studio_area) if acc.studio_area else None,
+        'single_area': float(acc.single_area) if acc.single_area else None,
         'rent_price': float(acc.rent_price),
         'deposit': float(acc.deposit) if acc.deposit else None,
         'is_furnished': acc.is_furnished,
@@ -259,12 +261,12 @@ def get_accommodation_detail(id):
             'studio': {
                 'total': acc.studio_count or 0,
                 'available': acc.studio_available or 0,
-                'area': float(acc.area) if acc.area else None
+                'area': float(acc.studio_area) if acc.studio_area else (float(acc.area) if acc.area else None)
             },
             'single': {
                 'total': acc.single_count or 0,
                 'available': acc.single_available or 0,
-                'area': float(acc.area) if acc.area else None
+                'area': float(acc.single_area) if acc.single_area else (float(acc.area) if acc.area else None)
             }
         },
         'owner': {

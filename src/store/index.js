@@ -19,6 +19,7 @@ export default createStore({
     selectedAccommodation: null,
     favoriteIds: [],
     loading: false,
+    dataInitialized: false,
 
     // 搜尋和篩選條件
     searchQuery: "",
@@ -146,6 +147,10 @@ export default createStore({
       state.filteredAccommodations = accommodations;
     },
 
+    SET_DATA_INITIALIZED(state, value) {
+      state.dataInitialized = value;
+    },
+
     SET_LOADING(state, isLoading) {
       state.loading = isLoading;
     },
@@ -179,6 +184,18 @@ export default createStore({
       if (index === -1) {
         state.favoriteIds.push(id);
       } else {
+        state.favoriteIds.splice(index, 1);
+      }
+      // 儲存到 localStorage
+      localStorage.setItem(
+        "favoriteAccommodations",
+        JSON.stringify(state.favoriteIds)
+      );
+    },
+
+    REMOVE_FAVORITE(state, id) {
+      const index = state.favoriteIds.indexOf(id);
+      if (index !== -1) {
         state.favoriteIds.splice(index, 1);
       }
       // 儲存到 localStorage
@@ -230,8 +247,64 @@ export default createStore({
   },
 
   actions: {
+    // 初始化應用程式
+    async initializeApp({ commit, dispatch }) {
+      try {
+        // 嘗試從 localStorage 載入收藏
+        const savedFavorites = localStorage.getItem("favoriteAccommodations");
+        if (savedFavorites) {
+          commit("SET_FAVORITE_IDS", JSON.parse(savedFavorites));
+        }
+
+        // 嘗試從 localStorage 載入房源資料
+        const savedAccommodations = localStorage.getItem("accommodations");
+        if (savedAccommodations) {
+          const parsedData = JSON.parse(savedAccommodations);
+          commit("SET_ACCOMMODATIONS", parsedData);
+          commit("SET_LOADING", false);
+
+          // 如果有本地資料，先套用篩選和排序
+          dispatch("applyFiltersAndSort");
+
+          // 標記為已初始化
+          commit("SET_DATA_INITIALIZED", true);
+        }
+
+        // 檢查是否需要更新資料（如果資料太舊或不存在）
+        const lastUpdate = localStorage.getItem("accommodationsLastUpdated");
+        const now = new Date().getTime();
+        const dataAge = lastUpdate ? now - parseInt(lastUpdate) : Infinity;
+
+        // 如果資料不存在或太舊（超過1小時），則從API獲取
+        if (!savedAccommodations || dataAge > 3600000) {
+          console.log("Data is stale or missing, fetching from API...");
+          await dispatch("fetchAccommodations");
+        }
+
+        // 檢查用戶登入狀態
+        const userFromLocal = localStorage.getItem("user");
+        const userFromSession = sessionStorage.getItem("user");
+
+        if (userFromLocal || userFromSession) {
+          const userData = JSON.parse(userFromLocal || userFromSession);
+          commit("SET_USER", userData);
+          commit("SET_AUTHENTICATED", true);
+
+          // 如果用戶已登入，嘗試同步收藏
+          dispatch("syncFavorites");
+        }
+      } catch (error) {
+        console.error("Failed to initialize app:", error);
+
+        // 如果初始化失敗但有本地資料，仍標記為已初始化
+        if (localStorage.getItem("accommodations")) {
+          commit("SET_DATA_INITIALIZED", true);
+        }
+      }
+    },
+
     // 獲取房源資料
-    async fetchAccommodations({ commit, dispatch }) {
+    async fetchAccommodations({ commit, dispatch, state }) {
       try {
         commit("SET_LOADING", true);
 
@@ -306,6 +379,13 @@ export default createStore({
           });
 
           commit("SET_ACCOMMODATIONS", formattedData);
+
+          localStorage.setItem("accommodations", JSON.stringify(formattedData));
+          localStorage.setItem('accommodationsLastUpdated', new Date().getTime().toString());
+
+          commit('SET_DATA_INITIALIZED', true);
+
+          dispatch('applyFiltersAndSort');
         } else {
           console.error(
             "Failed to fetch accommodations:",
@@ -329,6 +409,10 @@ export default createStore({
           console.error("Failed to load fallback data:", err);
           return { default: [] };
         });
+
+        if (state.accommodations.length > 0) {
+          commit('SET_DATA_INITIALIZED', true);
+        }
 
         commit("SET_ACCOMMODATIONS", fallbackData.default || []);
 
@@ -370,14 +454,103 @@ export default createStore({
 
         if (response && response.success) {
           commit("TOGGLE_FAVORITE", id);
+          return true;
+        } else {
+          throw new Error("API failed to toggle favorite");
         }
       } catch (error) {
         console.error("Failed to toggle favorite:", error);
+
+        commit("TOGGLE_FAVORITE", id);
+
+        console.warn("Changes are saved locally only");
+        return false;
+      }
+    },
+
+    // 從收藏中移除單個項目
+    async removeFavorite({ commit }, id) {
+      try {
+        // 嘗試使用 API 移除收藏
+        const response =
+          await apiService.accommodations.favorites.removeFavorite(id);
+
+        if (response && response.success) {
+          // API 成功，更新本地狀態
+          commit("REMOVE_FAVORITE", id);
+          return true;
+        } else {
+          throw new Error("API request failed");
+        }
+      } catch (error) {
+        console.error("Failed to remove favorite with API:", error);
+
+        // API 失敗，僅在本地移除收藏
+        commit("REMOVE_FAVORITE", id);
+
+        // 顯示提示
+        console.warn("Changes are saved locally only");
+        return false;
+      }
+    },
+
+    // 同步收藏列表與伺服器
+    async syncFavorites({ commit, state }) {
+      // 如果用戶已登入，則嘗試與伺服器同步收藏
+      if (state.isAuthenticated) {
+        try {
+          const response =
+            await apiService.accommodations.favorites.getFavorites();
+
+          // 從回應中提取房源 ID
+          const serverFavoriteIds = response.map((item) => item.id);
+
+          // 本地收藏 ID
+          const localFavoriteIds = state.favoriteIds;
+
+          if (JSON.stringify(serverFavoriteIds.sort()) === JSON.stringify(localFavoriteIds.sort())) {
+            console.log("本地收藏與伺服器一致，無需同步");
+            return;
+          }
+
+          // 找出需要添加到伺服器的本地收藏
+          const toAdd = localFavoriteIds.filter(
+            (id) => !serverFavoriteIds.includes(id)
+          );
+
+          // 找出需要從本地移除的伺服器收藏 (已在伺服器上移除)
+          const toRemove = serverFavoriteIds.filter(
+            (id) => !localFavoriteIds.includes(id)
+          );
+
+          // 同步添加
+          for (const id of toAdd) {
+            await apiService.accommodations.favorites.toggleFavorite(id);
+          }
+
+          // 同步移除
+          for (const id of toRemove) {
+            await apiService.accommodations.favorites.removeFavorite(id);
+          }
+
+          // 更新本地狀態為伺服器狀態
+          commit("SET_FAVORITE_IDS", serverFavoriteIds);
+
+          // 更新 localStorage
+          localStorage.setItem(
+            "favoriteAccommodations",
+            JSON.stringify(serverFavoriteIds)
+          );
+
+          console.log("Favorites synced with server");
+        } catch (error) {
+          console.error("Failed to sync favorites with server:", error);
+        }
       }
     },
 
     // 應用篩選和排序
-    applyFiltersAndSort({ commit, state }) {
+    async applyFiltersAndSort({ commit, state }) {
       let filtered = [...state.accommodations];
 
       // 套用搜尋

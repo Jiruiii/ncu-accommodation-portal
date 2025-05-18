@@ -36,7 +36,7 @@
       // 初始化數據
       onMounted(() => {
         checkLoginStatus();
-        store.dispatch("fetchAccommodations");
+        store.dispatch("initializeApp");
 
         // 監聽 localStorage 變化
         window.addEventListener("storage", (e) => {

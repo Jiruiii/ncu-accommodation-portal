@@ -236,6 +236,8 @@ export const apiService = {
     favorites: {
       getFavorites: () => apiService.get("/api/accommodations/favorites"),
       toggleFavorite: (id) =>
+        apiService.post(`/api/accommodations/favorites/toggle/${id}`),
+      addFavorite: (id) =>
         apiService.post(`/api/accommodations/favorites/${id}`),
       removeFavorite: (id) =>
         apiService.post(`/api/accommodations/favorites/delete/${id}`),
