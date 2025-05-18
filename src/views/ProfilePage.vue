@@ -616,8 +616,8 @@
           }
 
           // 否則拼接 API 基礎 URL
-          const baseApiUrl = process.env.VUE_APP_API_BASE_URL || "";
-          return `${baseApiUrl}${user.value.profile_image}`;
+          return `http://localhost:5000${user.value.profile_image}`;
+
         }
 
         // 如果沒有頭像，返回預設頭像
@@ -1004,6 +1004,7 @@
         avatarUrl,
         triggerFileInput,
         uploadAvatar,
+        uploadError,
         isUploading,
         bindPortalAccount,
         deleteAccount,

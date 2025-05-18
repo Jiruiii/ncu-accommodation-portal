@@ -45,6 +45,10 @@ export default createStore({
       state.isAuthenticated = !!user;
     },
 
+    SET_AUTHENTICATED(state, value) {
+      state.isAuthenticated = value;
+    },
+
     TOGGLE_NAVIGATION(state) {
       state.navigationOpen = !state.navigationOpen;
     },
@@ -435,8 +439,7 @@ export default createStore({
           const localFavoriteIds = state.favoriteIds;
 
           if (JSON.stringify(serverFavoriteIds.sort()) === JSON.stringify(localFavoriteIds.sort())) {
-            console.log("本地收藏與伺服器一致，無需同步");
-            return;
+            return; 
           }
 
           // 找出需要添加到伺服器的本地收藏

@@ -70,21 +70,6 @@
           <div class="no-photo-notice" v-if="!hasPhotos(property)">
             屋主尚未更新照片
           </div>
-          <div class="price-tag">
-            NT$ {{ formatPrice(property.房租 || "0") }}/月
-          </div>
-          <button
-            class="favorite-btn"
-            @click.stop="toggleFavorite(property.編碼 || index)"
-          >
-            <div
-              :class="
-                isFavorite(property.編碼 || index)
-                  ? 'heart-filled'
-                  : 'heart-outline'
-              "
-            ></div>
-          </button>
         </div>
         <div class="property-info">
           <h3>{{ property.標題 || "無標題" }}</h3>
@@ -252,6 +237,8 @@
                 currentPhotoIndex
               ),
             }"
+            @mouseover="stopSlideShow"
+            @mouseleave="startSlideShow"
           ></div>
 
           <div
@@ -416,7 +403,7 @@
           </div>
         </div>
 
-        <!-- 使用新的評論區組件 -->
+        <!-- 評論組件 -->
         <CommentSection
           v-if="selectedProperty"
           :propertyId="selectedProperty.編碼"
@@ -449,9 +436,9 @@ export default {
       },
       selectedProperty: null,
       currentPhotoIndex: 0,
-      // 從這裡移除與評論相關的數據
-      // newComment: "", // 已移動到 CommentSection 組件
-      // newRating: 0,  // 已移動到 CommentSection 組件
+      slideShowInterval: null, // 自動輪播計時器
+      autoSlideShowEnabled: true, // 是否啟用自動輪播
+      slideShowDelay: 2000, // 輪播間隔，2秒
     };
   },
 
@@ -658,10 +645,18 @@ export default {
       this.selectedProperty = property;
       this.currentPhotoIndex = 0;
       document.body.style.overflow = "hidden"; // 防止背景滾動
+
+      // 立即開始輪播，無需檢查 autoSlideShowEnabled
+      this.$nextTick(() => {
+        this.startSlideShow();
+      });
     },
 
-    // 新增方法 - 關閉房源詳細資訊
+    // 修改方法 - 關閉房源詳細資訊
     closePropertyDetail() {
+      // 停止輪播
+      this.stopSlideShow();
+
       this.selectedProperty = null;
       document.body.style.overflow = "auto"; // 恢復背景滾動
     },
@@ -669,6 +664,19 @@ export default {
     // 新增方法 - 下一張照片
     nextPhoto(event) {
       event.stopPropagation(); // 阻止事件傳播
+
+      // 手動切換時暫時停止自動輪播
+      if (this.autoSlideShowEnabled) {
+        this.stopSlideShow();
+
+        // 2秒後重新開始輪播
+        setTimeout(() => {
+          if (this.selectedProperty && this.autoSlideShowEnabled) {
+            this.startSlideShow();
+          }
+        }, 2000);
+      }
+
       if (this.selectedProperty && this.hasPhotos(this.selectedProperty)) {
         this.currentPhotoIndex =
           (this.currentPhotoIndex + 1) %
@@ -676,9 +684,22 @@ export default {
       }
     },
 
-    // 新增方法 - 上一張照片
+    // 修改方法 - 上一張照片
     prevPhoto(event) {
       event.stopPropagation(); // 阻止事件傳播
+
+      // 手動切換時暫時停止自動輪播
+      if (this.autoSlideShowEnabled) {
+        this.stopSlideShow();
+
+        // 2秒後重新開始輪播
+        setTimeout(() => {
+          if (this.selectedProperty && this.autoSlideShowEnabled) {
+            this.startSlideShow();
+          }
+        }, 2000);
+      }
+
       if (this.selectedProperty && this.hasPhotos(this.selectedProperty)) {
         this.currentPhotoIndex =
           (this.currentPhotoIndex -
@@ -688,10 +709,14 @@ export default {
       }
     },
 
+    beforeDestroy() {
+      this.stopSlideShow();
+    },
+
     // 新增方法 - 聯絡房東
     contactLandlord() {
       if (this.selectedProperty && this.selectedProperty.聯絡資訊) {
-        alert(`聯絡資訊：${this.selectedProperty.聯絡資訊}`);
+        // alert(`聯絡資訊：${this.selectedProperty.聯絡資訊}`);
       }
     },
 
@@ -715,6 +740,44 @@ export default {
         return 0;
       }
       return property.房屋照片.length;
+    },
+
+    // 開始自動輪播
+    startSlideShow() {
+      // 清除之前的計時器
+      this.stopSlideShow();
+
+      // 只有在有選中的房源且有多張照片時才啟動輪播
+      if (
+        this.selectedProperty &&
+        this.hasMultiplePhotos(this.selectedProperty)
+      ) {
+        this.slideShowInterval = setInterval(() => {
+          // 滾動到下一張照片
+          this.currentPhotoIndex =
+            (this.currentPhotoIndex + 1) %
+            this.getPhotoCount(this.selectedProperty);
+        }, this.slideShowDelay);
+      }
+    },
+
+    // 停止自動輪播
+    stopSlideShow() {
+      if (this.slideShowInterval) {
+        clearInterval(this.slideShowInterval);
+        this.slideShowInterval = null;
+      }
+    },
+
+    // 切換自動輪播狀態
+    toggleSlideShow() {
+      this.autoSlideShowEnabled = !this.autoSlideShowEnabled;
+
+      if (this.autoSlideShowEnabled) {
+        this.startSlideShow();
+      } else {
+        this.stopSlideShow();
+      }
     },
   },
 };
@@ -1134,6 +1197,67 @@ export default {
   height: 300px;
 }
 
+/* 自動輪播按鈕 */
+.gallery-autoplay-btn {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.gallery-autoplay-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.play-icon,
+.pause-icon {
+  width: 16px;
+  height: 16px;
+  position: relative;
+}
+
+.play-icon:before {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 14px solid #333;
+  left: 1px;
+  top: 0;
+}
+
+.pause-icon:before,
+.pause-icon:after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 16px;
+  background: #333;
+  top: 0;
+}
+
+.pause-icon:before {
+  left: 2px;
+}
+
+.pause-icon:after {
+  right: 2px;
+}
+
+/* 修改圖片過渡效果 */
 .gallery-image {
   width: 100%;
   height: 100%;
@@ -1141,6 +1265,7 @@ export default {
   background-position: center;
   background-repeat: no-repeat;
   background-color: #f5f5f5;
+  transition: background-image 0.3s ease; /* 添加過渡效果使輪播更平滑 */
 }
 
 .gallery-nav {
