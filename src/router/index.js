@@ -8,12 +8,16 @@ const FavoritesPage = () => import("@/views/FavoritesPage.vue");
 const SubletPage = () => import("@/views/SubletPage.vue");
 const LoginPage = () => import("@/views/LoginPage.vue");
 const AuthCallback = () => import("@/views/AuthCallback.vue");
+const ResetPasswordPage = () => import("@/views/ResetPasswordPage.vue");
+const ChatRoom = () => import("@/components/ChatRoom.vue");
+
 const AdminDashboard = () => import("@/views/admin/AdminDashboard.vue");
 const TableView = () => import("@/components/admin/TableView.vue");
 const UserManagement = () => import("@/components/admin/UserManagement.vue");
 const AdminLoginPage = () => import("@/views/admin/AdminLoginPage.vue");
-const ResetPasswordPage = () => import("@/views/ResetPasswordPage.vue");
-const ChatRoom = () => import("@/components/ChatRoom.vue");
+
+const LandLordVerificationPage = () => import("@/views/landlord/LandlordVerificationPage.vue");
+
 const NotFound = () => import("@/views/NotFound.vue");
 
 const routes = [
@@ -114,6 +118,12 @@ const routes = [
         meta: { requiresAuth: true, requiresAdmin: true },
       },
     ],
+  },
+  {
+    path: "/landlord",
+    name: "LandlordVerification",
+    component: LandLordVerificationPage,
+    meta: { requiresAuth: false, requiresAdmin: false },
   },
   {
     path: "/:catchAll(.*)",
