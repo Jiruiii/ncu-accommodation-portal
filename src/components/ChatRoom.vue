@@ -15,8 +15,8 @@
             </div>
             <div class="msg-landlord" v-if="checkmsg_receive" v-for="msgReceive in msgsReceive">
                 <img class="msg-landlord-image" src="https://randomuser.me/api/portraits/men/42.jpg" />
-                <div class="message-landlord">{{msgReceive.msg}}</div>
-                <div class="time">{{msgReceive.time}}</div>
+                <div class="message-landlord">{{msgReceive.msg_receive}}</div>
+                <div class="time">{{msgReceive.time_receive}}</div>
             </div>
         </div>
         <div class="input-flame">
@@ -44,11 +44,11 @@
             const chatContainer = ref(null);
             const jsonData = ref(null);
             const user = ref([]); 
-            const userId = ref("");
+            const userId = ref(8);
             const msgsReceive = ref([]);
             const msg_receive = ref("");
             const time_receive = ref("");
-            const targetUserId = ref(10);
+            const targetUserId = ref(9);
 
             // 添加訊息
             const addMessages = () => {
@@ -58,7 +58,9 @@
                     time: new Intl.DateTimeFormat("zh-TW", {
                         hour: "numeric",
                         minute: "numeric",
-                        hour12: true  // 讓時間顯示為 12 小時制（上午/下午）
+                        second: undefined,
+                        hour12: true,  // 讓時間顯示為 12 小時制（上午/下午）
+                        timeZone: "Asia/Taipei"
                     }).format(time.value)
                 });
 
@@ -66,7 +68,7 @@
 
                 checkMessageTenant(); 
 
-                navigateMessages();
+                //navigateMessages();
 
                 sendMessage();
 
@@ -89,7 +91,7 @@
             };
 
             // 將新訊息傳遞到後端
-            const navigateMessages = () => {
+            /*const navigateMessages = () => {
                 if (msgsTenant.value.length > 0) {
                     const latestMsg = msgsTenant.value[msgsTenant.value.length - 1].msg;
                     const latestTime = new Intl.DateTimeFormat("zh-TW", {
@@ -116,7 +118,7 @@
                 } else {
                     console.warn("沒有可推送的訊息！");
                 }
-            };
+            };*/
 
             // 建立 WebSocket 連線
             const socket = io("http://localhost:5000", {
@@ -141,7 +143,9 @@
                     time_receive: new Intl.DateTimeFormat("zh-TW", {
                         hour: "numeric",
                         minute: "numeric",
-                        hour12: true  // 顯示上午/下午
+                        second: undefined,
+                        hour12: true,  // 顯示上午/下午
+                        timeZone: "Asia/Taipei"
                     }).format(new Date())
                 });
 
@@ -155,12 +159,13 @@
                 checkMessageTenant();  
             });
 
-            // 發送訊息到後端
+            // 發送訊息給其他用戶
             const sendMessage = () => {
                 const latestMsg = msgsTenant.value[msgsTenant.value.length - 1].msg;
+                const latesTime = new Date();
 
                 console.log("送出訊息:", latestMsg);  
-                socket.emit("new_message", { sender: userId.value, receiver: targetUserId.value, message: latestMsg });
+                socket.emit("new_message", { sender: userId.value, receiver: targetUserId.value, message: latestMsg, time: latesTime });
             };
 
             // 取德用戶的 id
@@ -176,33 +181,45 @@
                 }
             };
 
-            /*const fetchHistory = async () => {
+            const fetchHistory = async () => {
                 try {
                     const response = await fetch(`http://localhost:5000/api/chat/history?sender_id=${userId.value}&receiver_id=${targetUserId.value}`);
                     const history = await response.json();
                     
-                    msgsTenant.value = history.map(msg => ({
-                        msg: msg.text, 
-                        time: new Date(msg.timestamp).toLocaleTimeString()
-                    }));
+                    msgsTenant.value = history.map(msg => {
+                        const formattedTime = new Intl.DateTimeFormat("zh-TW", {
+                            hour: "numeric",
+                            minute: "numeric",
+                            hour12: true,
+                            timeZone: "Asia/Taipei"
+                        }).format(new Date(msg.timestamp));
+
+                        return {
+                            msg: msg.text,
+                            time: formattedTime
+                                .replace("AM", "上午")
+                                .replace("PM", "下午")
+                        };
+                    });
+
                     checkMessageTenant();  // 確保更新 UI 狀態
                 } catch (error) {
                     console.error("獲取歷史訊息失敗:", error);
                 }
-            };*/
+            };
 
-            onMounted(() => {
+            onMounted(async () => {
                 // 先移除所有舊的監聽，避免累積事件
                 socket.off("new_message"); 
+
+                await fetchData(); // 確保先取得 userId
+                await fetchHistory();
 
                 nextTick(() => {
                     if (chatContainer.value) {
                         chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
                     }
                 });
-
-                fetchData();
-                //fetchHistory();
             }); 
 
             return { 
@@ -214,7 +231,7 @@
                 checkMessageTenant,
                 checkMessageReceive,
                 chatContainer,
-                navigateMessages,
+                //navigateMessages,
                 jsonData,
                 user,
                 userId,
@@ -223,6 +240,7 @@
                 time_receive,
                 checkmsg_receive,
                 targetUserId,
+                fetchHistory,
             };
         },
     }

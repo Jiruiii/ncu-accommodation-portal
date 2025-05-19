@@ -11,4 +11,4 @@ class Message(db.Model):
     time = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<ChatMessage {self.chat_id}>'
+        return f'<Message {self.chat_id}>'

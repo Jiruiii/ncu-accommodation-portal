@@ -1,324 +1,326 @@
 <template>
-    <div class="landlord-verification-page">
-      <div class="verification-header">
-        <h1>房東身份認證</h1>
-        <p>完成認證後，您將獲得發布房源、管理租約等特權</p>
-      </div>
-  
-      <div class="verification-progress">
-        <div class="progress-steps">
-          <div 
-            v-for="(step, index) in steps" 
-            :key="index"
-            :class="['step', { 'active': currentStep >= index, 'completed': currentStep > index }]"
-          >
-            <div class="step-number">{{ index + 1 }}</div>
-            <div class="step-label">{{ step.label }}</div>
-          </div>
+      <div class="landlord-verification-page">
+        <div class="landlord-verification-content">
+        <div class="verification-header">
+          <h1>房東身份認證</h1>
+          <p>完成認證後，您將獲得發布房源、管理租約等特權</p>
         </div>
-        <div class="progress-bar">
-          <div class="progress" :style="{ width: progressPercentage + '%' }"></div>
-        </div>
-      </div>
-  
-      <!-- 基本資料表單 -->
-      <div v-if="currentStep === 0" class="verification-form">
-        <h2>基本資料</h2>
-        <div class="form-group">
-          <label>真實姓名 <span class="required">*</span></label>
-          <input 
-            type="text" 
-            v-model="formData.realName" 
-            placeholder="請輸入您的真實姓名，需與證件一致"
-          />
-          <div class="error-message" v-if="validationErrors.realName">{{ validationErrors.realName }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label>身份證號碼 <span class="required">*</span></label>
-          <input 
-            type="text" 
-            v-model="formData.idNumber" 
-            placeholder="請輸入您的身份證號碼"
-          />
-          <div class="error-message" v-if="validationErrors.idNumber">{{ validationErrors.idNumber }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label>聯絡電話 <span class="required">*</span></label>
-          <input 
-            type="text" 
-            v-model="formData.phone" 
-            placeholder="請輸入您的聯絡電話"
-          />
-          <div class="error-message" v-if="validationErrors.phone">{{ validationErrors.phone }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label>電子郵件 <span class="required">*</span></label>
-          <input 
-            type="email" 
-            v-model="formData.email" 
-            placeholder="請輸入您的電子郵件"
-          />
-          <div class="error-message" v-if="validationErrors.email">{{ validationErrors.email }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label>地址 <span class="required">*</span></label>
-          <input 
-            type="text" 
-            v-model="formData.address" 
-            placeholder="請輸入您的地址"
-          />
-          <div class="error-message" v-if="validationErrors.address">{{ validationErrors.address }}</div>
-        </div>
-        
-        <div class="form-actions">
-          <button class="next-btn" @click="validateAndContinue">繼續</button>
-        </div>
-      </div>
-  
-      <!-- 身份驗證表單 -->
-      <div v-else-if="currentStep === 1" class="verification-form">
-        <h2>身份驗證</h2>
-        <div class="upload-section">
-          <div class="upload-card">
-            <h3>身份證正面 <span class="required">*</span></h3>
+    
+        <div class="verification-progress">
+          <div class="progress-steps">
             <div 
-              class="upload-area"
-              :class="{ 'has-file': formData.idCardFront }"
-              @click="triggerFileUpload('idCardFront')"
+              v-for="(step, index) in steps" 
+              :key="index"
+              :class="['step', { 'active': currentStep >= index, 'completed': currentStep > index }]"
             >
-              <div v-if="!formData.idCardFront" class="upload-placeholder">
-                <i class="fa-solid fa-upload"></i>
-                <p>點擊上傳或拖曳檔案至此</p>
-              </div>
-              <div v-else class="file-preview">
-                <img :src="formData.idCardFrontPreview" alt="身份證正面預覽" />
-                <button class="remove-file" @click.stop="removeFile('idCardFront')">
-                  <i class="fa-solid fa-times"></i>
-                </button>
-              </div>
+              <div class="step-number">{{ index + 1 }}</div>
+              <div class="step-label">{{ step.label }}</div>
             </div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress" :style="{ width: progressPercentage + '%' }"></div>
+          </div>
+        </div>
+    
+        <!-- 基本資料表單 -->
+        <div v-if="currentStep === 0" class="verification-form">
+          <h2>基本資料</h2>
+          <div class="form-group">
+            <label>真實姓名 <span class="required">*</span></label>
             <input 
-              type="file" 
-              ref="idCardFrontInput"
-              style="display: none" 
-              accept="image/*"
-              @change="handleFileUpload('idCardFront', $event)"
+              type="text" 
+              v-model="formData.realName" 
+              placeholder="請輸入您的真實姓名，需與證件一致"
             />
-            <div class="error-message" v-if="validationErrors.idCardFront">{{ validationErrors.idCardFront }}</div>
+            <div class="error-message" v-if="validationErrors.realName">{{ validationErrors.realName }}</div>
           </div>
           
-          <div class="upload-card">
-            <h3>身份證反面 <span class="required">*</span></h3>
-            <div 
-              class="upload-area"
-              :class="{ 'has-file': formData.idCardBack }"
-              @click="triggerFileUpload('idCardBack')"
-            >
-              <div v-if="!formData.idCardBack" class="upload-placeholder">
-                <i class="fa-solid fa-upload"></i>
-                <p>點擊上傳或拖曳檔案至此</p>
-              </div>
-              <div v-else class="file-preview">
-                <img :src="formData.idCardBackPreview" alt="身份證反面預覽" />
-                <button class="remove-file" @click.stop="removeFile('idCardBack')">
-                  <i class="fa-solid fa-times"></i>
-                </button>
-              </div>
-            </div>
+          <div class="form-group">
+            <label>身份證號碼 <span class="required">*</span></label>
             <input 
-              type="file" 
-              ref="idCardBackInput"
-              style="display: none" 
-              accept="image/*"
-              @change="handleFileUpload('idCardBack', $event)"
+              type="text" 
+              v-model="formData.idNumber" 
+              placeholder="請輸入您的身份證號碼"
             />
-            <div class="error-message" v-if="validationErrors.idCardBack">{{ validationErrors.idCardBack }}</div>
-          </div>
-        </div>
-        
-        <div class="privacy-notice">
-          <input type="checkbox" id="privacyConsent" v-model="formData.privacyConsent" />
-          <label for="privacyConsent">
-            我同意系統收集、處理及利用我提供的個人資料，用於身份驗證目的。系統將依據<a href="#">隱私權政策</a>保護我的個人資料。
-          </label>
-          <div class="error-message" v-if="validationErrors.privacyConsent">{{ validationErrors.privacyConsent }}</div>
-        </div>
-        
-        <div class="form-actions">
-          <button class="back-btn" @click="currentStep--">返回</button>
-          <button class="next-btn" @click="validateAndContinue">繼續</button>
-        </div>
-      </div>
-  
-      <!-- 房源相關資訊 -->
-      <div v-else-if="currentStep === 2" class="verification-form">
-        <h2>房產資訊</h2>
-        <div class="form-group">
-          <label>您是否有房產出租經驗？</label>
-          <div class="radio-group">
-            <label>
-              <input type="radio" v-model="formData.hasRentalExperience" :value="true" />
-              是
-            </label>
-            <label>
-              <input type="radio" v-model="formData.hasRentalExperience" :value="false" />
-              否
-            </label>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label>您打算出租的房屋數量</label>
-          <select v-model="formData.propertyCount">
-            <option value="1">1間</option>
-            <option value="2-5">2-5間</option>
-            <option value="6-10">6-10間</option>
-            <option value="10+">10間以上</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>房屋類型 <span class="required">*</span></label>
-          <div class="checkbox-group">
-            <label v-for="type in propertyTypes" :key="type.value">
-              <input type="checkbox" v-model="formData.propertyTypes" :value="type.value" />
-              {{ type.label }}
-            </label>
-          </div>
-          <div class="error-message" v-if="validationErrors.propertyTypes">{{ validationErrors.propertyTypes }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label>房屋所在區域 <span class="required">*</span></label>
-          <select v-model="formData.propertyArea">
-            <option value="">請選擇區域</option>
-            <option value="中壢區">中壢區</option>
-            <option value="平鎮區">平鎮區</option>
-            <option value="龍潭區">龍潭區</option>
-            <option value="楊梅區">楊梅區</option>
-            <option value="其他">其他</option>
-          </select>
-          <div class="error-message" v-if="validationErrors.propertyArea">{{ validationErrors.propertyArea }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label>其他資訊或備註</label>
-          <textarea
-            v-model="formData.additionalInfo"
-            placeholder="請輸入任何您希望我們知道的額外資訊"
-            rows="4"
-          ></textarea>
-        </div>
-        
-        <div class="form-actions">
-          <button class="back-btn" @click="currentStep--">返回</button>
-          <button class="next-btn" @click="validateAndContinue">繼續</button>
-        </div>
-      </div>
-  
-      <!-- 提交確認 -->
-      <div v-else-if="currentStep === 3" class="verification-form">
-        <h2>確認提交</h2>
-        <div class="confirmation-summary">
-          <p>請確認以下資訊無誤，提交後將由管理員進行審核，審核結果將發送至您的郵箱。</p>
-          
-          <div class="summary-section">
-            <h3>基本資料</h3>
-            <div class="summary-item">
-              <span class="summary-label">真實姓名</span>
-              <span class="summary-value">{{ formData.realName }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">身份證號碼</span>
-              <span class="summary-value">{{ maskIdNumber(formData.idNumber) }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">聯絡電話</span>
-              <span class="summary-value">{{ formData.phone }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">電子郵件</span>
-              <span class="summary-value">{{ formData.email }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">地址</span>
-              <span class="summary-value">{{ formData.address }}</span>
-            </div>
+            <div class="error-message" v-if="validationErrors.idNumber">{{ validationErrors.idNumber }}</div>
           </div>
           
-          <div class="summary-section">
-            <h3>房產資訊</h3>
-            <div class="summary-item">
-              <span class="summary-label">出租經驗</span>
-              <span class="summary-value">{{ formData.hasRentalExperience ? '有' : '無' }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">房屋數量</span>
-              <span class="summary-value">{{ formData.propertyCount }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">房屋類型</span>
-              <span class="summary-value">{{ getPropertyTypeLabels().join(', ') }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">所在區域</span>
-              <span class="summary-value">{{ formData.propertyArea }}</span>
-            </div>
-            <div class="summary-item" v-if="formData.additionalInfo">
-              <span class="summary-label">備註</span>
-              <span class="summary-value">{{ formData.additionalInfo }}</span>
-            </div>
+          <div class="form-group">
+            <label>聯絡電話 <span class="required">*</span></label>
+            <input 
+              type="text" 
+              v-model="formData.phone" 
+              placeholder="請輸入您的聯絡電話"
+            />
+            <div class="error-message" v-if="validationErrors.phone">{{ validationErrors.phone }}</div>
           </div>
           
-          <div class="terms-agreement">
-            <input type="checkbox" id="termsConsent" v-model="formData.termsConsent" />
-            <label for="termsConsent">
-              我確認所提供的資訊真實無誤，並同意遵守系統的<a href="#">服務條款</a>和<a href="#">房東規範</a>。
-            </label>
-            <div class="error-message" v-if="validationErrors.termsConsent">{{ validationErrors.termsConsent }}</div>
-          </div>
-        </div>
-        
-        <div class="form-actions">
-          <button class="back-btn" @click="currentStep--">返回</button>
-          <button class="submit-btn" @click="submitVerification" :disabled="isSubmitting">
-            <span v-if="isSubmitting">
-              <i class="fa-solid fa-spinner fa-spin"></i> 提交中...
-            </span>
-            <span v-else>提交申請</span>
-          </button>
-        </div>
-      </div>
-  
-      <!-- 提交完成 -->
-      <div v-else-if="currentStep === 4" class="verification-form success-form">
-        <div class="success-message">
-          <i class="fa-solid fa-check-circle"></i>
-          <h2>申請提交成功！</h2>
-          <p>您的房東認證申請已成功提交，我們會在1-3個工作日內完成審核。</p>
-          <p>審核結果將發送至您的電子信箱：{{ formData.email }}</p>
-          
-          <div class="verification-status">
-            <div class="status-label">審核狀態</div>
-            <div class="status-value pending">審核中</div>
+          <div class="form-group">
+            <label>電子郵件 <span class="required">*</span></label>
+            <input 
+              type="email" 
+              v-model="formData.email" 
+              placeholder="請輸入您的電子郵件"
+            />
+            <div class="error-message" v-if="validationErrors.email">{{ validationErrors.email }}</div>
           </div>
           
-          <div class="next-steps">
-            <h3>後續步驟</h3>
-            <ul>
-              <li>請保持電話暢通，我們可能需要與您電話確認</li>
-              <li>審核通過後，您將獲得房東特權，可以發布和管理房源</li>
-              <li>您可以隨時在個人資料頁面查看審核狀態</li>
-            </ul>
+          <div class="form-group">
+            <label>地址 <span class="required">*</span></label>
+            <input 
+              type="text" 
+              v-model="formData.address" 
+              placeholder="請輸入您的地址"
+            />
+            <div class="error-message" v-if="validationErrors.address">{{ validationErrors.address }}</div>
           </div>
           
           <div class="form-actions">
-            <button class="home-btn" @click="goToProfile">返回個人資料</button>
-            <button class="dashboard-btn" @click="goToLandlordDashboard">前往房東中心</button>
+            <button class="next-btn" @click="validateAndContinue">繼續</button>
+          </div>
+        </div>
+    
+        <!-- 身份驗證表單 -->
+        <div v-else-if="currentStep === 1" class="verification-form">
+          <h2>身份驗證</h2>
+          <div class="upload-section">
+            <div class="upload-card">
+              <h3>身份證正面 <span class="required">*</span></h3>
+              <div 
+                class="upload-area"
+                :class="{ 'has-file': formData.idCardFront }"
+                @click="triggerFileUpload('idCardFront')"
+              >
+                <div v-if="!formData.idCardFront" class="upload-placeholder">
+                  <i class="fa-solid fa-upload"></i>
+                  <p>點擊上傳或拖曳檔案至此</p>
+                </div>
+                <div v-else class="file-preview">
+                  <img :src="formData.idCardFrontPreview" alt="身份證正面預覽" />
+                  <button class="remove-file" @click.stop="removeFile('idCardFront')">
+                    <i class="fa-solid fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              <input 
+                type="file" 
+                ref="idCardFrontInput"
+                style="display: none" 
+                accept="image/*"
+                @change="handleFileUpload('idCardFront', $event)"
+              />
+              <div class="error-message" v-if="validationErrors.idCardFront">{{ validationErrors.idCardFront }}</div>
+            </div>
+            
+            <div class="upload-card">
+              <h3>身份證反面 <span class="required">*</span></h3>
+              <div 
+                class="upload-area"
+                :class="{ 'has-file': formData.idCardBack }"
+                @click="triggerFileUpload('idCardBack')"
+              >
+                <div v-if="!formData.idCardBack" class="upload-placeholder">
+                  <i class="fa-solid fa-upload"></i>
+                  <p>點擊上傳或拖曳檔案至此</p>
+                </div>
+                <div v-else class="file-preview">
+                  <img :src="formData.idCardBackPreview" alt="身份證反面預覽" />
+                  <button class="remove-file" @click.stop="removeFile('idCardBack')">
+                    <i class="fa-solid fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              <input 
+                type="file" 
+                ref="idCardBackInput"
+                style="display: none" 
+                accept="image/*"
+                @change="handleFileUpload('idCardBack', $event)"
+              />
+              <div class="error-message" v-if="validationErrors.idCardBack">{{ validationErrors.idCardBack }}</div>
+            </div>
+          </div>
+          
+          <div class="privacy-notice">
+            <input type="checkbox" id="privacyConsent" v-model="formData.privacyConsent" />
+            <label for="privacyConsent">
+              我同意系統收集、處理及利用我提供的個人資料，用於身份驗證目的。系統將依據<a href="#">隱私權政策</a>保護我的個人資料。
+            </label>
+            <div class="error-message" v-if="validationErrors.privacyConsent">{{ validationErrors.privacyConsent }}</div>
+          </div>
+          
+          <div class="form-actions">
+            <button class="back-btn" @click="currentStep--">返回</button>
+            <button class="next-btn" @click="validateAndContinue">繼續</button>
+          </div>
+        </div>
+    
+        <!-- 房源相關資訊 -->
+        <div v-else-if="currentStep === 2" class="verification-form">
+          <h2>房產資訊</h2>
+          <div class="form-group">
+            <label>您是否有房產出租經驗？</label>
+            <div class="radio-group">
+              <label>
+                <input type="radio" v-model="formData.hasRentalExperience" :value="true" />
+                是
+              </label>
+              <label>
+                <input type="radio" v-model="formData.hasRentalExperience" :value="false" />
+                否
+              </label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>您打算出租的房屋數量</label>
+            <select v-model="formData.propertyCount">
+              <option value="1">1間</option>
+              <option value="2-5">2-5間</option>
+              <option value="6-10">6-10間</option>
+              <option value="10+">10間以上</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>房屋類型 <span class="required">*</span></label>
+            <div class="checkbox-group">
+              <label v-for="type in propertyTypes" :key="type.value">
+                <input type="checkbox" v-model="formData.propertyTypes" :value="type.value" />
+                {{ type.label }}
+              </label>
+            </div>
+            <div class="error-message" v-if="validationErrors.propertyTypes">{{ validationErrors.propertyTypes }}</div>
+          </div>
+          
+          <div class="form-group">
+            <label>房屋所在區域 <span class="required">*</span></label>
+            <select v-model="formData.propertyArea">
+              <option value="">請選擇區域</option>
+              <option value="中壢區">中壢區</option>
+              <option value="平鎮區">平鎮區</option>
+              <option value="龍潭區">龍潭區</option>
+              <option value="楊梅區">楊梅區</option>
+              <option value="其他">其他</option>
+            </select>
+            <div class="error-message" v-if="validationErrors.propertyArea">{{ validationErrors.propertyArea }}</div>
+          </div>
+          
+          <div class="form-group">
+            <label>其他資訊或備註</label>
+            <textarea
+              v-model="formData.additionalInfo"
+              placeholder="請輸入任何您希望我們知道的額外資訊"
+              rows="4"
+            ></textarea>
+          </div>
+          
+          <div class="form-actions">
+            <button class="back-btn" @click="currentStep--">返回</button>
+            <button class="next-btn" @click="validateAndContinue">繼續</button>
+          </div>
+        </div>
+    
+        <!-- 提交確認 -->
+        <div v-else-if="currentStep === 3" class="verification-form">
+          <h2>確認提交</h2>
+          <div class="confirmation-summary">
+            <p>請確認以下資訊無誤，提交後將由管理員進行審核，審核結果將發送至您的郵箱。</p>
+            
+            <div class="summary-section">
+              <h3>基本資料</h3>
+              <div class="summary-item">
+                <span class="summary-label">真實姓名</span>
+                <span class="summary-value">{{ formData.realName }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">身份證號碼</span>
+                <span class="summary-value">{{ maskIdNumber(formData.idNumber) }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">聯絡電話</span>
+                <span class="summary-value">{{ formData.phone }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">電子郵件</span>
+                <span class="summary-value">{{ formData.email }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">地址</span>
+                <span class="summary-value">{{ formData.address }}</span>
+              </div>
+            </div>
+            
+            <div class="summary-section">
+              <h3>房產資訊</h3>
+              <div class="summary-item">
+                <span class="summary-label">出租經驗</span>
+                <span class="summary-value">{{ formData.hasRentalExperience ? '有' : '無' }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">房屋數量</span>
+                <span class="summary-value">{{ formData.propertyCount }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">房屋類型</span>
+                <span class="summary-value">{{ getPropertyTypeLabels().join(', ') }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">所在區域</span>
+                <span class="summary-value">{{ formData.propertyArea }}</span>
+              </div>
+              <div class="summary-item" v-if="formData.additionalInfo">
+                <span class="summary-label">備註</span>
+                <span class="summary-value">{{ formData.additionalInfo }}</span>
+              </div>
+            </div>
+            
+            <div class="terms-agreement">
+              <input type="checkbox" id="termsConsent" v-model="formData.termsConsent" />
+              <label for="termsConsent">
+                我確認所提供的資訊真實無誤，並同意遵守系統的<a href="#">服務條款</a>和<a href="#">房東規範</a>。
+              </label>
+              <div class="error-message" v-if="validationErrors.termsConsent">{{ validationErrors.termsConsent }}</div>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button class="back-btn" @click="currentStep--">返回</button>
+            <button class="submit-btn" @click="submitVerification" :disabled="isSubmitting">
+              <span v-if="isSubmitting">
+                <i class="fa-solid fa-spinner fa-spin"></i> 提交中...
+              </span>
+              <span v-else>提交申請</span>
+            </button>
+          </div>
+        </div>
+    
+        <!-- 提交完成 -->
+        <div v-else-if="currentStep === 4" class="verification-form success-form">
+          <div class="success-message">
+            <i class="fa-solid fa-check-circle"></i>
+            <h2>申請提交成功！</h2>
+            <p>您的房東認證申請已成功提交，我們會在1-3個工作日內完成審核。</p>
+            <p>審核結果將發送至您的電子信箱：{{ formData.email }}</p>
+            
+            <div class="verification-status">
+              <div class="status-label">審核狀態</div>
+              <div class="status-value pending">審核中</div>
+            </div>
+            
+            <div class="next-steps">
+              <h3>後續步驟</h3>
+              <ul>
+                <li>請保持電話暢通，我們可能需要與您電話確認</li>
+                <li>審核通過後，您將獲得房東特權，可以發布和管理房源</li>
+                <li>您可以隨時在個人資料頁面查看審核狀態</li>
+              </ul>
+            </div>
+            
+            <div class="form-actions">
+              <button class="home-btn" @click="goToProfile">返回個人資料</button>
+              <button class="dashboard-btn" @click="goToLandlordDashboard">前往房東中心</button>
+            </div>
           </div>
         </div>
       </div>
@@ -621,11 +623,14 @@
   
   <style scoped>
   .landlord-verification-page {
-    max-width: 900px;
     margin: 0 auto;
-    padding: 40px 20px;
+    padding: 40px 30px;
     overflow-y: auto;
     height: calc(100vh - 80px);
+  }
+
+  .landlord.verification-content{
+    max-width: 900px;
     position: relative;
   }
   
@@ -710,7 +715,6 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 30px;
     margin-bottom: 30px;
-    overflow: visible;
   }
   
   .verification-form h2 {
