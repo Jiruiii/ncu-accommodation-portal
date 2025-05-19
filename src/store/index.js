@@ -1,5 +1,4 @@
 import { createStore } from "vuex";
-// import accommodationData from "@/data.json";
 import apiService from "@/services/api";
 
 export default createStore({
@@ -19,6 +18,7 @@ export default createStore({
     selectedAccommodation: null,
     favoriteIds: [],
     loading: false,
+    dataInitialized: false,
 
     // 搜尋和篩選條件
     searchQuery: "",
@@ -35,89 +35,18 @@ export default createStore({
     mapCenter: { lat: 24.968, lng: 121.1944 }, // 中央大學座標
     mapZoom: 15,
 
-    // 新增：房源評論資料
-    comments: {
-      // 預設假資料，使用房源編碼作為 key
-      1: [
-        {
-          id: 1,
-          userId: "user123",
-          userName: "張小明",
-          content: "房東人很好，環境也很乾淨！浴室有暖氣，住起來很舒適。",
-          rating: 5,
-          date: "2025-05-10",
-          likes: 3,
-        },
-        {
-          id: 2,
-          userId: "user456",
-          userName: "林小華",
-          content: "地點很方便，走路到中央大學只要10分鐘。附近有超商也很方便。",
-          rating: 4,
-          date: "2025-05-08",
-          likes: 1,
-        },
-      ],
-      2: [
-        {
-          id: 3,
-          userId: "user789",
-          userName: "王小美",
-          content: "冷氣很涼，房間隔音還不錯。唯一缺點是洗衣機共用，要排隊。",
-          rating: 4,
-          date: "2025-05-05",
-          likes: 2,
-        },
-      ],
-      3: [
-        {
-          id: 4,
-          userId: "user321",
-          userName: "黃小傑",
-          content: "價格合理，房間採光佳。房東定期打掃公共區域，環境很乾淨。",
-          rating: 5,
-          date: "2025-05-12",
-          likes: 4,
-        },
-        {
-          id: 5,
-          userId: "user654",
-          userName: "陳小玉",
-          content: "整體不錯，但廁所有點小。夏天熱水不太穩定，其他都還可以。",
-          rating: 3,
-          date: "2025-05-03",
-          likes: 0,
-        },
-      ],
-      5: [
-        {
-          id: 6,
-          userId: "user111",
-          userName: "李大明",
-          content: "停車方便，房間明亮。不過走廊燈晚上有點太亮，需要厚窗簾。",
-          rating: 4,
-          date: "2025-05-01",
-          likes: 2,
-        },
-      ],
-      8: [
-        {
-          id: 7,
-          userId: "user222",
-          userName: "吳小芳",
-          content: "網路很快，管理員人很親切。缺點是附近施工，早上有點吵。",
-          rating: 3,
-          date: "2025-04-28",
-          likes: 1,
-        },
-      ],
-    },
+    // 修改：評論資料結構，空物件準備從資料庫加載
+    comments: {},
   },
 
   mutations: {
     SET_USER(state, user) {
       state.user = user;
       state.isAuthenticated = !!user;
+    },
+
+    SET_AUTHENTICATED(state, value) {
+      state.isAuthenticated = value;
     },
 
     TOGGLE_NAVIGATION(state) {
@@ -144,6 +73,10 @@ export default createStore({
     SET_ACCOMMODATIONS(state, accommodations) {
       state.accommodations = accommodations;
       state.filteredAccommodations = accommodations;
+    },
+
+    SET_DATA_INITIALIZED(state, value) {
+      state.dataInitialized = value;
     },
 
     SET_LOADING(state, isLoading) {
@@ -188,6 +121,18 @@ export default createStore({
       );
     },
 
+    REMOVE_FAVORITE(state, id) {
+      const index = state.favoriteIds.indexOf(id);
+      if (index !== -1) {
+        state.favoriteIds.splice(index, 1);
+      }
+      // 儲存到 localStorage
+      localStorage.setItem(
+        "favoriteAccommodations",
+        JSON.stringify(state.favoriteIds)
+      );
+    },
+
     TOGGLE_MAP_VIEW(state) {
       state.mapView = !state.mapView;
     },
@@ -196,14 +141,14 @@ export default createStore({
       state.mapCenter = center;
     },
 
-    // 新增：評論相關 mutations
+    // 更新評論相關 mutations
     ADD_COMMENT(state, { propertyId, comment }) {
       if (!state.comments[propertyId]) {
         state.comments[propertyId] = [];
       }
       state.comments[propertyId].unshift(comment);
 
-      // 更新 localStorage
+      // 可保留 localStorage 作為緩存，或完全依賴資料庫
       localStorage.setItem("propertyComments", JSON.stringify(state.comments));
     },
 
@@ -213,8 +158,6 @@ export default createStore({
       );
       if (comment) {
         comment.likes += 1;
-
-        // 更新 localStorage
         localStorage.setItem(
           "propertyComments",
           JSON.stringify(state.comments)
@@ -222,16 +165,76 @@ export default createStore({
       }
     },
 
-    LOAD_COMMENTS(state, comments) {
-      if (comments) {
-        state.comments = comments;
-      }
+    SET_PROPERTY_COMMENTS(state, { propertyId, comments }) {
+      // 設置特定房源的評論
+      state.comments[propertyId] = comments;
     },
+
+    SET_ALL_COMMENTS(state, comments) {
+      // 替換所有評論數據
+      state.comments = comments;
+    }
   },
 
   actions: {
+    // 初始化應用程式
+    async initializeApp({ commit, dispatch }) {
+      try {
+        // 嘗試從 localStorage 載入收藏
+        const savedFavorites = localStorage.getItem("favoriteAccommodations");
+        if (savedFavorites) {
+          commit("SET_FAVORITE_IDS", JSON.parse(savedFavorites));
+        }
+
+        // 嘗試從 localStorage 載入房源資料
+        const savedAccommodations = localStorage.getItem("accommodations");
+        if (savedAccommodations) {
+          const parsedData = JSON.parse(savedAccommodations);
+          commit("SET_ACCOMMODATIONS", parsedData);
+          commit("SET_LOADING", false);
+
+          // 如果有本地資料，先套用篩選和排序
+          dispatch("applyFiltersAndSort");
+
+          // 標記為已初始化
+          commit("SET_DATA_INITIALIZED", true);
+        }
+
+        // 檢查是否需要更新資料（如果資料太舊或不存在）
+        const lastUpdate = localStorage.getItem("accommodationsLastUpdated");
+        const now = new Date().getTime();
+        const dataAge = lastUpdate ? now - parseInt(lastUpdate) : Infinity;
+
+        // 如果資料不存在或太舊（超過1小時），則從API獲取
+        if (!savedAccommodations || dataAge > 3600000) {
+          console.log("Data is stale or missing, fetching from API...");
+          await dispatch("fetchAccommodations");
+        }
+
+        // 檢查用戶登入狀態
+        const userFromLocal = localStorage.getItem("user");
+        const userFromSession = sessionStorage.getItem("user");
+
+        if (userFromLocal || userFromSession) {
+          const userData = JSON.parse(userFromLocal || userFromSession);
+          commit("SET_USER", userData);
+          commit("SET_AUTHENTICATED", true);
+
+          // 如果用戶已登入，嘗試同步收藏
+          dispatch("syncFavorites");
+        }
+      } catch (error) {
+        console.error("Failed to initialize app:", error);
+
+        // 如果初始化失敗但有本地資料，仍標記為已初始化
+        if (localStorage.getItem("accommodations")) {
+          commit("SET_DATA_INITIALIZED", true);
+        }
+      }
+    },
+
     // 獲取房源資料
-    async fetchAccommodations({ commit, dispatch }) {
+    async fetchAccommodations({ commit, dispatch, state }) {
       try {
         commit("SET_LOADING", true);
 
@@ -253,18 +256,18 @@ export default createStore({
               聯絡資訊: item.contact_info || "請聯絡房東",
               屋內設備: item.amenities
                 ? item.amenities
-                    .filter(
-                      (a) =>
-                        a.category === "appliance" || a.category === "furniture"
-                    )
-                    .map((a) => a.name)
+                  .filter(
+                    (a) =>
+                      a.category === "appliance" || a.category === "furniture"
+                  )
+                  .map((a) => a.name)
                 : [],
               公共設施: item.amenities
                 ? item.amenities
-                    .filter(
-                      (a) => a.category === "utility" || a.category === "other"
-                    )
-                    .map((a) => a.name)
+                  .filter(
+                    (a) => a.category === "utility" || a.category === "other"
+                  )
+                  .map((a) => a.name)
                 : [],
               屋況說明: item.description
                 ? item.description.split(/[,，、。；;]/).filter((s) => s.trim())
@@ -273,26 +276,26 @@ export default createStore({
                 套房:
                   item.studio_count > 0
                     ? {
-                        總數: item.studio_count,
-                        空房: item.studio_available,
-                        坪數: item.studio_area
-                          ? `約${item.studio_area}坪`
-                          : item.area
+                      總數: item.studio_count,
+                      空房: item.studio_available,
+                      坪數: item.studio_area
+                        ? `約${item.studio_area}坪`
+                        : item.area
                           ? `約${item.area}坪`
                           : "未提供",
-                      }
+                    }
                     : null,
                 雅房:
                   item.single_count > 0
                     ? {
-                        總數: item.single_count,
-                        空房: item.single_available,
-                        坪數: item.single_area
-                          ? `約${item.single_area}坪`
-                          : item.area
+                      總數: item.single_count,
+                      空房: item.single_available,
+                      坪數: item.single_area
+                        ? `約${item.single_area}坪`
+                        : item.area
                           ? `約${item.area}坪`
                           : "未提供",
-                      }
+                    }
                     : null,
               },
               其他費用: item.deposit ? `押金：${item.deposit}元` : "無額外費用",
@@ -306,6 +309,13 @@ export default createStore({
           });
 
           commit("SET_ACCOMMODATIONS", formattedData);
+
+          localStorage.setItem("accommodations", JSON.stringify(formattedData));
+          localStorage.setItem('accommodationsLastUpdated', new Date().getTime().toString());
+
+          commit('SET_DATA_INITIALIZED', true);
+
+          dispatch('applyFiltersAndSort');
         } else {
           console.error(
             "Failed to fetch accommodations:",
@@ -329,6 +339,10 @@ export default createStore({
           console.error("Failed to load fallback data:", err);
           return { default: [] };
         });
+
+        if (state.accommodations.length > 0) {
+          commit('SET_DATA_INITIALIZED', true);
+        }
 
         commit("SET_ACCOMMODATIONS", fallbackData.default || []);
 
@@ -370,14 +384,102 @@ export default createStore({
 
         if (response && response.success) {
           commit("TOGGLE_FAVORITE", id);
+          return true;
+        } else {
+          throw new Error("API failed to toggle favorite");
         }
       } catch (error) {
         console.error("Failed to toggle favorite:", error);
+
+        commit("TOGGLE_FAVORITE", id);
+
+        console.warn("Changes are saved locally only");
+        return false;
+      }
+    },
+
+    // 從收藏中移除單個項目
+    async removeFavorite({ commit }, id) {
+      try {
+        // 嘗試使用 API 移除收藏
+        const response =
+          await apiService.accommodations.favorites.removeFavorite(id);
+
+        if (response && response.success) {
+          // API 成功，更新本地狀態
+          commit("REMOVE_FAVORITE", id);
+          return true;
+        } else {
+          throw new Error("API request failed");
+        }
+      } catch (error) {
+        console.error("Failed to remove favorite with API:", error);
+
+        // API 失敗，僅在本地移除收藏
+        commit("REMOVE_FAVORITE", id);
+
+        // 顯示提示
+        console.warn("Changes are saved locally only");
+        return false;
+      }
+    },
+
+    // 同步收藏列表與伺服器
+    async syncFavorites({ commit, state }) {
+      // 如果用戶已登入，則嘗試與伺服器同步收藏
+      if (state.isAuthenticated) {
+        try {
+          const response =
+            await apiService.accommodations.favorites.getFavorites();
+
+          // 從回應中提取房源 ID
+          const serverFavoriteIds = response.map((item) => item.id);
+
+          // 本地收藏 ID
+          const localFavoriteIds = state.favoriteIds;
+
+          if (JSON.stringify(serverFavoriteIds.sort()) === JSON.stringify(localFavoriteIds.sort())) {
+            return; 
+          }
+
+          // 找出需要添加到伺服器的本地收藏
+          const toAdd = localFavoriteIds.filter(
+            (id) => !serverFavoriteIds.includes(id)
+          );
+
+          // 找出需要從本地移除的伺服器收藏 (已在伺服器上移除)
+          const toRemove = serverFavoriteIds.filter(
+            (id) => !localFavoriteIds.includes(id)
+          );
+
+          // 同步添加
+          for (const id of toAdd) {
+            await apiService.accommodations.favorites.toggleFavorite(id);
+          }
+
+          // 同步移除
+          for (const id of toRemove) {
+            await apiService.accommodations.favorites.removeFavorite(id);
+          }
+
+          // 更新本地狀態為伺服器狀態
+          commit("SET_FAVORITE_IDS", serverFavoriteIds);
+
+          // 更新 localStorage
+          localStorage.setItem(
+            "favoriteAccommodations",
+            JSON.stringify(serverFavoriteIds)
+          );
+
+          console.log("Favorites synced with server");
+        } catch (error) {
+          console.error("Failed to sync favorites with server:", error);
+        }
       }
     },
 
     // 應用篩選和排序
-    applyFiltersAndSort({ commit, state }) {
+    async applyFiltersAndSort({ commit, state }) {
       let filtered = [...state.accommodations];
 
       // 套用搜尋
@@ -475,63 +577,105 @@ export default createStore({
       commit("SET_CURRENTROUTE", route);
     },
 
-    addComment({ commit, state }, { propertyId, content, rating }) {
-      // 產生新評論
-      const newComment = {
-        id: Date.now(),
-        userId: state.user?.id || "guest",
-        userName: state.user?.name || "訪客",
-        content,
-        rating,
-        date: new Date().toISOString().split("T")[0],
-        likes: 0,
-      };
-
-      // 提交 mutation
-      commit("ADD_COMMENT", { propertyId, comment: newComment });
-    },
-
-    likeComment({ commit }, { propertyId, commentId }) {
-      commit("LIKE_COMMENT", { propertyId, commentId });
-    },
-
-    // 從 localStorage 加載評論
-    loadComments({ commit }) {
+    // 從資料庫加載特定房源的評論
+    async fetchPropertyComments({ commit }, propertyId) {
       try {
+        // 這裡將來替換為實際的 API 調用
+        // const response = await apiService.comments.getComments(propertyId);
+        // if (response && response.success) {
+        //   commit("SET_PROPERTY_COMMENTS", { 
+        //     propertyId, 
+        //     comments: response.comments 
+        //   });
+        // }
+
+        // 臨時：從 localStorage 加載
         const savedComments = localStorage.getItem("propertyComments");
         if (savedComments) {
-          commit("LOAD_COMMENTS", JSON.parse(savedComments));
+          const allComments = JSON.parse(savedComments);
+          const propertyComments = allComments[propertyId] || [];
+          commit("SET_PROPERTY_COMMENTS", {
+            propertyId,
+            comments: propertyComments
+          });
         }
       } catch (error) {
-        console.error("無法載入評論:", error);
+        console.error(`無法獲取房源 ${propertyId} 的評論:`, error);
       }
     },
 
-    // 初始化資料時同時加載評論
-    // async fetchAccommodations({ commit, dispatch }) {
-    //   try {
-    //     // 原有的加載邏輯...
-    //     const validAccommodations = accommodationData.filter(property =>
-    //       property &&
-    //       property.編碼 &&
-    //       property.標題 &&
-    //       property.房租
-    //     );
+    // 從資料庫加載所有評論
+    async fetchAllComments({ commit }) {
+      try {
+        // 這裡將來替換為實際的 API 調用
+        // const response = await apiService.comments.getAllComments();
+        // if (response && response.success) {
+        //   commit("SET_ALL_COMMENTS", response.comments);
+        // }
 
-    //     commit('SET_ACCOMMODATIONS', validAccommodations);
+        // 臨時：從 localStorage 加載
+        const savedComments = localStorage.getItem("propertyComments");
+        if (savedComments) {
+          commit("SET_ALL_COMMENTS", JSON.parse(savedComments));
+        }
+      } catch (error) {
+        console.error("無法獲取所有評論:", error);
+      }
+    },
 
-    //     const savedFavorites = localStorage.getItem('favoriteAccommodations');
-    //     const favoriteIds = savedFavorites ? JSON.parse(savedFavorites) : [];
-    //     commit('SET_FAVORITE_IDS', favoriteIds);
+    // 添加評論 - 準備連接資料庫
+    async addComment({ commit, state }, { propertyId, content, rating }) {
+      try {
+        const newComment = {
+          id: Date.now(), // 臨時ID，資料庫應生成真實ID
+          userId: state.user?.id || "guest",
+          userName: state.user?.name || "訪客",
+          content,
+          rating,
+          date: new Date().toISOString().split("T")[0],
+          likes: 0,
+        };
 
-    //     // 新增：載入評論
-    //     dispatch('loadComments');
+        // 這裡將來替換為實際的 API 調用
+        // const response = await apiService.comments.addComment(propertyId, {
+        //   content,
+        //   rating,
+        //   userId: state.user?.id
+        // });
+        // 
+        // if (response && response.success) {
+        //   // 使用後端返回的評論數據
+        //   commit("ADD_COMMENT", { propertyId, comment: response.comment });
+        //   return true;
+        // }
 
-    //     dispatch('applyFiltersAndSort');
-    //   } catch (error) {
-    //     console.error('Failed to fetch accommodations:', error);
-    //   }
-    // }
+        // 臨時：直接添加到本地狀態
+        commit("ADD_COMMENT", { propertyId, comment: newComment });
+        return true;
+      } catch (error) {
+        console.error("添加評論失敗:", error);
+        return false;
+      }
+    },
+
+    // 點贊評論 - 準備連接資料庫
+    async likeComment({ commit }, { propertyId, commentId }) {
+      try {
+        // 這裡將來替換為實際的 API 調用
+        // const response = await apiService.comments.likeComment(propertyId, commentId);
+        // if (response && response.success) {
+        //   commit("LIKE_COMMENT", { propertyId, commentId });
+        //   return true;
+        // }
+
+        // 臨時：直接更新本地狀態
+        commit("LIKE_COMMENT", { propertyId, commentId });
+        return true;
+      } catch (error) {
+        console.error("點贊評論失敗:", error);
+        return false;
+      }
+    },
   },
 
   getters: {

@@ -236,6 +236,8 @@ export const apiService = {
     favorites: {
       getFavorites: () => apiService.get("/api/accommodations/favorites"),
       toggleFavorite: (id) =>
+        apiService.post(`/api/accommodations/favorites/toggle/${id}`),
+      addFavorite: (id) =>
         apiService.post(`/api/accommodations/favorites/${id}`),
       removeFavorite: (id) =>
         apiService.post(`/api/accommodations/favorites/delete/${id}`),
@@ -257,6 +259,8 @@ export const apiService = {
   users: {
     getProfile: () => apiService.get("/api/users/profile"),
     updateProfile: (data) => apiService.put("/api/users/profile", data),
+    uploadProfileImage: (formData) =>
+      apiService.post("/api/users/profile/image", formData),
     changePassword: (data) =>
       apiService.post("/api/users/change-password", data),
     unbindPortal: () => apiService.post("/api/users/unbind-portal"),
@@ -330,6 +334,39 @@ export const apiService = {
       apiService.post("/api/verification/verify-email", { code }),
     verifyPhone: async (code) =>
       apiService.post("/api/verification/verify-phone", { code }),
+  },
+
+  landlord: {
+    getDashboard: () => apiService.get("/api/landlord/dashboard"),
+
+    // 房東認證
+    submitVerification: (formData) =>
+      apiService.post("/api/landlord/verification", formData),
+    getVerificationStatus: () =>
+      apiService.get("/api/landlord/verification/status"),
+
+    // 房源管理
+    getProperties: () => apiService.get("/api/landlord/properties"),
+    getProperty: (id) => apiService.get(`/api/landlord/properties/${id}`),
+    createProperty: (data) => apiService.post("/api/landlord/properties", data),
+    updateProperty: (id, data) =>
+      apiService.put(`/api/landlord/properties/${id}`, data),
+    deleteProperty: (id) => apiService.delete(`/api/landlord/properties/${id}`),
+    updatePropertyStatus: (id, status) =>
+      apiService.post(`/api/landlord/properties/${id}/status`, { status }),
+
+    // 訊息管理
+    getMessages: () => apiService.get("/api/landlord/messages"),
+    getMessage: (id) => apiService.get(`/api/landlord/messages/${id}`),
+    replyMessage: (id, content) =>
+      apiService.post(`/api/landlord/messages/${id}/reply`, { content }),
+
+    // 租賃合同
+    getContracts: () => apiService.get("/api/landlord/contracts"),
+    getContract: (id) => apiService.get(`/api/landlord/contracts/${id}`),
+    createContract: (data) => apiService.post("/api/landlord/contracts", data),
+    updateContract: (id, data) =>
+      apiService.put(`/api/landlord/contracts/${id}`, data),
   },
 };
 
