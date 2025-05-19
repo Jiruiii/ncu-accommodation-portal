@@ -3,5 +3,10 @@
     "timestamp": "20250518_034117",
     "filename": "db_export_20250518_034117.json",
     "user": "USER"
+  },
+  "last_import": {
+    "timestamp": "20250519_152847",
+    "filename": "db_export_20250518_034117.json",
+    "user": "USER"
   }
 }
