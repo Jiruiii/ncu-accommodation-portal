@@ -177,14 +177,14 @@ export const apiService = {
           "id identifier chinese-name student-id academy-records email mobile-phone"
         );
         const state = generateRandomState();
-    
+
         // 保存 state 到 localStorage
         localStorage.setItem("oauth_state", state);
         localStorage.setItem("oauth_action", "binding");
-    
+
         return `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&state=${state}`;
       },
-      
+
       // Portal 快速登入
       getLoginUrl: () => {
         const clientId = "20250507153856UyZ8gD4BXoY5";
@@ -195,14 +195,14 @@ export const apiService = {
           "id identifier chinese-name student-id academy-records email mobile-phone"
         );
         const state = generateRandomState();
-    
+
         // 保存 state 到 localStorage
         localStorage.setItem("oauth_state", state);
         localStorage.setItem("oauth_action", "login");
-    
+
         return `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&state=${state}`;
       },
-      
+
       // 註冊時獲取 Portal 資訊
       getInfoUrl: () => {
         const clientId = "20250507153856UyZ8gD4BXoY5";
@@ -213,12 +213,12 @@ export const apiService = {
           "id identifier chinese-name student-id academy-records email mobile-phone"
         );
         const state = generateRandomState();
-    
+
         // 保存 state 到 localStorage
         localStorage.setItem("oauth_state", state);
         localStorage.setItem("oauth_action", "getinfo");
         localStorage.setItem("bindingForRegistration", "true");
-    
+
         return `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&state=${state}`;
       },
       handleCallback: (code, action_type) =>
@@ -228,17 +228,22 @@ export const apiService = {
 
   // 住宿相關 API
   accommodations: {
-    getAll: (params = {}) => {
-      const queryString = new URLSearchParams(params).toString();
-      return apiService.get(`/api/accommodations?${queryString}`);
-    },
+    getAccommodations: () => apiService.get("/api/accommodations"),
     getById: (id) => apiService.get(`/api/accommodations/${id}`),
     create: (data) => apiService.post("/api/accommodations", data),
     update: (id, data) => apiService.put(`/api/accommodations/${id}`, data),
     delete: (id) => apiService.delete(`/api/accommodations/${id}`),
-    getFavorites: () => apiService.get("/api/accommodations/favorites"),
-    toggleFavorite: (id) =>
-      apiService.post(`/api/accommodations/${id}/favorite`),
+    favorites: {
+      getFavorites: () => apiService.get("/api/accommodations/favorites"),
+      toggleFavorite: (id) =>
+        apiService.post(`/api/accommodations/favorites/toggle/${id}`),
+      addFavorite: (id) =>
+        apiService.post(`/api/accommodations/favorites/${id}`),
+      removeFavorite: (id) =>
+        apiService.post(`/api/accommodations/favorites/delete/${id}`),
+      checkFavoriteStatus: (id) =>
+        apiService.get(`/api/accommodations/favorites/status/${id}`),
+    },
   },
 
   // 評價相關 API
@@ -254,6 +259,8 @@ export const apiService = {
   users: {
     getProfile: () => apiService.get("/api/users/profile"),
     updateProfile: (data) => apiService.put("/api/users/profile", data),
+    uploadProfileImage: (formData) =>
+      apiService.post("/api/users/profile/image", formData),
     changePassword: (data) =>
       apiService.post("/api/users/change-password", data),
     unbindPortal: () => apiService.post("/api/users/unbind-portal"),
@@ -323,11 +330,44 @@ export const apiService = {
       apiService.post("/api/verification/send-email", { email }),
     sendPhoneVerification: async (phone) =>
       apiService.post("/api/verification/send-phone", { phone }),
-    verifyEmail: async (code) => 
+    verifyEmail: async (code) =>
       apiService.post("/api/verification/verify-email", { code }),
     verifyPhone: async (code) =>
       apiService.post("/api/verification/verify-phone", { code }),
-  }
+  },
+
+  landlord: {
+    getDashboard: () => apiService.get("/api/landlord/dashboard"),
+
+    // 房東認證
+    submitVerification: (formData) =>
+      apiService.post("/api/landlord/verification", formData),
+    getVerificationStatus: () =>
+      apiService.get("/api/landlord/verification/status"),
+
+    // 房源管理
+    getProperties: () => apiService.get("/api/landlord/properties"),
+    getProperty: (id) => apiService.get(`/api/landlord/properties/${id}`),
+    createProperty: (data) => apiService.post("/api/landlord/properties", data),
+    updateProperty: (id, data) =>
+      apiService.put(`/api/landlord/properties/${id}`, data),
+    deleteProperty: (id) => apiService.delete(`/api/landlord/properties/${id}`),
+    updatePropertyStatus: (id, status) =>
+      apiService.post(`/api/landlord/properties/${id}/status`, { status }),
+
+    // 訊息管理
+    getMessages: () => apiService.get("/api/landlord/messages"),
+    getMessage: (id) => apiService.get(`/api/landlord/messages/${id}`),
+    replyMessage: (id, content) =>
+      apiService.post(`/api/landlord/messages/${id}/reply`, { content }),
+
+    // 租賃合同
+    getContracts: () => apiService.get("/api/landlord/contracts"),
+    getContract: (id) => apiService.get(`/api/landlord/contracts/${id}`),
+    createContract: (data) => apiService.post("/api/landlord/contracts", data),
+    updateContract: (id, data) =>
+      apiService.put(`/api/landlord/contracts/${id}`, data),
+  },
 };
 
 // 生成隨機狀態碼防止CSRF攻擊

@@ -11,9 +11,16 @@ class Accommodation(db.Model):
     property_type = db.Column(db.Enum('apartment', 'studio', 'house', 
                                     'shared_room', 'single_room',
                                     name='property_type_enum'), nullable=False)
-    room_count = db.Column(db.Integer)
+    room_count = db.Column(db.Integer) # 房間總數
+    studio_count = db.Column(db.Integer)  # 套房總數
+    studio_available = db.Column(db.Integer)  # 套房空房數
+    single_count = db.Column(db.Integer)  # 雅房總數
+    single_available = db.Column(db.Integer)  # 雅房空房數
+    contact_info = db.Column(db.String(255), nullable=False)
     bathroom_count = db.Column(db.Integer)
     area = db.Column(db.Float)
+    studio_area = db.Column(db.Float)  # 套房面積
+    single_area = db.Column(db.Float)  # 雅房面積
     rent_price = db.Column(db.Numeric(10, 2), nullable=False)
     deposit = db.Column(db.Numeric(10, 2))
     is_furnished = db.Column(db.Boolean, default=False)
