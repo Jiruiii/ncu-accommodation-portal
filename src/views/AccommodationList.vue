@@ -670,9 +670,9 @@ export default {
         // 用戶未登入，僅在本地切換收藏狀態
         this.TOGGLE_FAVORITE(id);
         // 提示用戶登入
-        this.$nextTick(() => {
-          alert("登入後收藏將會同步到您的帳戶");
-        });
+        // this.$nextTick(() => {
+        //   alert("登入後收藏將會同步到您的帳戶");
+        // });
       }
     },
 
