@@ -1,6 +1,6 @@
 from app import create_app
 from app.extensions import db
-from sqlalchemy import text
+from sqlalchemy import text # type: ignore
 
 app = create_app()
 

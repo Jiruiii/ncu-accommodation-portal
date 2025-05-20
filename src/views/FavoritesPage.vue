@@ -520,6 +520,7 @@
 
       onMounted(() => {
         syncFavorites();
+        fetchFavorites();
       });
 
       return {
