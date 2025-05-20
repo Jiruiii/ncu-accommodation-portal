@@ -70,10 +70,94 @@
             class="like-btn"
             @click="likeComment(comment.id)"
             :disabled="isLiking"
+            :class="{ 'liked': isCommentLiked(comment) }"
           >
             <span class="like-icon">👍</span> {{ comment.likes }}
           </button>
+          <button 
+            class="reply-btn" 
+            @click="showReplyForm(comment.id)"
+          >
+            回覆 ({{ comment.replyCount || 0 }})
+          </button>
         </div>
+
+        <!-- 回覆表單 -->
+        <div class="reply-form" v-if="replyingToId === comment.id">
+          <textarea
+            v-model="replyText"
+            placeholder="輸入您的回覆..."
+            rows="2"
+          ></textarea>
+          <div class="reply-actions">
+            <button 
+              @click="cancelReply" 
+              class="cancel-reply-btn"
+            >
+              取消
+            </button>
+            <button
+              @click="submitReply(comment.id)"
+              class="submit-reply-btn"
+              :disabled="!replyText.trim() || isSubmittingReply"
+            >
+              {{ isSubmittingReply ? "發送中..." : "發送回覆" }}
+            </button>
+          </div>
+        </div>
+
+        <!-- 回覆列表 -->
+        <div class="replies-list" v-if="showingRepliesForId === comment.id">
+          <div v-if="isLoadingReplies" class="loading-replies">
+            <div class="loading-spinner">載入回覆中...</div>
+          </div>
+          
+          <div v-else-if="replies.length > 0" class="replies-container">
+            <div v-for="reply in replies" :key="reply.id" class="reply-item">
+              <div class="reply-header">
+                <div class="reply-user">
+                  <div class="user-avatar small">
+                    {{ reply.author ? reply.author[0].toUpperCase() : "?" }}
+                  </div>
+                  <div class="user-info">
+                    <div class="user-name">{{ reply.author || "匿名用戶" }}</div>
+                    <div class="reply-date">{{ formatDate(reply.created_at) }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="reply-content">{{ reply.content }}</div>
+              <div class="reply-actions">
+                <button
+                  class="like-btn small"
+                  @click="likeReply(reply.id)"
+                  :disabled="isReplyLiking"
+                  :class="{ 'liked': isReplyLiked(reply) }"
+                >
+                  <span class="like-icon">👍</span> {{ reply.like_count || 0 }}
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div v-else class="no-replies">
+            目前沒有回覆
+          </div>
+          
+          <button 
+            class="hide-replies-btn" 
+            @click="hideReplies"
+          >
+            收起回覆
+          </button>
+        </div>
+        
+        <button 
+          v-else-if="comment.replyCount > 0" 
+          class="show-replies-btn" 
+          @click="showReplies(comment.id)"
+        >
+          顯示 {{ comment.replyCount }} 則回覆
+        </button>
       </div>
     </div>
 
@@ -98,11 +182,22 @@ export default {
 
   setup(props) {
     const store = useStore();
+    
+    // 評論相關
     const commentText = ref("");
     const newRating = ref(0);
     const isLoading = ref(true);
     const isSubmitting = ref(false);
     const isLiking = ref(false);
+
+    // 回覆相關
+    const replyText = ref("");
+    const replyingToId = ref(null);
+    const showingRepliesForId = ref(null);
+    const isSubmittingReply = ref(false);
+    const isLoadingReplies = ref(false);
+    const isReplyLiking = ref(false);
+    const replies = ref([]);
 
     // 從 Vuex 獲取評論數據
     const comments = computed(() => {
@@ -118,6 +213,18 @@ export default {
     const commentCount = computed(() => {
       return store.getters.getPropertyCommentCount(props.propertyId);
     });
+
+    // 檢查評論是否已點贊
+    const isCommentLiked = (comment) => {
+      const userId = store.state.user?.user_id;
+      return comment.likedBy && userId && comment.likedBy.includes(userId);
+    };
+
+    // 檢查回覆是否已點贊
+    const isReplyLiked = (reply) => {
+      const userId = store.state.user?.user_id;
+      return reply.likes && userId && reply.likes.includes(userId);
+    };
 
     // 在組件掛載時從資料庫加載評論
     onMounted(async () => {
@@ -180,6 +287,90 @@ export default {
       }
     };
 
+    // 顯示回覆表單
+    const showReplyForm = (commentId) => {
+      replyingToId.value = commentId;
+      replyText.value = "";
+    };
+
+    // 取消回覆
+    const cancelReply = () => {
+      replyingToId.value = null;
+      replyText.value = "";
+    };
+
+    // 提交回覆
+    const submitReply = async (commentId) => {
+      if (!replyText.value.trim()) return;
+
+      isSubmittingReply.value = true;
+      try {
+        await store.dispatch("addCommentReply", {
+          propertyId: props.propertyId,
+          commentId: commentId,
+          content: replyText.value.trim()
+        });
+        
+        // 如果用戶正在查看回覆，則重新加載回覆
+        if (showingRepliesForId.value === commentId) {
+          await showReplies(commentId);
+        }
+        
+        // 清空表單並隱藏回覆框
+        replyText.value = "";
+        replyingToId.value = null;
+      } catch (error) {
+        console.error("提交回覆失敗:", error);
+        alert("提交回覆失敗，請稍後再試");
+      } finally {
+        isSubmittingReply.value = false;
+      }
+    };
+
+    // 顯示回覆
+    const showReplies = async (commentId) => {
+      showingRepliesForId.value = commentId;
+      isLoadingReplies.value = true;
+      
+      try {
+        const commentReplies = await store.dispatch("fetchCommentReplies", {
+          propertyId: props.propertyId,
+          commentId: commentId
+        });
+        replies.value = commentReplies || [];
+      } catch (error) {
+        console.error("獲取回覆失敗:", error);
+      } finally {
+        isLoadingReplies.value = false;
+      }
+    };
+
+    // 隱藏回覆
+    const hideReplies = () => {
+      showingRepliesForId.value = null;
+    };
+
+    // 點贊回覆
+    const likeReply = async (replyId) => {
+      if (isReplyLiking.value) return;
+
+      isReplyLiking.value = true;
+      try {
+        await store.dispatch("likeCommentReply", {
+          propertyId: props.propertyId,
+          commentId: showingRepliesForId.value,
+          replyId: replyId
+        });
+        
+        // 重新加載回覆以獲取最新的讚狀態
+        await showReplies(showingRepliesForId.value);
+      } catch (error) {
+        console.error("點贊回覆失敗:", error);
+      } finally {
+        isReplyLiking.value = false;
+      }
+    };
+
     // 格式化日期
     const formatDate = (dateString) => {
       if (!dateString) return "未知日期";
@@ -209,6 +400,23 @@ export default {
       submitComment,
       likeComment,
       formatDate,
+      isCommentLiked,
+      
+      // 回覆相關
+      replyText,
+      replyingToId,
+      showingRepliesForId,
+      isSubmittingReply,
+      isLoadingReplies,
+      isReplyLiking,
+      replies,
+      showReplyForm,
+      cancelReply,
+      submitReply,
+      showReplies,
+      hideReplies,
+      likeReply,
+      isReplyLiked
     };
   },
 };
@@ -272,6 +480,12 @@ export default {
   font-weight: 500;
 }
 
+.user-avatar.small {
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
+}
+
 .user-info {
   display: flex;
   flex-direction: column;
@@ -282,7 +496,7 @@ export default {
   color: #333;
 }
 
-.comment-date {
+.comment-date, .reply-date {
   font-size: 0.8rem;
   color: #999;
 }
@@ -301,6 +515,7 @@ export default {
 .comment-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
 }
 
 .like-btn {
@@ -326,8 +541,27 @@ export default {
   cursor: not-allowed;
 }
 
+.like-btn.liked {
+  color: #e74c3c;
+  border-color: #e74c3c;
+}
+
 .like-icon {
   font-size: 1rem;
+}
+
+.reply-btn {
+  background: none;
+  border: 1px solid #ddd;
+  padding: 5px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.reply-btn:hover {
+  background: #f0f0f0;
 }
 
 /* 新增評論表單 */
@@ -434,6 +668,118 @@ textarea {
   border-radius: 50%;
   border-top-color: transparent;
   animation: spin 0.8s linear infinite;
+}
+
+/* 回覆相關樣式 */
+.reply-form {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.reply-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.cancel-reply-btn {
+  background: #f0f0f0;
+  color: #666;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submit-reply-btn {
+  background: #0d6efd;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submit-reply-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.show-replies-btn,
+.hide-replies-btn {
+  background: none;
+  border: none;
+  color: #0d6efd;
+  padding: 8px 0;
+  margin-top: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-align: left;
+  text-decoration: underline;
+}
+
+.replies-list {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.replies-container {
+  margin-bottom: 10px;
+}
+
+.reply-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.reply-item:last-child {
+  border-bottom: none;
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.reply-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reply-content {
+  margin-left: 38px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.reply-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+
+.like-btn.small {
+  padding: 3px 8px;
+  font-size: 0.8rem;
+}
+
+.no-replies {
+  color: #999;
+  font-style: italic;
+  padding: 5px 0;
+}
+
+.loading-replies {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
 }
 
 @keyframes spin {
