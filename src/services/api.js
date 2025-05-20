@@ -368,6 +368,66 @@ export const apiService = {
     updateContract: (id, data) =>
       apiService.put(`/api/landlord/contracts/${id}`, data),
   },
+
+  // 討論區相關 API
+  discussion: {
+    // 主題相關
+    getTopics: (page = 1, perPage = 10) =>
+      apiService.get(`/api/discussion/topics?page=${page}&per_page=${perPage}`),
+
+    getTopic: (topicId) => apiService.get(`/api/discussion/topics/${topicId}`),
+
+    createTopic: (data) => apiService.post("/api/discussion/topics", data),
+
+    updateTopic: (topicId, data) =>
+      apiService.put(`/api/discussion/topics/${topicId}`, data),
+
+    deleteTopic: (topicId) =>
+      apiService.delete(`/api/discussion/topics/${topicId}`),
+
+    // 文章相關
+    getPosts: (topicId, page = 1, perPage = 20) =>
+      apiService.get(
+        `/api/discussion/topics/${topicId}/posts?page=${page}&per_page=${perPage}`
+      ),
+
+    createPost: (topicId, data) =>
+      apiService.post(`/api/discussion/topics/${topicId}/posts`, data),
+
+    updatePost: (postId, data) =>
+      apiService.put(`/api/discussion/posts/${postId}`, data),
+
+    deletePost: (postId) =>
+      apiService.delete(`/api/discussion/posts/${postId}`),
+
+    // 回覆相關
+    getReplies: (postId, page = 1, perPage = 50) =>
+      apiService.get(
+        `/api/discussion/posts/${postId}/replies?page=${page}&per_page=${perPage}`
+      ),
+
+    createReply: (postId, data) =>
+      apiService.post(`/api/discussion/posts/${postId}/replies`, data),
+
+    updateReply: (replyId, data) =>
+      apiService.put(`/api/discussion/replies/${replyId}`, data),
+
+    deleteReply: (replyId) =>
+      apiService.delete(`/api/discussion/replies/${replyId}`),
+
+    // 讚相關
+    likePost: (postId) =>
+      apiService.post(`/api/discussion/posts/${postId}/like`),
+
+    likeReply: (replyId) =>
+      apiService.post(`/api/discussion/replies/${replyId}/like`),
+
+    // 管理員功能
+    pinTopic: (topicId) =>
+      apiService.post(`/api/discussion/topics/${topicId}/pin`),
+
+    pinPost: (postId) => apiService.post(`/api/discussion/posts/${postId}/pin`),
+  },
 };
 
 // 生成隨機狀態碼防止CSRF攻擊

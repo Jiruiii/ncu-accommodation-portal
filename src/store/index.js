@@ -1,4 +1,5 @@
 import { createStore } from "vuex";
+import discussion from "@/store/modules/discussion";
 import apiService from "@/services/api";
 
 export default createStore({
@@ -710,6 +711,10 @@ export default createStore({
     getPropertyCommentCount: (state) => (propertyId) => {
       return (state.comments[propertyId] || []).length;
     },
+  },
+
+  modules: {
+    discussion,
   },
 });
 
