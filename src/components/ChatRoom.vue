@@ -8,16 +8,20 @@
             <i class="fa-solid fa-phone" style="color: black; font-size: 25px; cursor: pointer;"></i>
         </div>
         <div class="chatroom" ref="chatContainer">
-            <div class="msg-tenant" v-if="checkmsg_tenant" v-for="msgTenant in msgsTenant">
-                <div class="time">{{msgTenant.time}}</div>
-                <div class="message-tenant">{{msgTenant.msg}}</div>
-                <img class="msg-tenant-image"  src="https://randomuser.me/api/portraits/women/65.jpg" />
-            </div>
-            <div class="msg-landlord" v-if="checkmsg_receive" v-for="msgReceive in msgsReceive">
-                <img class="msg-landlord-image" src="https://randomuser.me/api/portraits/men/42.jpg" />
-                <div class="message-landlord">{{msgReceive.msg_receive}}</div>
-                <div class="time">{{msgReceive.time_receive}}</div>
-            </div>
+            <template v-if="checkmsg_tenant">
+                <div class="msg-tenant" v-for="(msgTenant, index) in msgsTenant" :key="'tenant-' + index">
+                    <div class="time">{{msgTenant.time}}</div>
+                    <div class="message-tenant">{{msgTenant.msg}}</div>
+                    <img class="msg-tenant-image"  src="https://randomuser.me/api/portraits/women/65.jpg" />
+                </div>
+            </template>
+            <template v-if="checkmsg_receive">
+                <div class="msg-landlord" v-for="(msgReceive, index) in msgsReceive" :key="'landlord-' + index">
+                    <img class="msg-landlord-image" src="https://randomuser.me/api/portraits/men/42.jpg" />
+                    <div class="message-landlord">{{msgReceive.msg_receive}}</div>
+                    <div class="time">{{msgReceive.time_receive}}</div>
+                </div>
+            </template>
         </div>
         <div class="input-flame">
             <input placeholder="請輸入文字..." v-model.trim="msg" @keydown.enter="addMessages"/>
@@ -28,14 +32,14 @@
 
 <script>
     import { ref, onMounted, nextTick } from "vue";
-    import { useRouter } from "vue-router";
+    // import { useRouter } from "vue-router";
     import apiService from "@/services/api";
     import { io } from "socket.io-client";
 
     export default{
         name: "ChatRoom",
         setup (){
-            const router = useRouter();
+            // const router = useRouter();
             const msgsTenant = ref([]);
             const msg = ref("");
             const time = ref("");
