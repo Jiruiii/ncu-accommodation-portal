@@ -557,7 +557,8 @@
           :user-email="user.email"
         />
       </div>
-      <ChatRoom />
+
+      <ChatRoom  v-if="activeTab === 'chatroom'"/>
     </div>
   </div>
 </template>

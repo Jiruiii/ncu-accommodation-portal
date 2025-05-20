@@ -10,3 +10,4 @@ from app.models.lease import Lease
 from app.models.maintenance import MaintenanceRequest, MaintenanceImage
 from app.models.notification import Notification
 from app.models.fraud import FraudReport
+from app.models.chat import Message

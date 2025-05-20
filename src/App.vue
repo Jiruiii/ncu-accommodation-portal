@@ -2,7 +2,8 @@
   <div class="app-container">
     <PageTransition />
 
-    <CircleNavigation v-if="isLoggedIn" />
+    <CircleNavigation v-if="isLoggedIn" class="desktop-nav" />
+    <MobileNavBar v-if="isLoggedIn" class="mobile-nav" />
   </div>
 </template>
 
@@ -13,12 +14,14 @@
   import apiService from "@/services/api";
   import CircleNavigation from "@/components/CircleNavigation.vue";
   import PageTransition from "@/components/PageTransition.vue";
+  import MobileNavBar from "@/components/MobileNavBar.vue";
 
   export default {
     name: "App",
     components: {
       CircleNavigation,
       PageTransition,
+      MobileNavBar,
     },
     setup() {
       const store = useStore();
@@ -158,4 +161,26 @@
     transform: translateY(-5px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
   }
+
+  /* Add these styles for MobileNavBar*/
+.desktop-nav {
+  display: none;
+}
+
+@media screen and (min-width: 768px) {
+  .desktop-nav {
+    display: block;
+  }
+  
+  .mobile-nav {
+    display: none;
+  }
+}
+
+/* Add padding to prevent content from being hidden behind the mobile nav bar */
+@media screen and (max-width: 767px) {
+  .app-container {
+    padding-bottom: 60px;
+  }
+}
 </style>

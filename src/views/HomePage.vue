@@ -6,7 +6,7 @@
       <div class="hero-content">
         <h1>中央大學校外外宿網</h1>
           <p>整合式的校外住宿資訊平台，讓你的找房體驗更輕鬆</p>
-          <div class="search-container" style="border-radius: 8px;">
+            <div class="search-container" style="border-radius: 8px;">
             <div class="search-input">
               <i class="search-icon"></i>
               <input
@@ -481,69 +481,69 @@
       const featuredListings = [
         {
           id: 1,
-          title: "中大湖畔雙人套房",
-          price: 8000,
+          title: "【屋況新，家庭式房舍】",
+          price: 25000,
           distance: 0.8,
-          roomType: "套房",
+          roomType: "套房/雅房",
           rating: 4.5,
           reviews: 28,
           photo:
-            "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+            "https://house.nfu.edu.tw/uploads/data/NCU/images_house/16997x1_20230810-161145.jpg",
         },
         {
           id: 2,
-          title: "松苑學生宿舍",
-          price: 6500,
+          title: "【大享街,中大隨筆,三房兩廳】",
+          price: 25000,
           distance: 1.2,
-          roomType: "雅房",
+          roomType: "套房/雅房",
           rating: 4.2,
           reviews: 45,
           photo:
-            "https://images.unsplash.com/photo-1493809842364-78817add7ffb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+            "https://house.nfu.edu.tw/uploads/data/NCU/images_house/16997x2_20230810-161145.jpg",
         },
         {
           id: 3,
-          title: "中壢區精品公寓",
-          price: 12000,
+          title: "房間出租 套房1間 雅房1間",
+          price: 7000,
           distance: 2.5,
-          roomType: "整層出租",
+          roomType: "套房/雅房",
           rating: 4.8,
           reviews: 17,
           photo:
-            "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+            "https://house.nfu.edu.tw/uploads/data/NCU/images_house/4039x1.jpg",
         },
         {
           id: 4,
-          title: "中央舒適單人套房",
-          price: 7500,
+          title: "【一樓平房，消防安全性高】",
+          price: 4167,
           distance: 1.0,
           roomType: "套房",
           rating: 4.0,
           reviews: 32,
           photo:
-            "https://images.unsplash.com/photo-1554995207-c18c203602cb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+            "https://house.nfu.edu.tw/uploads/data/NCU/images_house/16549x1_20220609-190337.jpg",
         },
         {
           id: 5,
-          title: "桃園區豪華雙人套房",
-          price: 9800,
+          title: "【長青園-學生套房】 ",
+          price: 3333,
           distance: 3.2,
-          roomType: "雙人套房",
+          roomType: "套房",
           rating: 4.7,
           reviews: 41,
           photo:
-            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+            "https://house.nfu.edu.tw/uploads/data/NCU/images_house/3419x2.jpg",
         },
         {
           id: 6,
-          title: "近老街溪捷運站精裝套房",
-          price: 8500,
+          title: "房間出租 套房5間",
+          price: 4167,
           distance: 1.5,
-          roomType: "單人套房",
+          roomType: "套房",
           rating: 4.5,
           reviews: 37,
           photo:
-            "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+            "https://house.nfu.edu.tw/uploads/data/NCU/images_house/4205x1.jpg",
         },
       ];
 
