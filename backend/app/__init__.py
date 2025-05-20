@@ -1,6 +1,7 @@
 from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS # type: ignore
 from flask_session import Session # type: ignore
+from flask_migrate import Migrate # type: ignore
 from datetime import timedelta
 from config import config
 from app.extensions import db, migrate, jwt

@@ -767,7 +767,7 @@ export default {
 
     // 前往租屋列表
     const goToList = () => {
-      router.push({ name: "home" });
+      router.push({ name: "accomodation-list" });
     };
 
     // 檢查項目是否被選中
@@ -786,10 +786,10 @@ export default {
 
           if (!success) {
             // 如果 API 失敗但本地成功，顯示提示
-            setTimeout(() => {
-              alert("因連線問題，變更僅保存在本機。下次登入時將同步變更。");
-            }, 300);
-          }
+          setTimeout(() => {
+               //alert("因連線問題，變更僅保存在本機。下次登入時將同步變更。");
+             }, 300);
+           }
         } catch (error) {
           console.error("Error removing favorite:", error);
           card.style.opacity = "1";
