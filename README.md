@@ -47,3 +47,11 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 - 不要直接修改 `backend/db_sync` 目錄中的 JSON 檔案
 - 如果新增了模型或更改了模型結構，確保更新資料庫匯出檔
 - `last_updated` 等時間戳欄位可能導致衝突，請在匯入時注意
+
+### 如一直發生git衝突
+
+```bash
+git rm -r --cached .
+git add .
+git commit -m "clear git cache"
+```
