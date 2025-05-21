@@ -56,3 +56,14 @@ git rm -r --cached .
 git add .
 git commit -m "clear git cache"
 ```
+
+### 資料庫語言
+
+flask db current
+flask db history
+flask db show
+flask db heads
+flask db branches
+flask db migrate -m ""
+flask db upgrade
+flask db downgrade
