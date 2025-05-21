@@ -61,9 +61,9 @@ def create_app(config_name='default'):
     socketio.init_app(app)
     
     # 註冊藍圖
-    from app.api import api_bp, discussion_bp
+    from app.api import api_bp, comments_bp
     app.register_blueprint(api_bp, url_prefix='/api')
-    app.register_blueprint(discussion_bp, url_prefix='/api/discussion')
+    app.register_blueprint(comments_bp, url_prefix='/api/comments')
     
     # 確保上傳目錄存在
     app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')

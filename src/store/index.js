@@ -1,5 +1,5 @@
 import { createStore } from "vuex";
-import discussion from "@/store/modules/discussion";
+import comments from "@/store/modules/comments";
 import apiService from "@/services/api";
 
 export default createStore({
@@ -440,7 +440,7 @@ export default createStore({
             return;
           }
     
-          console.log('Syncing favorites with server...');
+          // console.log('Syncing favorites with server...');
           const response = await apiService.accommodations.favorites.getFavorites();
           
           // 從回應中提取房源 ID
@@ -470,13 +470,13 @@ export default createStore({
           }
     
           if (!needsSync) {
-            console.log('Favorites already in sync');
+            // console.log('Favorites already in sync');
             localStorage.setItem('lastFavoritesSyncTime', currentTime.toString());
             return;
           }
     
-          console.log('Local favorites:', localFavoriteIds);
-          console.log('Server favorites:', serverFavoriteIds);
+          // console.log('Local favorites:', localFavoriteIds);
+          // console.log('Server favorites:', serverFavoriteIds);
     
           // 找出需要添加到伺服器的本地收藏 (在本地但不在伺服器)
           const toAdd = localFavoriteIds.filter((id) => !serverSet.has(id));
@@ -750,7 +750,7 @@ export default createStore({
   },
 
   modules: {
-    discussion,
+    comments,
   },
 });
 
