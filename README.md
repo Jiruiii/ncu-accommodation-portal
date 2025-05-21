@@ -41,6 +41,7 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 1. 運行 `python backend/db_sync.py status` 查看可用的匯出檔
 2. 選擇適當的匯出檔進行匯入：`python backend/db_sync.py import -f <filename>`
+3. 如果您想清除現有資料並重新匯入：`python db_sync.py import -f 檔案路徑.json --clear`
 
 ### 注意事項
 

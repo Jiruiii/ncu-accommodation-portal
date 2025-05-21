@@ -1,5 +1,5 @@
 import { createStore } from "vuex";
-import comments from "@/store/modules/comments";
+import commentsModule from "@/store/modules/comments";
 import apiService from "@/services/api";
 
 export default createStore({
@@ -750,7 +750,7 @@ export default createStore({
   },
 
   modules: {
-    comments,
+    commentsModule,
   },
 });
 

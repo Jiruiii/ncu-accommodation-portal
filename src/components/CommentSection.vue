@@ -250,22 +250,22 @@
 
       // 從 Vuex 獲取評論數據
       const comments = computed(() => {
-        return store.getters["comments/getComments"](props.propertyId);
+        return store.getters["commentsModule/getComments"](props.propertyId);
       });
 
       // 獲取回覆
       const replies = computed(() => {
-        return store.getters["comments/allReplies"];
+        return store.getters["commentsModule/allReplies"];
       });
 
       // 計算平均評分
       const averageRating = computed(() => {
-        return store.getters["comments/getPropertyRating"](props.propertyId);
+        return store.getters["commentsModule/getPropertyRating"](props.propertyId);
       });
 
       // 計算評論數量
       const commentCount = computed(() => {
-        return store.getters["comments/commentCount"](props.propertyId);
+        return store.getters["commentsModule/commentCount"](props.propertyId);
       });
 
       // 檢查評論是否已點贊
@@ -284,7 +284,7 @@
       onMounted(async () => {
         isLoading.value = true;
         try {
-          await store.dispatch("comments/fetchComments", {
+          await store.dispatch("commentsModule/fetchComments", {
             propertyId: props.propertyId,
             page: 1,
             perPage: 50,
@@ -308,7 +308,7 @@
 
         isSubmitting.value = true;
         try {
-          await store.dispatch("comments/addComment", {
+          await store.dispatch("commentsModule/addComment", {
             propertyId: props.propertyId,
             content: commentText.value.trim(),
             rating: newRating.value,
@@ -336,7 +336,7 @@
 
         isLiking.value = true;
         try {
-          await store.dispatch("comments/likeComment", commentId);
+          await store.dispatch("commentsModule/likeComment", commentId);
         } catch (error) {
           console.error("點贊失敗:", error);
         } finally {
@@ -367,7 +367,7 @@
 
         isSubmittingReply.value = true;
         try {
-          await store.dispatch("comments/addReply", {
+          await store.dispatch("commentsModule/addReply", {
             commentId,
             content: replyText.value.trim(),
           });
@@ -394,7 +394,7 @@
         isLoadingReplies.value = true;
 
         try {
-          await store.dispatch("comments/fetchReplies", {
+          await store.dispatch("commentsModule/fetchReplies", {
             commentId,
             page: 1,
             perPage: 50,
@@ -422,7 +422,7 @@
 
         isReplyLiking.value = true;
         try {
-          await store.dispatch("comments/likeReply", replyId);
+          await store.dispatch("commentsModule/likeReply", replyId);
         } catch (error) {
           console.error("點贊回覆失敗:", error);
         } finally {
@@ -484,12 +484,12 @@
       const executeDelete = async () => {
         try {
           if (deleteTarget.value === "comment") {
-            await store.dispatch("comments/deleteComment", {
+            await store.dispatch("commentsModule/deleteComment", {
               propertyId: props.propertyId,
               commentId: itemToDeleteId.value,
             });
           } else if (deleteTarget.value === "reply") {
-            await store.dispatch("comments/deleteReply", itemToDeleteId.value);
+            await store.dispatch("commentsModule/deleteReply", itemToDeleteId.value);
 
             // 如果正在顯示回覆，重新載入回覆列表
             if (showingRepliesForId.value) {
