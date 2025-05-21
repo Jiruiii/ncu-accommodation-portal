@@ -43,6 +43,20 @@ def export_command(args):
         with open(status_file, 'w', encoding='utf-8') as f:
             json.dump(status, f, ensure_ascii=False, indent=2)
 
+        files = [f for f in os.listdir(sync_folder) if f.endswith('.json') and f != 'sync_status.json']
+        if len(files) > 15:
+            # 根據文件修改時間排序
+            files_with_time = [(f, os.path.getmtime(os.path.join(sync_folder, f))) for f in files]
+            sorted_files = sorted(files_with_time, key=lambda x: x[1], reverse=True)
+            
+            # 刪除舊文件
+            for old_file, _ in sorted_files[15:]:
+                try:
+                    os.remove(os.path.join(sync_folder, old_file))
+                    print(f"已刪除舊備份: {old_file}")
+                except Exception as e:
+                    print(f"無法刪除舊備份 {old_file}: {str(e)}")
+
 def import_command(args):
     """匯入資料庫"""
     app = get_app()
