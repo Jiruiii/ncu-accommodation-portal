@@ -557,7 +557,8 @@
           :user-email="user.email"
         />
       </div>
-      <ChatRoom />
+
+      <ChatRoom  v-if="activeTab === 'chatroom'"/>
     </div>
   </div>
 </template>
@@ -1519,40 +1520,185 @@
   }
 
   /* 帳戶設置 */
-  .account-settings {
-    padding: 30px;
-  }
+.account-settings {
+  padding: 35px;
+  max-width: 900px;
+  margin: 0 auto;
+}
 
-  .settings-section {
-    margin-bottom: 40px;
-  }
+.settings-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
 
-  .settings-section h2 {
-    font-size: 1.4rem;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-  }
+.settings-section h2 {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #eef2f7;
+}
 
-  .settings-item {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 15px 0;
-    border-bottom: 1px solid #f5f5f5;
-  }
+.settings-item {
+  display: flex;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #f5f7fa;
+  transition: background-color 0.2s ease;
+}
 
-  .settings-label {
-    width: 150px;
-    font-weight: 500;
-  }
+.settings-item:last-child {
+  border-bottom: none;
+}
 
-  .settings-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
+.settings-item:hover {
+  background-color: #f8fafc;
+}
+
+.settings-label {
+  width: 180px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.settings-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* 開關按鈕樣式優化 */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 26px;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e5e7eb;
+  transition: 0.3s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input:checked + .slider {
+  background-color: #3b82f6;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* 下拉選單樣式優化 */
+.settings-select {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  width: 200px;
+  font-size: 0.95rem;
+  color: #4b5563;
+  background-color: white;
+  transition: all 0.2s ease;
+}
+
+.settings-select:hover {
+  border-color: #cbd5e1;
+}
+
+.settings-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 按鈕樣式優化 */
+.settings-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-btn.highlight {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.settings-btn.highlight:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.settings-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 危險區域樣式優化 */
+.danger-zone {
+  margin-top: 40px;
+  padding: 25px;
+  background-color: #fef2f2;
+  border-radius: 12px;
+  border: 1px solid #fee2e2;
+}
+
+.danger-zone h2 {
+  color: #dc2626;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.danger-zone h2:before {
+  content: "⚠️";
+}
+
+.danger-btn {
+  background-color: #dc2626;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.danger-btn:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+}
 
   .verified-tag {
     padding: 2px 8px;

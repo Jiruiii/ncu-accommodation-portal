@@ -1,6 +1,7 @@
 from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS # type: ignore
 from flask_session import Session # type: ignore
+from flask_socketio import SocketIO # type: ignore
 from flask_migrate import Migrate # type: ignore
 from datetime import timedelta
 from config import config
@@ -9,6 +10,7 @@ from dotenv import load_dotenv
 import os 
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
+socketio = SocketIO(cors_allowed_origins="*")
 
 def create_app(config_name='default'):
     app = Flask(__name__)
@@ -56,10 +58,12 @@ def create_app(config_name='default'):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)  # 即使不使用 JWT，保留此行也沒有害處
+    socketio.init_app(app)
     
     # 註冊藍圖
-    from app.api import api_bp
+    from app.api import api_bp, comments_bp
     app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(comments_bp, url_prefix='/api/comments')
     
     # 確保上傳目錄存在
     app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
