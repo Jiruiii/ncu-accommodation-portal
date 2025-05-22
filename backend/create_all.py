@@ -1,6 +1,6 @@
 from app import create_app
 from app.extensions import db
-from sqlalchemy import inspect
+from sqlalchemy import inspect # type: ignore
 import os
 import time
 from datetime import datetime
