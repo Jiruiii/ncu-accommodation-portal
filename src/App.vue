@@ -11,6 +11,7 @@
   import { ref, onMounted, watch, onUnmounted } from "vue";
   import { useStore } from "vuex";
   import { useRoute } from "vue-router";
+  import apiService from "@/services/api";
   import CircleNavigation from "@/components/CircleNavigation.vue";
   import PageTransition from "@/components/PageTransition.vue";
   import MobileNavBar from "@/components/MobileNavBar.vue";
@@ -37,9 +38,23 @@
       };
 
       // 初始化數據
-      onMounted(() => {
+      onMounted(async () => {
         checkLoginStatus();
-        store.dispatch("fetchAccommodations");
+
+        // 如果用戶已登入，嘗試獲取最新用戶資訊
+        if (isLoggedIn.value) {
+          try {
+            const response = await apiService.users.getProfile();
+            if (response && response.user) {
+              // 更新本地儲存
+              localStorage.setItem("user", JSON.stringify(response.user));
+            }
+          } catch (error) {
+            console.error("獲取用戶資訊失敗:", error);
+          }
+        }
+
+        store.dispatch("initializeApp");
 
         // 監聽 localStorage 變化
         window.addEventListener("storage", (e) => {

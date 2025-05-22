@@ -1,7 +1,12 @@
 {
   "last_export": {
-    "timestamp": "20250518_034117",
-    "filename": "db_export_20250518_034117.json",
+    "timestamp": "20250521_181744",
+    "filename": "db_export_20250521_181744.json",
+    "user": "USER"
+  },
+  "last_import": {
+    "timestamp": "20250521_215637",
+    "filename": "db_export_20250521_181744.json",
     "user": "USER"
   }
 }
