@@ -1,21 +1,6 @@
 {
-  "last_export": {
-<<<<<<< HEAD
-    "timestamp": "20250519_144014",
-    "filename": "db_export_20250519_144014.json",
-    "user": "USER"
-  },
   "last_import": {
-    "timestamp": "20250521_202015",
-    "filename": "db_export_20250519_144014.json",
-=======
-    "timestamp": "20250521_181744",
-    "filename": "db_export_20250521_181744.json",
->>>>>>> 8cff589452ad458f868626e756092b9cdbc9cac9
-    "user": "USER"
-  },
-  "last_import": {
-    "timestamp": "20250521_215637",
+    "timestamp": "20250521_231611",
     "filename": "db_export_20250521_181744.json",
     "user": "USER"
   }
