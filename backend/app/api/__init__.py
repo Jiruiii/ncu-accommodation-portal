@@ -1,10 +1,10 @@
 from flask import Blueprint
 
 api_bp = Blueprint('api', __name__)
-discussion_bp = Blueprint('discussion', __name__)
+comments_bp = Blueprint('comments', __name__)
 
 # 導入路由模組
-from . import auth, chat, users, accommodations, reviews, maintenance, sublets, admin, verification, discussion
+from . import auth, chat, comments, users, accommodations, reviews, maintenance, sublets, admin, verification
 
 # 註冊錯誤處理器
 @api_bp.errorhandler(404)
