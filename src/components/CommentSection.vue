@@ -127,63 +127,59 @@
         </div>
 
         <!-- 回覆列表 -->
-        <transition name="fade">
-          <div class="replies-list" v-if="showingRepliesForId === comment.id">
-            <div v-if="isLoadingReplies" class="loading-replies">
-              <div class="loading-spinner">載入回覆中...</div>
-            </div>
+        <div class="replies-list" v-if="showingRepliesForId === comment.id">
+          <div v-if="isLoadingReplies" class="loading-replies">
+            <div class="loading-spinner">載入回覆中...</div>
+          </div>
 
-            <div v-else-if="replies.length > 0" class="replies-container">
-              <div v-for="reply in replies" :key="reply.id" class="reply-item">
-                <div class="reply-header">
-                  <div class="reply-user">
-                    <div class="user-avatar small">
-                      {{ reply.author ? reply.author[0].toUpperCase() : "?" }}
+          <div v-else-if="replies.length > 0" class="replies-container">
+            <div v-for="reply in replies" :key="reply.id" class="reply-item">
+              <div class="reply-header">
+                <div class="reply-user">
+                  <div class="user-avatar small">
+                    {{ reply.author ? reply.author[0].toUpperCase() : "?" }}
+                  </div>
+                  <div class="user-info">
+                    <div class="user-name">
+                      {{ reply.author || "匿名用戶" }}
                     </div>
-                    <div class="user-info">
-                      <div class="user-name">
-                        {{ reply.author || "匿名用戶" }}
-                      </div>
-                      <div class="reply-date">
-                        {{ formatDate(reply.created_at) }}
-                      </div>
+                    <div class="reply-date">
+                      {{ formatDate(reply.created_at) }}
                     </div>
                   </div>
-                  <button
-                    v-if="canDeleteReply(reply)"
-                    class="delete-btn small"
-                    @click="confirmDeleteReply(reply.id)"
-                    title="刪除回覆"
-                  >
-                    <i class="material-icons">delete</i>
-                  </button>
                 </div>
-                <div class="reply-content">{{ reply.content }}</div>
-                <div class="reply-actions">
-                  <button
-                    class="like-btn small"
-                    @click="likeReply(reply.id)"
-                    :disabled="isReplyLiking"
-                    :class="{ liked: isReplyLiked(reply) }"
-                  >
-                    <span class="like-icon">👍</span>
-                    <span>{{
-                      typeof reply.like_count === "number"
-                        ? reply.like_count
-                        : 0
-                    }}</span>
-                  </button>
-                </div>
+                <button
+                  v-if="canDeleteReply(reply)"
+                  class="delete-btn small"
+                  @click="confirmDeleteReply(reply.id)"
+                  title="刪除回覆"
+                >
+                  <i class="material-icons">delete</i>
+                </button>
+              </div>
+              <div class="reply-content">{{ reply.content }}</div>
+              <div class="reply-actions">
+                <button
+                  class="like-btn small"
+                  @click="likeReply(reply.id)"
+                  :disabled="isReplyLiking"
+                  :class="{ liked: isReplyLiked(reply) }"
+                >
+                  <span class="like-icon">👍</span>
+                  <span>{{
+                    typeof reply.like_count === "number" ? reply.like_count : 0
+                  }}</span>
+                </button>
               </div>
             </div>
-
-            <div v-else class="no-replies">目前沒有回覆</div>
-
-            <button class="hide-replies-btn" @click="hideReplies">
-              收起回覆
-            </button>
           </div>
-        </transition>
+
+          <div v-else class="no-replies">目前沒有回覆</div>
+
+          <button class="hide-replies-btn" @click="hideReplies">
+            收起回覆
+          </button>
+        </div>
 
         <button
           v-if="!showingRepliesForId && comment.replyCount > 0"
@@ -1185,7 +1181,7 @@ textarea:focus {
 }
 
 /* 過渡效果 */
-.fade-enter-active,
+/* .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s, transform 0.3s;
 }
@@ -1193,7 +1189,7 @@ textarea:focus {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(-10px);
-}
+} */
 
 /* 響應式設計 */
 @media (max-width: 768px) {
@@ -1275,7 +1271,7 @@ textarea:focus {
   animation-delay: 0.2s;
 }
 .comment-item:nth-child(3) {
-  animation-delay: 0.3s;
+  animation-delay: 3s;
 }
 .comment-item:nth-child(4) {
   animation-delay: 0.4s;
