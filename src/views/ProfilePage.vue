@@ -244,12 +244,12 @@
               <p>冷氣開機後無法正常製冷，可能是需要添加冷媒。</p>
               <div class="maintenance-photos">
                 <img
-                  src="https://picsum.photos/id/100/100/100"
+                  v-for="(image, index) in ['https://picsum.photos/id/100/800/600', 'https://picsum.photos/id/101/800/600', 'https://picsum.photos/id/102/800/600']"
+                  :key="index"
+                  :src="image"
                   alt="故障照片"
-                />
-                <img
-                  src="https://picsum.photos/id/101/100/100"
-                  alt="故障照片"
+                  @click="openImagePreview(image)"
+                  class="maintenance-photo"
                 />
               </div>
             </div>
@@ -273,8 +273,12 @@
               <p>浴室排水口排水緩慢，洗澡時容易積水。</p>
               <div class="maintenance-photos">
                 <img
-                  src="https://picsum.photos/id/102/100/100"
+                  v-for="(image, index) in ['https://picsum.photos/id/100/800/600', 'https://picsum.photos/id/101/800/600', 'https://picsum.photos/id/102/800/600']"
+                  :key="index"
+                  :src="image"
                   alt="故障照片"
+                  @click="openImagePreview(image)"
+                  class="maintenance-photo"
                 />
               </div>
             </div>
@@ -285,6 +289,15 @@
           </div>
         </div>
       </div>
+
+      <Transition name="modal">
+        <div v-if="showImagePreview" class="image-preview-modal" @click="closeImagePreview">
+          <div class="preview-content" @click.stop>
+            <img :src="selectedImage" alt="預覽圖片" class="preview-image">
+            <button class="close-preview" @click="closeImagePreview">&times;</button>
+          </div>
+        </div>
+      </Transition>
 
       <!-- 我的發布 -->
       <div v-if="activeTab === 'posts'" class="my-posts">
@@ -669,6 +682,17 @@
       const showEmailVerificationModal = ref(false);
       const showPhoneVerificationModal = ref(false);
 
+      const showImagePreview = ref(false);
+      const selectedImage = ref('');
+
+      const openImagePreview = (image) => {
+        selectedImage.value = image;
+        showImagePreview.value = true;
+      };
+      const closeImagePreview = () => {
+        showImagePreview.value = false;
+      };
+
       const isProcessingPortal = ref(false);
 
       const fileInput = ref(null);
@@ -997,6 +1021,10 @@
         handleShowPhoneChange,
         handleShowPasswordChange,
         showContactModal,
+        showImagePreview,
+        selectedImage,
+        openImagePreview,
+        closeImagePreview,
       };
     },
   };
@@ -1203,6 +1231,7 @@
   line-height: 1.5;
 }
 
+/* 維修照片樣式 */
 .maintenance-photos {
   display: flex;
   gap: 10px;
@@ -1210,18 +1239,76 @@
   padding: 5px 0;
 }
 
-.maintenance-photos img {
+.maintenance-photo {
   width: 100px;
   height: 100px;
   object-fit: cover;
   border-radius: 8px;
-  transition: transform 0.2s;
   cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-.maintenance-photos img:hover {
+.maintenance-photo:hover {
   transform: scale(1.05);
 }
+
+/* 圖片預覽 Modal 樣式 */
+.image-preview-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.preview-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90vh;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  animation: zoomIn 0.3s ease;
+}
+
+.close-preview {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 10px;
+  transition: color 0.2s ease;
+}
+
+.close-preview:hover {
+  color: #ddd;
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 
 .maintenance-response,
 .maintenance-resolution {
@@ -1574,38 +1661,6 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 15px;
   padding: 20px 0;
-}
-
-.contact-btn:hover {
-  background-color: #0056b3; /* 深一點的藍色 */
-  transform: translateY(-2px); /* 輕微上浮 */
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2); /* 添加陰影 */
-}
-
-/* 點擊效果 */
-.contact-btn:active {
-  transform: translateY(0); /* 回到原位 */
-  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.1); /* 縮小陰影 */
-  background-color: #0050a6; /* 更深的藍色 */
-}
-
-/* 添加漣漪效果 */
-.contact-btn::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s, height 0.3s;
-}
-
-.contact-btn:active::after {
-  width: 200px;
-  height: 200px;
 }
 
 .action-btn {
@@ -2552,6 +2607,35 @@
 .modal-body {
   padding: 20px;
 }
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .preview-content,
+.modal-leave-active .preview-content {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from {
+  opacity: 0;
+}
+
+.modal-enter-from .preview-content {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-leave-to .preview-content {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
 
 .contact-info-item {
   display: flex;
