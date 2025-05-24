@@ -41,9 +41,29 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 1. 運行 `python backend/db_sync.py status` 查看可用的匯出檔
 2. 選擇適當的匯出檔進行匯入：`python backend/db_sync.py import -f <filename>`
+3. 如果您想清除現有資料並重新匯入：`python db_sync.py import -f 檔案路徑.json --clear`
 
 ### 注意事項
 
 - 不要直接修改 `backend/db_sync` 目錄中的 JSON 檔案
 - 如果新增了模型或更改了模型結構，確保更新資料庫匯出檔
 - `last_updated` 等時間戳欄位可能導致衝突，請在匯入時注意
+
+### 如一直發生git衝突
+
+```bash
+git rm -r --cached .
+git add .
+git commit -m "clear git cache"
+```
+
+### 資料庫語言
+
+flask db current
+flask db history
+flask db show
+flask db heads
+flask db branches
+flask db migrate -m ""
+flask db upgrade
+flask db downgrade

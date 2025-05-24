@@ -395,7 +395,7 @@
       // 提交聯絡表單
       const submitForm = () => {
         // 這裡可以添加表單驗證
-        console.log("提交表單數據:", contactForm.value);
+        // console.log("提交表單數據:", contactForm.value);
         
         // 成功提交後顯示提示
         alert("感謝您的訊息！我們會盡快回覆您。");

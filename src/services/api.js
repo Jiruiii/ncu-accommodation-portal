@@ -236,6 +236,8 @@ export const apiService = {
     favorites: {
       getFavorites: () => apiService.get("/api/accommodations/favorites"),
       toggleFavorite: (id) =>
+        apiService.post(`/api/accommodations/favorites/toggle/${id}`),
+      addFavorite: (id) =>
         apiService.post(`/api/accommodations/favorites/${id}`),
       removeFavorite: (id) =>
         apiService.post(`/api/accommodations/favorites/delete/${id}`),
@@ -257,6 +259,8 @@ export const apiService = {
   users: {
     getProfile: () => apiService.get("/api/users/profile"),
     updateProfile: (data) => apiService.put("/api/users/profile", data),
+    uploadProfileImage: (formData) =>
+      apiService.post("/api/users/profile/image", formData),
     changePassword: (data) =>
       apiService.post("/api/users/change-password", data),
     unbindPortal: () => apiService.post("/api/users/unbind-portal"),
@@ -330,6 +334,82 @@ export const apiService = {
       apiService.post("/api/verification/verify-email", { code }),
     verifyPhone: async (code) =>
       apiService.post("/api/verification/verify-phone", { code }),
+  },
+
+  landlord: {
+    getDashboard: () => apiService.get("/api/landlord/dashboard"),
+
+    // 房東認證
+    submitVerification: (formData) =>
+      apiService.post("/api/landlord/verification", formData),
+    getVerificationStatus: () =>
+      apiService.get("/api/landlord/verification/status"),
+
+    // 房源管理
+    getProperties: () => apiService.get("/api/landlord/properties"),
+    getProperty: (id) => apiService.get(`/api/landlord/properties/${id}`),
+    createProperty: (data) => apiService.post("/api/landlord/properties", data),
+    updateProperty: (id, data) =>
+      apiService.put(`/api/landlord/properties/${id}`, data),
+    deleteProperty: (id) => apiService.delete(`/api/landlord/properties/${id}`),
+    updatePropertyStatus: (id, status) =>
+      apiService.post(`/api/landlord/properties/${id}/status`, { status }),
+
+    // 訊息管理
+    getMessages: () => apiService.get("/api/landlord/messages"),
+    getMessage: (id) => apiService.get(`/api/landlord/messages/${id}`),
+    replyMessage: (id, content) =>
+      apiService.post(`/api/landlord/messages/${id}/reply`, { content }),
+
+    // 租賃合同
+    getContracts: () => apiService.get("/api/landlord/contracts"),
+    getContract: (id) => apiService.get(`/api/landlord/contracts/${id}`),
+    createContract: (data) => apiService.post("/api/landlord/contracts", data),
+    updateContract: (id, data) =>
+      apiService.put(`/api/landlord/contracts/${id}`, data),
+  },
+
+  // 評論相關 API
+  comments: {
+    // 獲取特定房源的評論
+    getPropertyComments: (propertyId, { page = 1, perPage = 20 } = {}) => 
+      apiService.get(`/api/comments/property/${propertyId}?page=${page}&per_page=${perPage}`),
+    
+    // 新增評論
+    createComment: (propertyId, data) => 
+      apiService.post(`/api/comments/property/${propertyId}`, data),
+    
+    // 更新評論
+    updateComment: (commentId, data) => 
+      apiService.put(`/api/comments/${commentId}`, data),
+    
+    // 刪除評論
+    deleteComment: (commentId) => 
+      apiService.delete(`/api/comments/${commentId}`),
+    
+    // 獲取評論的回覆
+    getReplies: (commentId, { page = 1, perPage = 50 } = {}) => 
+      apiService.get(`/api/comments/${commentId}/replies?page=${page}&per_page=${perPage}`),
+    
+    // 新增回覆
+    createReply: (commentId, data) => 
+      apiService.post(`/api/comments/${commentId}/replies`, data),
+    
+    // 更新回覆
+    updateReply: (replyId, data) => 
+      apiService.put(`/api/comments/replies/${replyId}`, data),
+    
+    // 刪除回覆
+    deleteReply: (replyId) => 
+      apiService.delete(`/api/comments/replies/${replyId}`),
+    
+    // 點讚評論
+    likeComment: (commentId) => 
+      apiService.post(`/api/comments/${commentId}/like`),
+    
+    // 點讚回覆
+    likeReply: (replyId) => 
+      apiService.post(`/api/comments/replies/${replyId}/like`),
   },
 };
 

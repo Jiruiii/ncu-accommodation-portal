@@ -4,11 +4,11 @@
       <i class="fas fa-home"></i>
       <span>首頁</span>
     </router-link>
-    <router-link to="/housing" class="nav-item">
+    <router-link to="/accommodation-list" class="nav-item">
       <i class="fas fa-building"></i>
       <span>租屋列表</span>
     </router-link>
-    <router-link to="/map" class="nav-item">
+    <router-link to="/map-search" class="nav-item">
       <i class="fas fa-map-marker-alt"></i>
       <span>地圖搜尋</span>
     </router-link>
@@ -16,7 +16,7 @@
       <i class="fas fa-heart"></i>
       <span>我的收藏</span>
     </router-link>
-    <router-link to="/sublease" class="nav-item">
+    <router-link to="/sublet" class="nav-item">
       <i class="fas fa-exchange-alt"></i>
       <span>轉租專區</span>
     </router-link>
