@@ -132,6 +132,7 @@
             socket.on("connect", () => {
                 console.log("WebSocket 連線成功！");  
                 socket.emit("join_room", { user_id: userId.value });
+                socket.emit("join_room", { user_id: userId.value });
             });
 
             socket.on("connect_error", (err) => {
@@ -189,6 +190,8 @@
                 try {
                     const response = await fetch(`http://localhost:5000/api/chat/history?sender_id=${userId.value}&receiver_id=${targetUserId.value}`);
                     const history = await response.json();
+
+                    console.log("取得歷史紀錄:", history);
                     
                     msgsTenant.value = history.map(msg => {
                         const formattedTime = new Intl.DateTimeFormat("zh-TW", {
@@ -284,6 +287,7 @@
     }
     .chatroom{
         overflow-y: auto;
+        flex-grow: 1;  /* 占滿可用空間 */
         flex-grow: 1;  /* 占滿可用空間 */
         background-color: #C4E1FF;
         padding-top: 20px;

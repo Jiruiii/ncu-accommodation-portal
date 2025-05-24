@@ -1,4 +1,5 @@
 import json
+from operator import or_
 import pytz
 from flask import Blueprint, request, jsonify
 from flask_socketio import SocketIO # type: ignore
@@ -76,10 +77,12 @@ def get_chat_history():
 
     # 從資料庫中找出符合條件的訊息
     messages = Message.query.filter(
-        ((Message.sender_id == sender_id) & (Message.receiver_id == receiver_id)) |
-        ((Message.sender_id == receiver_id) & (Message.receiver_id == sender_id))
-    ).order_by(Message.time.asc()).all() # 訊息案時間排序
-
+        or_(
+            Message.sender_id == sender_id,
+            Message.receiver_id == sender_id
+        )
+    ).order_by(Message.time).all() # 訊息案時間排序
+    
     return jsonify([
         {"sender": msg.sender_id, "text": msg.message, "timestamp": msg.time.isoformat()}
         for msg in messages
