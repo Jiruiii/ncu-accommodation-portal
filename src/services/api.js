@@ -368,6 +368,49 @@ export const apiService = {
     updateContract: (id, data) =>
       apiService.put(`/api/landlord/contracts/${id}`, data),
   },
+
+  // 評論相關 API
+  comments: {
+    // 獲取特定房源的評論
+    getPropertyComments: (propertyId, { page = 1, perPage = 20 } = {}) => 
+      apiService.get(`/api/comments/property/${propertyId}?page=${page}&per_page=${perPage}`),
+    
+    // 新增評論
+    createComment: (propertyId, data) => 
+      apiService.post(`/api/comments/property/${propertyId}`, data),
+    
+    // 更新評論
+    updateComment: (commentId, data) => 
+      apiService.put(`/api/comments/${commentId}`, data),
+    
+    // 刪除評論
+    deleteComment: (commentId) => 
+      apiService.delete(`/api/comments/${commentId}`),
+    
+    // 獲取評論的回覆
+    getReplies: (commentId, { page = 1, perPage = 50 } = {}) => 
+      apiService.get(`/api/comments/${commentId}/replies?page=${page}&per_page=${perPage}`),
+    
+    // 新增回覆
+    createReply: (commentId, data) => 
+      apiService.post(`/api/comments/${commentId}/replies`, data),
+    
+    // 更新回覆
+    updateReply: (replyId, data) => 
+      apiService.put(`/api/comments/replies/${replyId}`, data),
+    
+    // 刪除回覆
+    deleteReply: (replyId) => 
+      apiService.delete(`/api/comments/replies/${replyId}`),
+    
+    // 點讚評論
+    likeComment: (commentId) => 
+      apiService.post(`/api/comments/${commentId}/like`),
+    
+    // 點讚回覆
+    likeReply: (replyId) => 
+      apiService.post(`/api/comments/replies/${replyId}/like`),
+  },
 };
 
 // 生成隨機狀態碼防止CSRF攻擊

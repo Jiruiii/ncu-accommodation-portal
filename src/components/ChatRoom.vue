@@ -48,6 +48,7 @@
         name: "ChatRoom",
         setup (){
             const router = useRouter();
+            const msgsTenant = ref([]);
             const msg = ref("");
             const chatContainer = ref(null);
             const jsonData = ref(null);

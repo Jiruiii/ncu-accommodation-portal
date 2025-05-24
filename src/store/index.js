@@ -1,4 +1,5 @@
 import { createStore } from "vuex";
+import commentsModule from "@/store/modules/comments";
 import apiService from "@/services/api";
 
 export default createStore({
@@ -429,49 +430,85 @@ export default createStore({
       // 如果用戶已登入，則嘗試與伺服器同步收藏
       if (state.isAuthenticated) {
         try {
-          const response =
-            await apiService.accommodations.favorites.getFavorites();
-
+          // 設置一個標記在localStorage，避免重複同步
+          const lastSyncTime = localStorage.getItem('lastFavoritesSyncTime');
+          const currentTime = new Date().getTime();
+          
+          // 如果最後同步時間在30秒內，跳過同步
+          if (lastSyncTime && (currentTime - parseInt(lastSyncTime) < 30000)) {
+            console.log('Skip favorites sync: synced recently');
+            return;
+          }
+    
+          // console.log('Syncing favorites with server...');
+          const response = await apiService.accommodations.favorites.getFavorites();
+          
           // 從回應中提取房源 ID
           const serverFavoriteIds = response.map((item) => item.id);
-
+          
           // 本地收藏 ID
-          const localFavoriteIds = state.favoriteIds;
-
-          if (JSON.stringify(serverFavoriteIds.sort()) === JSON.stringify(localFavoriteIds.sort())) {
-            return; 
+          const localFavoriteIds = [...state.favoriteIds];
+    
+          // 使用集合操作比較兩個數組是否有相同元素，而不是簡單的字符串比較
+          const serverSet = new Set(serverFavoriteIds);
+          const localSet = new Set(localFavoriteIds);
+          
+          // 檢查兩個集合是否完全相同
+          let needsSync = false;
+          
+          // 如果長度不同，肯定需要同步
+          if (serverSet.size !== localSet.size) {
+            needsSync = true;
+          } else {
+            // 檢查本地是否包含所有伺服器的ID
+            for (const id of serverSet) {
+              if (!localSet.has(id)) {
+                needsSync = true;
+                break;
+              }
+            }
           }
-
-          // 找出需要添加到伺服器的本地收藏
-          const toAdd = localFavoriteIds.filter(
-            (id) => !serverFavoriteIds.includes(id)
-          );
-
-          // 找出需要從本地移除的伺服器收藏 (已在伺服器上移除)
-          const toRemove = serverFavoriteIds.filter(
-            (id) => !localFavoriteIds.includes(id)
-          );
-
+    
+          if (!needsSync) {
+            // console.log('Favorites already in sync');
+            localStorage.setItem('lastFavoritesSyncTime', currentTime.toString());
+            return;
+          }
+    
+          // console.log('Local favorites:', localFavoriteIds);
+          // console.log('Server favorites:', serverFavoriteIds);
+    
+          // 找出需要添加到伺服器的本地收藏 (在本地但不在伺服器)
+          const toAdd = localFavoriteIds.filter((id) => !serverSet.has(id));
+    
+          // 找出需要從本地移除的伺服器收藏 (在伺服器但不在本地)
+          const toRemove = serverFavoriteIds.filter((id) => !localSet.has(id));
+    
           // 同步添加
           for (const id of toAdd) {
-            await apiService.accommodations.favorites.toggleFavorite(id);
+            await apiService.accommodations.favorites.addFavorite(id);
           }
-
+    
           // 同步移除
           for (const id of toRemove) {
             await apiService.accommodations.favorites.removeFavorite(id);
           }
-
+    
+          // 重新獲取最新狀態，確保與伺服器一致
+          const updatedResponse = await apiService.accommodations.favorites.getFavorites();
+          const updatedServerFavoriteIds = updatedResponse.map((item) => item.id);
+    
           // 更新本地狀態為伺服器狀態
-          commit("SET_FAVORITE_IDS", serverFavoriteIds);
-
+          commit("SET_FAVORITE_IDS", updatedServerFavoriteIds);
+    
           // 更新 localStorage
           localStorage.setItem(
             "favoriteAccommodations",
-            JSON.stringify(serverFavoriteIds)
+            JSON.stringify(updatedServerFavoriteIds)
           );
-
-          console.log("Favorites synced with server");
+    
+          // 記錄同步時間
+          localStorage.setItem('lastFavoritesSyncTime', currentTime.toString());
         } catch (error) {
           console.error("Failed to sync favorites with server:", error);
         }
@@ -710,6 +747,10 @@ export default createStore({
     getPropertyCommentCount: (state) => (propertyId) => {
       return (state.comments[propertyId] || []).length;
     },
+  },
+
+  modules: {
+    commentsModule,
   },
 });
 

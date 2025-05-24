@@ -43,6 +43,50 @@ def export_command(args):
         with open(status_file, 'w', encoding='utf-8') as f:
             json.dump(status, f, ensure_ascii=False, indent=2)
 
+        files = [f for f in os.listdir(sync_folder) if f.endswith('.json') and f != 'sync_status.json']
+        if len(files) > 15:
+            # 根據文件修改時間排序
+            files_with_time = [(f, os.path.getmtime(os.path.join(sync_folder, f))) for f in files]
+            sorted_files = sorted(files_with_time, key=lambda x: x[1], reverse=True)
+            
+            # 刪除舊文件
+            for old_file, _ in sorted_files[15:]:
+                try:
+                    os.remove(os.path.join(sync_folder, old_file))
+                    print(f"已刪除舊備份: {old_file}")
+                except Exception as e:
+                    print(f"無法刪除舊備份 {old_file}: {str(e)}")
+
+def safe_load_json(filepath):
+    """安全地讀取 JSON 檔案"""
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+            # 移除可能的註解行
+            lines = content.split('\n')
+            cleaned_lines = [line for line in lines if not line.strip().startswith('//')]
+            cleaned_content = '\n'.join(cleaned_lines)
+            
+            try:
+                return json.loads(cleaned_content)
+            except json.JSONDecodeError as e:
+                print(f"JSON 格式錯誤: {str(e)}")
+                print("嘗試修復 JSON 格式...")
+                
+                # 嘗試更多修復
+                cleaned_content = cleaned_content.replace("'", '"')  # 替換單引號為雙引號
+                cleaned_content = cleaned_content.replace(",]", "]").replace(",}", "}")  # 修復尾隨逗號
+                
+                try:
+                    return json.loads(cleaned_content)
+                except:
+                    print("無法修復 JSON 格式，將返回空對象")
+                    return {}
+    except Exception as e:
+        print(f"讀取檔案時出錯: {str(e)}")
+        return {}
+
 def import_command(args):
     """匯入資料庫"""
     app = get_app()
@@ -59,17 +103,18 @@ def import_command(args):
             # 查找最新的匯出檔
             status_file = os.path.join(sync_folder, 'sync_status.json')
             if os.path.exists(status_file):
-                with open(status_file, 'r', encoding='utf-8') as f:
-                    status = json.load(f)
-                    latest_file = status.get('last_export', {}).get('filename')
-                    if latest_file:
-                        filepath = os.path.join(sync_folder, latest_file)
-                        if not os.path.exists(filepath):
-                            print(f"錯誤: 找不到最新匯出檔 {filepath}")
-                            return
-                    else:
-                        print("錯誤: 無法確定最新的匯出檔")
+                # 使用安全的 JSON 讀取
+                status = safe_load_json(status_file)
+                
+                latest_file = status.get('last_export', {}).get('filename')
+                if latest_file:
+                    filepath = os.path.join(sync_folder, latest_file)
+                    if not os.path.exists(filepath):
+                        print(f"錯誤: 找不到最新匯出檔 {filepath}")
                         return
+                else:
+                    print("錯誤: 無法確定最新的匯出檔")
+                    return
             else:
                 print("錯誤: 沒有同步狀態檔，請指定要匯入的檔案")
                 return
@@ -90,8 +135,7 @@ def import_command(args):
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
         if os.path.exists(status_file):
-            with open(status_file, 'r', encoding='utf-8') as f:
-                status = json.load(f)
+            status = safe_load_json(status_file)
         else:
             status = {}
         
@@ -101,8 +145,11 @@ def import_command(args):
             'user': os.environ.get('USERNAME', 'unknown')
         }
         
-        with open(status_file, 'w', encoding='utf-8') as f:
-            json.dump(status, f, ensure_ascii=False, indent=2)
+        try:
+            with open(status_file, 'w', encoding='utf-8') as f:
+                json.dump(status, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"寫入同步狀態檔時出錯: {str(e)}")
 
 def status_command(args):
     """查看同步狀態"""

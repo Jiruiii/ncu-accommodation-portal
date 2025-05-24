@@ -1,7 +1,7 @@
 import json
 import pytz
 from flask import Blueprint, request, jsonify
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO # type: ignore
 from app import socketio
 from app.api import api_bp
 from app.extensions import db
@@ -11,7 +11,7 @@ from datetime import datetime
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from flask_socketio import join_room as socketio_join_room
+from flask_socketio import join_room as socketio_join_room # type: ignore
 
 # 分隔不同的聊天室
 @socketio.on("join_room")
