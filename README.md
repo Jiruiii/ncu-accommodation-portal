@@ -63,7 +63,7 @@ flask db current
 flask db history
 flask db show
 flask db heads
+flask db branches
 flask db migrate -m ""
 flask db upgrade
 flask db downgrade
-flask db stamp 12b285e8eb3a(heads)

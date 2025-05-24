@@ -40,7 +40,6 @@ def get_profile():
         user = User.query.get_or_404(user_id)
         
         return jsonify({
-            "success": True,
             "user": {
                 "user_id": user.user_id,
                 "username": user.username,
@@ -60,10 +59,7 @@ def get_profile():
     except Exception as e:
         print(f"獲取用戶資料錯誤: {str(e)}")
         print(traceback.format_exc())
-        return jsonify({
-            "success": False,
-            "message": f"獲取用戶資料失敗: {str(e)}"
-        }), 500
+        return jsonify({"message": f"獲取用戶資料失敗: {str(e)}"}), 500
 
 # 更新用戶個人資料
 @api_bp.route('/users/profile', methods=['PUT'])
@@ -76,11 +72,8 @@ def update_profile():
         # 獲取請求的 JSON 資料
         data = request.get_json()
         
-        # 只允許更新特定欄位，確保所有欄位都存在於 User 模型中
-        allowed_fields = ['phone', 'username', 'email', 'is_email_verified', 'is_phone_verified']
-        
-        # 記錄實際更新的欄位
-        updated_fields = []
+        # 只允許更新特定欄位
+        allowed_fields = ['phone', 'bio','username', 'email']
         
         # 更新用戶資料
         for field in allowed_fields:
@@ -89,87 +82,38 @@ def update_profile():
                 if field == 'email' and data['email'] != user.email:
                     existing_user = User.query.filter_by(email=data['email']).first()
                     if existing_user:
-                        return jsonify({
-                            "success": False,
-                            "message": "此電子郵件已被使用"
-                        }), 400
+                        return jsonify({"message": "此電子郵件已被使用"}), 400
                 
                 # 檢查用戶名唯一性
                 if field == 'username' and data['username'] != user.username:
                     existing_user = User.query.filter_by(username=data['username']).first()
                     if existing_user:
-                        return jsonify({
-                            "success": False,
-                            "message": "此用戶名已被使用"
-                        }), 400
+                        return jsonify({"message": "此用戶名已被使用"}), 400
                 
-                # 檢查欄位是否確實存在於模型中
-                if hasattr(user, field):
-                    current_value = getattr(user, field)
-                    if current_value != data[field]:
-                        setattr(user, field, data[field])
-                        updated_fields.append(field)
-                else:
-                    print(f"警告: 嘗試更新不存在的欄位 '{field}'")
+                setattr(user, field, data[field])
         
-        # 特殊處理 has_portal_id
-        if 'has_portal_id' in data and data['has_portal_id'] is False:
-            if user.portal_id:
-                user.portal_id = None
-                user.school_email = None
-                updated_fields.extend(['portal_id', 'school_email'])
-        
-        # 如果沒有任何欄位更新，則直接返回成功
-        if not updated_fields:
-            return jsonify({
-                "success": True,
-                "message": "沒有資料變更",
-                "user": {
-                    "user_id": user.user_id,
-                    "username": user.username,
-                    "email": user.email,
-                    "school_email": user.school_email,
-                    "phone": user.phone,
-                    "profile_image": user.profile_image,
-                    "user_role": user.user_role,
-                    "is_verified": user.is_verified,
-                    "is_email_verified": user.is_email_verified,
-                    "is_phone_verified": user.is_phone_verified,
-                    "has_portal_id": bool(user.portal_id)
-                }
-            })
-        
-        # 更新時間戳
         user.updated_at = datetime.datetime.utcnow()
         db.session.commit()
         
-        # 返回更新後的完整使用者資料
         return jsonify({
-            "success": True,
-            "message": f"個人資料已更新: {', '.join(updated_fields)}",
+            "message": "個人資料已更新",
             "user": {
                 "user_id": user.user_id,
                 "username": user.username,
                 "email": user.email,
-                "school_email": user.school_email,
                 "phone": user.phone,
                 "profile_image": user.profile_image,
+                "bio": user.bio,
                 "user_role": user.user_role,
-                "is_verified": user.is_verified,
-                "is_email_verified": user.is_email_verified,
-                "is_phone_verified": user.is_phone_verified,
-                "has_portal_id": bool(user.portal_id)
+                "is_verified": user.is_verified
             }
         })
     except Exception as e:
         db.session.rollback()
         print(f"更新用戶資料錯誤: {str(e)}")
         print(traceback.format_exc())
-        return jsonify({
-            "success": False,
-            "message": f"更新用戶資料失敗: {str(e)}"
-        }), 500
-        
+        return jsonify({"message": f"更新用戶資料失敗: {str(e)}"}), 500
+
 # 上傳個人頭像
 @api_bp.route('/users/profile/image', methods=['POST'])
 @login_required
@@ -214,7 +158,6 @@ def upload_profile_image():
         
         # 返回完整 URL 以便前端顯示
         return jsonify({
-            "success": True,
             "message": "頭像已更新",
             "profile_image": user.profile_image
         })
@@ -222,10 +165,7 @@ def upload_profile_image():
         db.session.rollback()
         print(f"上傳頭像錯誤: {str(e)}")
         print(traceback.format_exc())
-        return jsonify({
-            "success": False,
-            "message": f"上傳頭像失敗: {str(e)}"
-        }), 500
+        return jsonify({"message": f"上傳頭像失敗: {str(e)}"}), 500
 
 # 修改密碼
 @api_bp.route('/users/change-password', methods=['POST'])
@@ -318,17 +258,13 @@ def deactivate_account():
         session.clear()
         
         return jsonify({
-            "success": True,
             "message": "帳戶已停用"
         })
     except Exception as e:
         db.session.rollback()
         print(f"停用帳戶錯誤: {str(e)}")
         print(traceback.format_exc())
-        return jsonify({
-            "success": False,
-            "message": f"停用帳戶失敗: {str(e)}"
-        }), 500
+        return jsonify({"message": f"停用帳戶失敗: {str(e)}"}), 500
 
 # 帳戶刪除 (僅超級管理員可以實際刪除，一般用戶僅停用)
 @api_bp.route('/users/delete', methods=['POST'])
@@ -342,36 +278,26 @@ def delete_account():
         
         # 確認用戶密碼
         if not user.check_password(data.get('password', '')):
-            return jsonify({
-                "success": False,
-                "message": "密碼不正確"
-            }), 400
-        
-        # 標記為非活躍即可，不需要實際刪除
+            return jsonify({"message": "密碼不正確"}), 400
+            
+        # 僅標記為已刪除，但不實際刪除
         user.is_active = False
+        user.is_deleted = True
+        user.deleted_at = datetime.datetime.utcnow()
         user.updated_at = datetime.datetime.utcnow()
-        
-        # 如果您確實需要這些欄位，應該先在 User 模型中添加
-        # user.is_deleted = True
-        # user.deleted_at = datetime.datetime.utcnow()
-        
         db.session.commit()
         
         # 清除 session
         session.clear()
         
         return jsonify({
-            "success": True,
             "message": "帳戶已刪除"
         })
     except Exception as e:
         db.session.rollback()
         print(f"刪除帳戶錯誤: {str(e)}")
         print(traceback.format_exc())
-        return jsonify({
-            "success": False,
-            "message": f"刪除帳戶失敗: {str(e)}"
-        }), 500
+        return jsonify({"message": f"刪除帳戶失敗: {str(e)}"}), 500
     
 # 取消Portal授權
 @api_bp.route('/users/unbind-portal', methods=['POST'])

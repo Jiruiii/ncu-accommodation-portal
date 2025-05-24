@@ -136,64 +136,6 @@ def check_auth_status():
             "authenticated": False,
             "error": str(e)
         }), 500
-        
-@api_bp.route('/auth/verify-token', methods=['GET'])
-def verify_token():
-    """驗證當前 session 是否有效"""
-    try:
-        if 'user_id' not in session:
-            return jsonify({
-                "valid": False,
-                "message": "無效的會話"
-            }), 401
-        
-        user_id = session.get('user_id')
-        user = User.query.get(user_id)
-        
-        if not user:
-            # 用戶不存在，清除 session
-            session.clear()
-            return jsonify({
-                "valid": False,
-                "message": "用戶不存在"
-            }), 401
-        
-        if not user.is_active:
-            # 用戶已被停用
-            session.clear()
-            return jsonify({
-                "valid": False,
-                "message": "帳號已被停用"
-            }), 401
-        
-        # 更新最後活動時間（可選）
-        # user.last_activity = datetime.utcnow()
-        # db.session.commit()
-        
-        # 返回有效的驗證結果
-        return jsonify({
-            "valid": True,
-            "user": {
-                "user_id": user.user_id,
-                "username": user.username,
-                "email": user.email,
-                "profile_image": user.profile_image,
-                "user_role": user.user_role,
-                "is_admin": user.is_admin(),
-                "is_superuser": user.is_superuser(),
-                "is_verified": user.is_verified,
-                "is_email_verified": user.is_email_verified,
-                "is_phone_verified": user.is_phone_verified,
-                "has_portal_id": bool(user.portal_id)
-            }
-        })
-    except Exception as e:
-        print(f"驗證 token 時出錯: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({
-            "valid": False,
-            "error": str(e)
-        }), 500
 
 @api_bp.route('/auth/portal-callback', methods=['POST'])
 def portal_callback():

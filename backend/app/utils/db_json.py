@@ -317,7 +317,7 @@ def get_models_mapping():
     from app.models.notification import Notification
     from app.models.fraud import FraudReport
     from app.models.chat import Message
-    from app.models.comments import Comment, Reply, CommentLike, ReplyLike, Report
+    from app.models.comments import Comment, Reply, CommentLike, ReplyLike
     
     # 建立表格名稱到模型類的映射
     return {
@@ -341,6 +341,5 @@ def get_models_mapping():
         'comments': Comment,
         'replies': Reply,
         'comment_likes': CommentLike,
-        'reply_likes': ReplyLike,
-        'reports': Report
+        'reply_likes': ReplyLike
     }

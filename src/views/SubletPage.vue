@@ -928,48 +928,6 @@ const nextImage = () => {
     position: relative;
     z-index: 10;
   }
-
-  @media (max-width: 768px) {
-  .sublet-actions {
-    flex-direction: column;
-    align-items: stretch;
-    margin: -30px auto 20px;
-    padding: 15px;
-  }
-
-  .search-filters {
-    order: 1; /* 改變排序 */
-    width: 100%;
-  }
-
-  .post-sublet-btn {
-    order: 2; /* 改變排序 */
-    justify-content: center;
-    margin: 0 auto;
-    width: fit-content;
-    min-width: 200px;
-  }
-
-  .filter-group {
-    flex-direction: column;
-  }
-
-  .filter-item {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .sublet-actions {
-    margin: -20px auto 15px;
-    padding: 12px;
-  }
-
-  .post-sublet-btn {
-    width: 100%;
-    padding: 12px 20px;
-  }
-}
   
   .search-filters {
     flex: 1;

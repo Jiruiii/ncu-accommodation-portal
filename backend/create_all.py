@@ -12,7 +12,7 @@ from app.models.accommodation import (
     AccommodationAmenity, Favorite
 )
 from app.models.review import Review
-from app.models.comments import Comment, Reply, CommentLike, ReplyLike, Report
+from app.models.comments import Comment, Reply, CommentLike, ReplyLike
 from app.models.chat import Message
 from app.models.notification import Notification
 from app.models.fraud import FraudReport
@@ -35,7 +35,6 @@ MODEL_TABLES = [
     (Reply, 'replies'),
     (CommentLike, 'comment_likes'),
     (ReplyLike, 'reply_likes'),
-    (Report, 'reports'),
     (Message, 'chat_message'),
     (Notification, 'notifications'),
     (FraudReport, 'fraud_reports'),
