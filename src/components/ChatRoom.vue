@@ -53,8 +53,8 @@
             const chatContainer = ref(null);
             const jsonData = ref(null);
             const user = ref([]); 
-            const userId = ref(8);
-            const targetUserId = ref(9);
+            const userId = ref("");
+            const targetUserId = ref("");
             const allMessages = ref([]);
             const msg_all = ref("");
             const time_all = ref("");
@@ -67,14 +67,33 @@
                 { id: 9, name: "test1", image: require("@/assets/default-avatar.jpg") },
             ]); 
 
+            // 生成聊天室識別碼
+            const getRoomId = (id1, id2) => {
+                const sortedIds = [id1, id2].sort(); // 確保順序一致
+                return `${sortedIds[0]}-${sortedIds[1]}`;
+            };
+
             // 判斷是否選擇聊天對象
-            const chooseUser = (id) => {
+            const chooseUser = async (id) => {
+                targetUserId.value = id;
                 userselected.value = !userselected.value;
-                //targetUserId.value = Number(id);
+
+                const roomId = getRoomId(userId.value, targetUserId.value);
+                socket.emit("join_room", { room: roomId }); // 讓使用者加入聊天室
+
+                await fetchHistory(userId.value, targetUserId.value);
+
+                // 有新訊息自動滾動到底部
+                nextTick(() => {
+                    if (chatContainer.value) {
+                        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+                    }
+                });
             }
 
             // 添加訊息
             const addMessages = () => {
+                // 取得現在時間並格式化
                 const formattedTime = new Intl.DateTimeFormat("zh-TW", {
                     hour: "numeric",
                     minute: "numeric",
@@ -107,7 +126,10 @@
 
             socket.on("connect", () => {
                 console.log("WebSocket 連線成功！");  
-                socket.emit("join_room", { user_id: userId.value });
+
+                const roomId = getRoomId(userId.value, targetUserId.value);
+
+                socket.emit("join_room", { room: roomId }); // 讓使用者加入聊天室
             });
 
             socket.on("connect_error", (err) => {
@@ -137,26 +159,27 @@
             const sendMessage = () => {
                 const latestMsg = msg.value.trim();
                 const latestTime = new Date();
+                const roomId = getRoomId(userId.value, targetUserId.value);
 
-                console.log("送出訊息:", latestMsg);  
+                // 發送訊息到 WebSocket 伺服器
                 socket.emit("new_message", { 
                     sender: userId.value, 
                     receiver: targetUserId.value, 
                     message: latestMsg, 
-                    time: latestTime 
+                    time: latestTime,
+                    room: roomId 
                 });
             };
 
             // 取得用戶的 id
-            const fetchData = async () => {
+            const fetchData = async () => { // 非同步函式
                 try {
-                    const response = await apiService.users.getProfile();
+                    const response = await apiService.users.getProfile(); // 向後端請求用戶資料
                     const userData = response.user;
 
                     user.value = userData;
                     userId.value = userData.user_id;
 
-                    console.log("獲取的 ID:", userId.value);
                     return userData.user_id; 
                 } catch (error) {
                     console.error("讀取 JSON 失敗:", error);
@@ -166,13 +189,13 @@
             // 取得聊天紀錄
             const fetchHistory = async (senderId, receiverId) => {
                 try {
+                    // 根據ID取得聊天歷史紀錄
                     const response = await fetch(`http://localhost:5000/api/chat/history?sender_id=${senderId}&receiver_id=${receiverId}`);
                     const history = await response.json();
-
-                    console.log("取得歷史紀錄:", history);
                     
                     allMessages.value = history.map(msg => {
-                        const isTenant = String(msg.sender) === String(userId.value) || String(msg.receiver) !== String(userId.value);
+                        const isTenant = String(msg.sender) === String(userId.value); // 判斷訊息是否是自己發送的
+
                         const formattedTime = new Intl.DateTimeFormat("zh-TW", {
                             hour: "numeric",
                             minute: "numeric",
@@ -192,31 +215,16 @@
                 }
             };
 
+            // 當 targetUserId 改變時，重新獲取聊天歷史
             onMounted(async () => {
                 const currentUserId = await fetchData();
+
                 userId.value = currentUserId;
                 
                 socket.emit("join_room", { user_id: currentUserId });
 
                 // 先移除所有舊的監聽，避免累積事件
                 socket.off("new_message"); 
-
-                socket.on("new_message", (data) => {
-                    console.log(`收到來自 ${data.sender} 的訊息:`, data.message);
-
-                    allMessages.value.push({
-                        fromTenant: false,
-                        text: data.message,
-                        time: data.time
-                    });
-
-                    nextTick(() => {
-                        if (chatContainer.value) {
-                            chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-                        }
-                    });
-
-                });
 
                 // 確保 userId 和 targetUserId 都有值再執行 fetchHistory
                 if (currentUserId && targetUserId.value) {
@@ -265,9 +273,12 @@
         background-color: #F0F0F0;
         border-radius: 12px;
         cursor: pointer;
+        transition: all 0.3s ease;
     }
     .user-selector:hover{
         background-color: #D0D0D0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     .chatroom-content{
         display: flex;
@@ -307,9 +318,10 @@
         font-weight: bold;
     }
     .chatroom{
-        max-height: 430px;
+        /*height: 600px;*/
+        /*max-height: 600px;*/
         overflow-y: auto;
-        flex-grow: 1;  /* 占滿可用空間 */
+        flex: 1;  /* 占滿可用空間 */
         background-color: #C4E1FF;
         padding-top: 20px;
         display: flex;
@@ -343,10 +355,11 @@
         margin: 5px;
     }
     .input-flame{
-        height: 220px;
+        height: 75px;
         border-bottom-left-radius: 12px;
         border-bottom-right-radius: 12px;
         background-color: #C4E1FF;
+        box-shadow: 0px -3px 3px #BEBEBE;
         display: flex;
         justify-content: center;
         align-items: center;
