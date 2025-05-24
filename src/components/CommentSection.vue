@@ -181,10 +181,11 @@
         </div>
 
         <!-- 回覆列表 -->
-        <div class="replies-list" v-if="showingRepliesForId === comment.id">
-          <div v-if="isLoadingReplies" class="loading-replies">
-            <div class="loading-spinner">載入回覆中...</div>
-          </div>
+        <transition name="fade">
+          <div class="replies-list" v-if="showingRepliesForId === comment.id">
+            <div v-if="isLoadingReplies" class="loading-replies">
+              <div class="loading-spinner">載入回覆中...</div>
+            </div>
 
             <div v-else-if="replies.length > 0" class="replies-container">
               <div v-for="reply in replies" :key="reply.id" class="reply-item">
@@ -276,12 +277,13 @@
               </div>
             </div>
 
-          <div v-else class="no-replies">目前沒有回覆</div>
+            <div v-else class="no-replies">目前沒有回覆</div>
 
-          <button class="hide-replies-btn" @click="hideReplies">
-            收起回覆
-          </button>
-        </div>
+            <button class="hide-replies-btn" @click="hideReplies">
+              收起回覆
+            </button>
+          </div>
+        </transition>
 
         <button
           v-if="!showingRepliesForId && comment.replyCount > 0"

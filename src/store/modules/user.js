@@ -388,14 +388,20 @@ export default {
       if (!state.user || !state.user.profile_image) {
         return require("@/assets/default-avatar.jpg");
       }
-
-      // 如果已經是完整 URL
-      if (state.user.profile_image.startsWith("http")) {
-        return state.user.profile_image;
+    
+      // 如果是相對路徑並且不是以 http 開頭
+      if (state.user.profile_image && !state.user.profile_image.startsWith('http')) {
+        // 確保路徑格式正確
+        const path = state.user.profile_image.startsWith('/') 
+          ? state.user.profile_image 
+          : `/${state.user.profile_image}`;
+          
+        // 使用環境變數或硬編碼的 API 網址
+        return `http://localhost:5000${path}`;
       }
-
-      // 否則拼接 API 基礎 URL
-      return `http://localhost:5000${state.user.profile_image}`;
+    
+      // 已經是完整 URL
+      return state.user.profile_image;
     },
 
     // 添加 rememberMe 狀態
