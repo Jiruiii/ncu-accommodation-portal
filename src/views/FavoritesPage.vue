@@ -767,7 +767,7 @@ export default {
 
     // 前往租屋列表
     const goToList = () => {
-      router.push({ name: "accommodation-list" });
+      router.push({ name: "accommmodation-list" });
       
     };
 
