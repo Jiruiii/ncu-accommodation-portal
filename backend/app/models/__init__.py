@@ -11,4 +11,4 @@ from app.models.maintenance import MaintenanceRequest, MaintenanceImage
 from app.models.notification import Notification
 from app.models.fraud import FraudReport
 from app.models.chat import Message
-from app.models.comments import Comment, Reply, CommentLike, ReplyLike
+from app.models.comments import Comment, Reply, CommentLike, ReplyLike, Report

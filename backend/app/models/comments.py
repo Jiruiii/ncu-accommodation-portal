@@ -89,3 +89,35 @@ class ReplyLike(db.Model):
     
     # 確保每個使用者只能對一條回覆按一次讚
     __table_args__ = (db.UniqueConstraint('reply_id', 'user_id', name='unique_reply_like'),)
+
+class Report(db.Model):
+    """內容舉報表"""
+    __tablename__ = 'reports'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    reporter_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    content_type = db.Column(db.String(20), nullable=False)  # 'comment' 或 'reply'
+    content_id = db.Column(db.Integer, nullable=False)
+    reasons = db.Column(db.String(255), nullable=False)  # 以逗號分隔的舉報原因
+    description = db.Column(db.Text)  # 詳細描述
+    status = db.Column(db.String(20), default='pending')  # pending, reviewed, resolved, rejected
+    created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
+    resolved_at = db.Column(db.DateTime)
+    
+    # 關聯
+    reporter = db.relationship('User', backref=db.backref('reports', lazy='dynamic'))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'reporter_id': self.reporter_id,
+            'content_type': self.content_type,
+            'content_id': self.content_id,
+            'reasons': self.reasons.split(',') if self.reasons else [],
+            'description': self.description,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+        }

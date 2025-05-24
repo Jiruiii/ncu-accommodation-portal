@@ -1669,23 +1669,6 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 
-<<<<<<< HEAD
-  .settings-section h2 {
-    font-size: 1.5rem;
-    color: #2c3e50;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #eef2f7;
-  }
-
-  .settings-item {
-    display: flex;
-    align-items: center;
-    padding: 20px 0;
-    border-bottom: 1px solid #f5f7fa;
-    transition: background-color 0.2s ease;
-  }
-=======
 .settings-section h2 {
   font-size: 1.5rem;
   margin-bottom: 25px;
@@ -1702,7 +1685,6 @@
   border-bottom: 1px solid #f5f7fa;
   gap: 15px;
 }
->>>>>>> thomas
 
   .settings-item:last-child {
     border-bottom: none;
@@ -1815,46 +1797,6 @@
     cursor: not-allowed;
   }
 
-<<<<<<< HEAD
-  /* 危險區域樣式優化 */
-  .danger-zone {
-    margin-top: 40px;
-    padding: 25px;
-    background-color: #fef2f2;
-    border-radius: 12px;
-    border: 1px solid #fee2e2;
-  }
-
-  .danger-zone h2 {
-    color: #dc2626;
-    font-size: 1.3rem;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .danger-zone h2:before {
-    content: "⚠️";
-  }
-
-  .danger-btn {
-    background-color: #dc2626;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .danger-btn:hover {
-    background-color: #b91c1c;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
-  }
-=======
 /* 租屋小幫手樣式優化 */
 .user-assistant {
   background: linear-gradient(145deg, #ffffff, #f8f9fa);
@@ -1977,7 +1919,6 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
->>>>>>> thomas
 
   .verified-tag {
     padding: 2px 8px;

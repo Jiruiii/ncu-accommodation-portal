@@ -6,8 +6,10 @@ from app.models.accommodation import Accommodation, AccommodationImage
 from app.models.review import Review
 from app.models.sublet import Sublet
 from app.models.lease import Lease
+from app.models.comments import Comment, Reply, Report
 from app.extensions import db
 from sqlalchemy import inspect, text # type: ignore
+from sqlalchemy.sql import func # type: ignore
 from functools import wraps
 import datetime
 import traceback
@@ -494,4 +496,79 @@ def check_auth():
         return jsonify({
             "error": str(e),
             "traceback": traceback.format_exc()
+        }), 500
+
+@api_bp.route('/admin/reports', methods=['GET'])
+@admin_required
+def get_all_reports():
+    """管理員獲取所有舉報列表"""
+    if not session.get('is_admin', False):
+        return jsonify({'error': '需要管理員權限'}), 403
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+    status = request.args.get('status')
+    
+    query = Report.query
+    
+    if status:
+        query = query.filter_by(status=status)
+    
+    query = query.order_by(Report.created_at.desc())
+    reports_pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    result = {
+        'success': True,
+        'reports': [report.to_dict() for report in reports_pagination.items],
+        'total': reports_pagination.total,
+        'pages': reports_pagination.pages,
+        'current_page': page
+    }
+    
+    return jsonify(result)
+
+@api_bp.route('/admin/reports/<int:report_id>', methods=['PUT'])
+@admin_required
+def update_report_status(report_id):
+    """管理員更新舉報狀態"""
+    if not session.get('is_admin', False):
+        return jsonify({'error': '需要管理員權限'}), 403
+    
+    data = request.get_json()
+    status = data.get('status')
+    
+    if not status or status not in ['reviewed', 'resolved', 'rejected']:
+        return jsonify({'error': '無效的狀態值'}), 400
+    
+    report = Report.query.get_or_404(report_id)
+    
+    try:
+        report.status = status
+        
+        if status == 'resolved':
+            report.resolved_at = func.now()
+            
+            # 如果決定刪除被舉報的內容
+            if data.get('delete_content', False):
+                if report.content_type == 'comment':
+                    comment = Comment.query.get(report.content_id)
+                    if comment:
+                        db.session.delete(comment)
+                else:  # reply
+                    reply = Reply.query.get(report.content_id)
+                    if reply:
+                        db.session.delete(reply)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '舉報狀態已更新',
+            'report': report.to_dict()
+        })
+    except SQLAlchemyError as e: # type: ignore
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'更新舉報狀態失敗: {str(e)}'
         }), 500
