@@ -190,7 +190,6 @@
   </div>
 </template>
 
-<!-- filepath: c:\Users\USER\Desktop\ncu-accommodation-portal\src\views\LoginPage.vue -->
 <script>
   import { ref } from "vue";
   import { useRoute, useRouter } from "vue-router";
@@ -991,7 +990,7 @@
       align-items: center;
       opacity: 1;
       visibility: visible;
-      gap: 15px;
+      gap: 10px;
     }
 
     /* 縮小表單元素間距 */

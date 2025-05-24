@@ -2131,7 +2131,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: 50px;
+  margin-top: 100px;
   margin-bottom: 25px;
   position: relative;
   z-index: 2;
