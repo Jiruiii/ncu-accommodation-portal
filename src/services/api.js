@@ -324,6 +324,51 @@ export const apiService = {
       apiService.put(`/api/admin/users/${userId}`, userData, true),
     deleteUser: (userId) =>
       apiService.post(`/api/admin/delete/users/${userId}`, true),
+
+    // 獲取評論列表
+    getComments: (params = {}) => {
+      // 構建查詢參數
+      const queryParams = new URLSearchParams();
+      for (const key in params) {
+        queryParams.append(key, params[key]);
+      }
+
+      return apiService.get(`/api/admin/comments?${queryParams.toString()}`);
+    },
+
+    // 獲取評論詳情
+    getCommentDetails: (commentId) => {
+      return apiService.get(`/api/admin/comments/${commentId}`);
+    },
+
+    // 更新評論
+    updateComment: (commentId, data) => {
+      return apiService.put(`/api/admin/comments/${commentId}`, data);
+    },
+
+    // 刪除評論
+    deleteComment: (commentId) => {
+      return apiService.delete(`/api/admin/comments/${commentId}`);
+    },
+
+    // 更新回覆
+    updateReply: (replyId, data) => {
+      return apiService.put(`/api/admin/replies/${replyId}`, data);
+    },
+
+    // 刪除回覆
+    deleteReply: (replyId) => {
+      return apiService.delete(`/api/admin/replies/${replyId}`);
+    },
+
+    getReports: (params = {}) =>
+      apiService.get(
+        `/api/admin/reports?page=${params.page || 1}&per_page=${
+          params.per_page || 10
+        }${params.status ? `&status=${params.status}` : ""}`
+      ),
+    updateReportStatus: (reportId, data) =>
+      apiService.put(`/api/admin/reports/${reportId}`, data),
   },
 
   verification: {

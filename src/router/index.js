@@ -11,12 +11,17 @@ const AuthCallback = () => import("@/views/AuthCallback.vue");
 const ResetPasswordPage = () => import("@/views/ResetPasswordPage.vue");
 const ChatRoom = () => import("@/components/ChatRoom.vue");
 
+const AdminLayout = () => import("@/components/admin/AdminLayout.vue");
 const AdminDashboard = () => import("@/views/admin/AdminDashboard.vue");
 const TableView = () => import("@/components/admin/TableView.vue");
-const UserManagement = () => import("@/components/admin/UserManagement.vue");
+const UserManagement = () => import("@/components/admin/UserManagementPage.vue");
 const AdminLoginPage = () => import("@/views/admin/AdminLoginPage.vue");
+const ReportsManagementPage = () => import("@/components/admin/ReportsManagementPage.vue");
+const CommentManagementPage = () => import("@/components/admin/CommentManagementPage.vue");
+const AdminSettingsPage = () => import("@/views/admin/AdminSettingsPage.vue");
 
-const LandLordVerificationPage = () => import("@/views/landlord/LandlordVerificationPage.vue");
+const LandLordVerificationPage = () =>
+  import("@/views/landlord/LandlordVerificationPage.vue");
 
 const NotFound = () => import("@/views/NotFound.vue");
 
@@ -96,7 +101,7 @@ const routes = [
   // 管理後台路由
   {
     path: "/admin",
-    component: () => import("@/components/admin/AdminLayout.vue"),
+    component: AdminLayout,
     meta: { requiresAuth: true, requiresAdmin: true },
     children: [
       {
@@ -115,6 +120,24 @@ const routes = [
         path: "tables/:tableName",
         name: "TableView",
         component: TableView,
+        meta: { requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: "reports",
+        name: "ReportsManagement",
+        component: ReportsManagementPage,
+        meta: { requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: "settings",
+        name: "AdminSettings",
+        component: AdminSettingsPage,
+        meta: { requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: "comments",
+        name: "CommentManagement",
+        component: CommentManagementPage,
         meta: { requiresAuth: true, requiresAdmin: true },
       },
     ],

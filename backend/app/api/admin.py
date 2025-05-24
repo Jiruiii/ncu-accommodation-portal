@@ -1,3 +1,4 @@
+from operator import or_
 from flask import request, jsonify, current_app, session
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt # type: ignore
 from app.api import api_bp
@@ -6,12 +7,13 @@ from app.models.accommodation import Accommodation, AccommodationImage
 from app.models.review import Review
 from app.models.sublet import Sublet
 from app.models.lease import Lease
-from app.models.comments import Comment, Reply, Report
+from app.models.comments import Comment, Reply, Report, CommentLike
 from app.extensions import db
 from sqlalchemy import inspect, text # type: ignore
 from sqlalchemy.sql import func # type: ignore
 from functools import wraps
 import datetime
+from datetime import timedelta
 import traceback
 
 # 管理員身份驗證裝飾器
@@ -94,6 +96,49 @@ def get_table_data(table_name):
     per_page = min(request.args.get('per_page', 20, type=int), 100)
     sort_by = request.args.get('sort_by')
     sort_direction = request.args.get('sort_direction', 'asc')
+
+    # 處理評論
+    if table_name == 'comments':
+        # 使用 JOIN 查詢獲取評論資料並包含使用者名稱
+        query = db.session.query(
+            Comment,
+            User.username.label('user_name'),
+            Accommodation.title.label('property_title')
+        ).join(
+            User, Comment.user_id == User.user_id
+        ).join(
+            Accommodation, Comment.property_id == Accommodation.accommodation_id
+        )
+        
+        # 執行分頁查詢
+        pagination = query.paginate(page=page, per_page=per_page)
+        
+        # 轉換結果為字典列表
+        results = []
+        for comment, user_name, property_title in pagination.items:
+            comment_dict = comment.to_dict()
+            # 添加關聯數據
+            comment_dict['user_name'] = user_name
+            comment_dict['property_title'] = property_title
+            results.append(comment_dict)
+            
+        # 返回結果
+        return jsonify({
+            'success': True,
+            'data': results,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': page,
+            'columns': [
+                {'key': 'id', 'label': 'ID'},
+                {'key': 'property_title', 'label': '住所名稱'},
+                {'key': 'user_name', 'label': '用戶名稱'},
+                {'key': 'content', 'label': '評論內容'},
+                {'key': 'rating', 'label': '評分'},
+                {'key': 'created_at', 'label': '創建時間'},
+                {'key': 'updated_at', 'label': '更新時間'}
+            ]
+        })
     
     # 構建查詢
     query = f"SELECT * FROM {table_name}"
@@ -502,9 +547,6 @@ def check_auth():
 @admin_required
 def get_all_reports():
     """管理員獲取所有舉報列表"""
-    if not session.get('is_admin', False):
-        return jsonify({'error': '需要管理員權限'}), 403
-    
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
     status = request.args.get('status')
@@ -531,9 +573,6 @@ def get_all_reports():
 @admin_required
 def update_report_status(report_id):
     """管理員更新舉報狀態"""
-    if not session.get('is_admin', False):
-        return jsonify({'error': '需要管理員權限'}), 403
-    
     data = request.get_json()
     status = data.get('status')
     
@@ -571,4 +610,278 @@ def update_report_status(report_id):
         return jsonify({
             'success': False,
             'error': f'更新舉報狀態失敗: {str(e)}'
+        }), 500
+        
+# 評論管理相關 API
+@api_bp.route('/admin/comments', methods=['GET'])
+@admin_required
+def get_comments():
+    """管理員獲取評論列表（帶篩選和關聯數據）"""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    
+    # 獲取篩選參數
+    rating = request.args.get('rating')
+    property_type = request.args.get('property_type')
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    search = request.args.get('search')
+    include_relations = request.args.get('include_relations', 'false').lower() == 'true'
+    
+    # 構建查詢
+    query = db.session.query(Comment)
+    
+    # 應用篩選條件
+    if rating:
+        query = query.filter(Comment.rating == rating)
+    
+    if property_type:
+        query = query.join(Accommodation, Comment.property_id == Accommodation.id)
+    
+    if date_from:
+        date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+        query = query.filter(Comment.created_at >= date_from_obj)
+    
+    if date_to:
+        date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+        date_to_obj = date_to_obj + timedelta(days=1)  # 包括當天
+        query = query.filter(Comment.created_at < date_to_obj)
+    
+    if search:
+        search_term = f"%{search}%"
+        query = query.join(User, Comment.user_id == User.id) \
+            .filter(
+                or_(
+                    Comment.content.ilike(search_term),
+                    User.username.ilike(search_term),
+                    User.email.ilike(search_term)
+                )
+            )
+    
+    # 排序：最新的評論優先
+    query = query.order_by(Comment.created_at.desc())
+    
+    # 執行分頁查詢
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    # 處理結果
+    comments_result = []
+    
+    for comment in pagination.items:
+        comment_dict = comment.to_dict()
+        
+        # 如果需要包含關聯數據
+        if include_relations:
+            # 添加用戶信息
+            user = User.query.get(comment.user_id)
+            if user:
+                comment_dict['user_name'] = user.username
+                comment_dict['user_avatar'] = user.profile_image
+                comment_dict['user_email'] = user.email
+            
+            # 添加住所信息
+            accommodation = Accommodation.query.get(comment.property_id)
+            if accommodation:
+                comment_dict['property_title'] = accommodation.title
+                comment_dict['property_address'] = accommodation.address
+            
+            # 添加統計信息
+            comment_dict['likes_count'] = CommentLike.query.filter_by(comment_id=comment.id).count()
+            comment_dict['replies_count'] = Reply.query.filter_by(comment_id=comment.id).count()
+            comment_dict['reports_count'] = Report.query.filter_by(
+                content_type='comment', content_id=comment.id
+            ).count()
+            
+            # 獲取回覆
+            replies = Reply.query.filter_by(comment_id=comment.id) \
+                .order_by(Reply.created_at.asc()).all()
+            
+            replies_list = []
+            for reply in replies:
+                reply_dict = reply.to_dict()
+                
+                # 添加回覆用戶信息
+                reply_user = User.query.get(reply.user_id)
+                if reply_user:
+                    reply_dict['user_name'] = reply_user.username
+                    reply_dict['user_avatar'] = reply_user.profile_image
+                
+                replies_list.append(reply_dict)
+            
+            comment_dict['replies'] = replies_list
+        
+        comments_result.append(comment_dict)
+    
+    return jsonify({
+        'success': True,
+        'comments': comments_result,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'current_page': page
+    })
+
+@api_bp.route('/admin/comments/<int:comment_id>', methods=['GET'])
+@admin_required
+def get_comment_details(comment_id):
+    """獲取評論詳情"""
+    comment = Comment.query.get_or_404(comment_id)
+    comment_dict = comment.to_dict()
+    
+    # 添加用戶信息
+    user = User.query.get(comment.user_id)
+    if user:
+        comment_dict['user_name'] = user.username
+        comment_dict['user_avatar'] = user.profile_image
+        comment_dict['user_email'] = user.email
+    
+    # 添加住所信息
+    accommodation = Accommodation.query.get(comment.property_id)
+    if accommodation:
+        comment_dict['property_title'] = accommodation.title
+        comment_dict['property_address'] = accommodation.address
+    
+    # 添加統計信息
+    comment_dict['likes_count'] = CommentLike.query.filter_by(comment_id=comment.id).count()
+    comment_dict['replies_count'] = Reply.query.filter_by(comment_id=comment.id).count()
+    
+    # 獲取回覆
+    replies = Reply.query.filter_by(comment_id=comment.id) \
+        .order_by(Reply.created_at.asc()).all()
+    
+    replies_list = []
+    for reply in replies:
+        reply_dict = reply.to_dict()
+        
+        # 添加回覆用戶信息
+        reply_user = User.query.get(reply.user_id)
+        if reply_user:
+            reply_dict['user_name'] = reply_user.username
+            reply_dict['user_avatar'] = reply_user.profile_image
+        
+        replies_list.append(reply_dict)
+    
+    comment_dict['replies'] = replies_list
+    
+    # 獲取舉報信息
+    reports = Report.query.filter_by(
+        content_type='comment', content_id=comment.id
+    ).order_by(Report.created_at.desc()).all()
+    
+    reports_list = []
+    for report in reports:
+        reports_list.append(report.to_dict())
+    
+    comment_dict['reports'] = reports_list
+    
+    return jsonify({
+        'success': True,
+        'comment': comment_dict
+    })
+
+@api_bp.route('/admin/comments/<int:comment_id>', methods=['PUT'])
+@admin_required
+def update_comment(comment_id):
+    """更新評論"""
+    comment = Comment.query.get_or_404(comment_id)
+    data = request.get_json()
+    
+    if 'content' in data:
+        comment.content = data['content']
+    
+    if 'rating' in data:
+        comment.rating = data['rating']
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': '評論已更新',
+            'comment': comment.to_dict()
+        })
+    except SQLAlchemyError as e: # type: ignore
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'更新評論失敗: {str(e)}'
+        }), 500
+
+@api_bp.route('/admin/comments/<int:comment_id>', methods=['DELETE'])
+@admin_required
+def delete_comment(comment_id):
+    """刪除評論"""
+    comment = Comment.query.get_or_404(comment_id)
+    
+    try:
+        # 先刪除關聯的數據
+        # 刪除評論的點讚
+        CommentLike.query.filter_by(comment_id=comment_id).delete()
+        
+        # 刪除評論的回覆
+        Reply.query.filter_by(comment_id=comment_id).delete()
+        
+        # 刪除評論的舉報
+        Report.query.filter_by(content_type='comment', content_id=comment_id).delete()
+        
+        # 刪除評論
+        db.session.delete(comment)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '評論已刪除'
+        })
+    except SQLAlchemyError as e: # type: ignore
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'刪除評論失敗: {str(e)}'
+        }), 500
+
+@api_bp.route('/admin/replies/<int:reply_id>', methods=['PUT'])
+@admin_required
+def update_reply(reply_id):
+    """更新回覆"""
+    reply = Reply.query.get_or_404(reply_id)
+    data = request.get_json()
+    
+    if 'content' in data:
+        reply.content = data['content']
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': '回覆已更新',
+            'reply': reply.to_dict()
+        })
+    except SQLAlchemyError as e: # type: ignore
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'更新回覆失敗: {str(e)}'
+        }), 500
+
+@api_bp.route('/admin/replies/<int:reply_id>', methods=['DELETE'])
+@admin_required
+def delete_reply(reply_id):
+    """刪除回覆"""
+    reply = Reply.query.get_or_404(reply_id)
+    
+    try:
+        # 刪除回覆的舉報
+        Report.query.filter_by(content_type='reply', content_id=reply_id).delete()
+        
+        # 刪除回覆
+        db.session.delete(reply)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '回覆已刪除'
+        })
+    except SQLAlchemyError as e: # type: ignore
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'刪除回覆失敗: {str(e)}'
         }), 500
