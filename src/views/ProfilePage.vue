@@ -706,33 +706,70 @@
       // 上傳頭像
       const uploadAvatar = async (event) => {
         const file = event.target.files[0];
-        if (!file) return;
+        if (!file) {
+          uploadError.value = "請選擇圖片檔案";
+          return;
+        }
 
         try {
           isUploading.value = true;
           uploadError.value = null;
 
+          // 檢查檔案大小
+          if (file.size > 5 * 1024 * 1024) {
+            uploadError.value = "檔案大小不能超過 5MB";
+            return;
+          }
+
+          // 檢查檔案類型
+          const validTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/jpg",
+          ];
+          if (!validTypes.includes(file.type)) {
+            uploadError.value = "只接受 JPG、PNG 或 GIF 格式的圖片";
+            return;
+          }
+
+          // 創建一個新的 FormData 實例
           const formData = new FormData();
           formData.append("image", file);
 
-          // 使用 user 模組的 updateProfileImage action
-          const profileImage = await store.dispatch(
-            "user/updateProfileImage",
-            formData
+          // 這裡直接使用 fetch API 而不是 axios
+          const response = await fetch(
+            "http://localhost:5000/api/users/profile/image",
+            {
+              method: "POST",
+              body: formData,
+              credentials: "include",
+              // 不要設置 Content-Type，讓瀏覽器自動設置
+            }
           );
 
-          if (profileImage) {
-            // 強制刷新頭像顯示
-            const timestamp = new Date().getTime();
-            // 注意：這裡不再需要手動處理頭像 URL，使用 avatarUrl 計算屬性即可
+          const data = await response.json();
+          if (data.success && data.profile_image) {
+            // 更新 Vuex store 中的用戶資料
+            await store.dispatch("user/updateProfile", {
+              profile_image: data.profile_image,
+            });
+
+            // 強制重新載入頭像
+            const avatarImg = document.querySelector(".profile-avatar img");
+            if (avatarImg) {
+              avatarImg.src =
+                store.getters["user/avatarUrl"] + "?t=" + new Date().getTime();
+            }
           } else {
-            uploadError.value = "上傳失敗，請稍後再試";
+            throw new Error(data.message || "上傳失敗，請稍後再試");
           }
         } catch (error) {
-          console.error("上傳頭像失敗:", error);
+          console.error("上傳頭像時發生錯誤:", error);
           uploadError.value = error.message || "上傳失敗，請稍後再試";
         } finally {
           isUploading.value = false;
+          // 清空檔案輸入，允許重複上傳相同檔案
           event.target.value = "";
         }
       };

@@ -178,6 +178,8 @@ def upload_profile_image():
         user_id = session.get('user_id')
         user = User.query.get_or_404(user_id)
         
+        print(request.files)
+        
         if 'image' not in request.files:
             return jsonify({"message": "未提供圖片"}), 400
             
