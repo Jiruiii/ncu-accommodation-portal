@@ -1439,51 +1439,37 @@
   justify-content: center;
   gap: 8px;
   transition: all 0.3s ease;
+  color: #ffffff;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.action-btn:hover {
-  transform: translateY(-2px);
-}
-
+/* 每個按鈕使用不同的柔和漸層色 */
 .action-btn.report {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.action-btn.report:hover {
-  background-color: #43A047;
-  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  color: #1565C0;
 }
 
 .action-btn.extend {
-  background-color: #2196F3;
-  color: white;
-}
-
-.action-btn.extend:hover {
-  background-color: #1E88E5;
-  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+  background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
+  color: #7B1FA2;
 }
 
 .action-btn.terminate {
-  background-color: #FF5722;
-  color: white;
-}
-
-.action-btn.terminate:hover {
-  background-color: #F4511E;
-  box-shadow: 0 4px 8px rgba(255, 87, 34, 0.3);
+  background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+  color: #2E7D32;
 }
 
 .action-btn.receipt {
-  background-color: #9C27B0;
-  color: white;
+  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+  color: #E65100;
 }
 
-.action-btn.receipt:hover {
-  background-color: #8E24AA;
-  box-shadow: 0 4px 8px rgba(156, 39, 176, 0.3);
+/* 懸浮效果 */
+.action-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* 響應式設計 */
