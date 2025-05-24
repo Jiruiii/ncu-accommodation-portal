@@ -767,8 +767,7 @@ export default {
 
     // 前往租屋列表
     const goToList = () => {
-      router.push({ name: "accommmodation-list" });
-      
+      router.push({ name: "accommodation-list" });
     };
 
     // 檢查項目是否被選中
