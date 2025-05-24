@@ -4,6 +4,15 @@
 
     <CircleNavigation v-if="isLoggedIn" class="desktop-nav" />
     <MobileNavBar v-if="isLoggedIn" class="mobile-nav" />
+
+    <MessageToast
+      :message="messageState.message"
+      :type="messageState.type"
+      :visible="messageState.visible"
+      :duration="messageState.duration"
+      :show-close-button="messageState.showCloseButton"
+      @close="closeMessage"
+    />
   </div>
 </template>
 
@@ -15,6 +24,8 @@
   import CircleNavigation from "@/components/CircleNavigation.vue";
   import PageTransition from "@/components/PageTransition.vue";
   import MobileNavBar from "@/components/MobileNavBar.vue";
+  import MessageToast from "@/components/common/MessageToast.vue";
+  import MessageService from "@/services/MessageService";
 
   export default {
     name: "App",
@@ -22,11 +33,15 @@
       CircleNavigation,
       PageTransition,
       MobileNavBar,
+      MessageToast,
     },
     setup() {
       const store = useStore();
       const route = useRoute();
+
       const isLoggedIn = ref(false);
+
+      const messageState = MessageService.getState();
 
       // 檢查用戶是否已登入
       const checkLoginStatus = () => {
@@ -35,6 +50,10 @@
         const userFromSession = sessionStorage.getItem("user");
 
         isLoggedIn.value = !!(userFromLocal || userFromSession);
+      };
+
+      const closeMessage = () => {
+        MessageService.close();
       };
 
       // 初始化數據
@@ -83,6 +102,8 @@
 
       return {
         isLoggedIn,
+        messageState,
+        closeMessage,
       };
     },
   };
@@ -163,24 +184,24 @@
   }
 
   /* Add these styles for MobileNavBar*/
-.desktop-nav {
-  display: none;
-}
-
-@media screen and (min-width: 768px) {
   .desktop-nav {
-    display: block;
-  }
-  
-  .mobile-nav {
     display: none;
   }
-}
 
-/* Add padding to prevent content from being hidden behind the mobile nav bar */
-@media screen and (max-width: 767px) {
-  .app-container {
-    padding-bottom: 60px;
+  @media screen and (min-width: 768px) {
+    .desktop-nav {
+      display: block;
+    }
+
+    .mobile-nav {
+      display: none;
+    }
   }
-}
+
+  /* Add padding to prevent content from being hidden behind the mobile nav bar */
+  @media screen and (max-width: 767px) {
+    .app-container {
+      padding-bottom: 60px;
+    }
+  }
 </style>

@@ -3,7 +3,11 @@
     <div class="profile-header">
       <div class="profile-avatar">
         <img :src="avatarUrl" alt="用戶頭像" />
-        <button class="edit-avatar-btn" @click="triggerFileInput" :disabled="isUploading">
+        <button
+          class="edit-avatar-btn"
+          @click="triggerFileInput"
+          :disabled="isUploading"
+        >
           <i class="fa-solid fa-camera" v-if="!isUploading"></i>
           <i class="fa-solid fa-spinner fa-spin" v-else></i>
         </button>
@@ -16,7 +20,7 @@
         />
         <div v-if="uploadError" class="upload-error">{{ uploadError }}</div>
       </div>
-      
+
       <div class="profile-info">
         <h1>
           {{ user.username }}
@@ -50,8 +54,9 @@
           </div>
         </div>
       </div>
-      <button class="edit-profile-btn">編輯個人資料</button>
-      <!-- 新增管理員後台入口按鈕 -->
+      <button class="logout-btn" @click="handleLogout">
+        <span class="material-symbols-outlined"> logout </span>登出
+      </button>
       <button
         v-if="isAdmin"
         class="admin-dashboard-btn"
@@ -617,7 +622,7 @@
         />
       </div>
 
-      <ChatRoom  v-if="activeTab === 'chatroom'"/>
+      <ChatRoom v-if="activeTab === 'chatroom'" />
     </div>
   </div>
 </template>
@@ -625,6 +630,7 @@
 <script>
   import { ref, computed, onMounted, reactive } from "vue";
   import { useRouter } from "vue-router";
+  import { useStore } from "vuex";
   import apiService from "@/services/api";
   import EmailVerificationModal from "@/components/verification/EmailVerificationModal.vue";
   import PhoneVerificationModal from "@/components/verification/PhoneVerificationModal.vue";
@@ -648,6 +654,7 @@
       ChatRoom,
     },
     setup() {
+      const store = useStore();
       const router = useRouter();
 
       const activeTab = ref("housing");
@@ -670,21 +677,22 @@
 
       const showContactModal = ref(false);
 
-      const avatarUrl = computed(() => {
-        if (user.value && user.value.profile_image) {
-          // 如果已經是完整 URL（以 http 開頭），直接返回
-          if (user.value.profile_image.startsWith("http")) {
-            return user.value.profile_image;
-          }
+      const user = computed(() => store.getters["user/currentUser"]);
+      const isAdmin = computed(() => store.getters["user/isAdmin"]);
+      const avatarUrl = computed(() => store.getters["user/avatarUrl"]);
 
-          // 否則拼接 API 基礎 URL
-          return `http://localhost:5000${user.value.profile_image}`;
-
+      const fetchUserData = async () => {
+        try {
+          loading.value = true;
+          error.value = null;
+          await store.dispatch("user/fetchUserProfile");
+        } catch (err) {
+          console.error("獲取用戶資料失敗:", err);
+          error.value = "獲取資料失敗，請稍後重試";
+        } finally {
+          loading.value = false;
         }
-
-        // 如果沒有頭像，返回預設頭像
-        return require("@/assets/default-avatar.jpg"); // 確保這個檔案存在
-      });
+      };
 
       // 觸發文件選擇對話框
       const triggerFileInput = () => {
@@ -697,44 +705,31 @@
         if (!file) return;
 
         try {
-          // 顯示上傳中狀態
           isUploading.value = true;
           uploadError.value = null;
 
           const formData = new FormData();
           formData.append("image", file);
 
-          const response = await apiService.users.uploadProfileImage(formData);
+          // 使用 user 模組的 updateProfileImage action
+          const profileImage = await store.dispatch(
+            "user/updateProfileImage",
+            formData
+          );
 
-          if (response && response.profile_image) {
-            // 更新用戶頭像
-            user.value.profile_image = response.profile_image;
-
-            // 更新本地儲存的用戶資訊
-            const userStr = localStorage.getItem("user");
-            if (userStr) {
-              const userData = JSON.parse(userStr);
-              userData.profile_image = response.profile_image;
-              localStorage.setItem("user", JSON.stringify(userData));
-            }
-
+          if (profileImage) {
             // 強制刷新頭像顯示
             const timestamp = new Date().getTime();
-            const cachedAvatarUrl = avatarUrl.value;
-            if (cachedAvatarUrl.includes("?")) {
-              avatarUrl.value = `${
-                cachedAvatarUrl.split("?")[0]
-              }?t=${timestamp}`;
-            } else {
-              avatarUrl.value = `${cachedAvatarUrl}?t=${timestamp}`;
-            }
+            // 注意：這裡不再需要手動處理頭像 URL，使用 avatarUrl 計算屬性即可
+          } else {
+            uploadError.value = "上傳失敗，請稍後再試";
           }
         } catch (error) {
           console.error("上傳頭像失敗:", error);
           uploadError.value = error.message || "上傳失敗，請稍後再試";
         } finally {
           isUploading.value = false;
-          event.target.value = ""; // 清空檔案輸入框，以便可以再次選擇同一檔案
+          event.target.value = "";
         }
       };
 
@@ -752,18 +747,6 @@
         confirmPassword: "",
       });
 
-      const user = ref({
-        username: "Loading...",
-        email: "Loading...",
-        user_role: "",
-        is_verified: false,
-        phone: "",
-        profile_image: null,
-        has_portal_id: false,
-        school_email: "",
-        user_id: null,
-      });
-
       // 確定标签應該顯示哪些
       const tabs = computed(() => {
         const baseTabs = [
@@ -778,15 +761,6 @@
         }
 
         return baseTabs;
-      });
-
-      // 計算屬性：檢查用戶是否為管理員或超級管理員
-      const isAdmin = computed(() => {
-        return (
-          user.value.is_admin ||
-          user.value.is_superuser ||
-          ["admin", "superuser"].includes(user.value.user_role)
-        );
       });
 
       // 計算屬性：格式化用戶全名
@@ -821,41 +795,6 @@
         router.push("/admin");
       };
 
-      // 獲取用戶資料
-      const fetchUserData = async () => {
-        try {
-          loading.value = true;
-          error.value = null;
-
-          // 從API獲取用戶資料
-          const response = await apiService.users.getProfile();
-
-          if (response && response.user) {
-            user.value = response.user;
-          } else {
-            // 如果API請求沒有返回用戶數據，嘗試從本地存儲獲取
-            const userStr = localStorage.getItem("user");
-            if (userStr) {
-              user.value = JSON.parse(userStr);
-            } else {
-              error.value = "無法獲取用戶資料";
-            }
-          }
-        } catch (err) {
-          console.error("獲取用戶資料失敗:", err);
-          error.value = "獲取資料失敗，請稍後重試";
-
-          // 如果API請求失敗，嘗試從本地存儲獲取
-          const userStr =
-            localStorage.getItem("user") || sessionStorage.getItem("user");
-          if (userStr) {
-            user.value = JSON.parse(userStr);
-          }
-        } finally {
-          loading.value = false;
-        }
-      };
-
       // 開啟編輯個人資料模態框
       const openEditModal = () => {
         // 確保表單數據與當前用戶數據一致
@@ -882,20 +821,10 @@
             const response = await apiService.users.unbindPortal();
 
             if (response && response.success) {
-              user.value.has_portal_id = false;
-              user.value.school_email = null;
-
-              try {
-                const userStr = localStorage.getItem("user");
-                if (userStr) {
-                  const userData = JSON.parse(userStr);
-                  userData.has_portal_id = false;
-                  userData.school_email = null;
-                  localStorage.setItem("user", JSON.stringify(userData));
-                }
-              } catch (e) {
-                console.error("更新本地存儲失敗:", e);
-              }
+              await store.dispatch("user/updateProfile", {
+                has_portal_id: false,
+                school_email: null,
+              });
             } else {
               throw new Error(response.message || "解除綁定失敗");
             }
@@ -924,8 +853,7 @@
         try {
           await apiService.users.deleteAccount({ password });
           alert("帳戶已成功刪除");
-          localStorage.removeItem("user");
-          sessionStorage.removeItem("user");
+          await store.dispatch("user/logout");
           router.push("/login");
         } catch (err) {
           console.error("刪除帳戶失敗:", err);
@@ -934,23 +862,15 @@
       };
 
       const handleEmailVerificationSuccess = () => {
-        // 更新用戶資訊
-        user.value.is_email_verified = true;
-
-        // 更新本地存儲
-        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-        storedUser.is_email_verified = true;
-        localStorage.setItem("user", JSON.stringify(storedUser));
+        store.dispatch("user/updateProfile", {
+          is_email_verified: true,
+        });
       };
 
       const handlePhoneVerificationSuccess = () => {
-        // 更新用戶資訊
-        user.value.is_phone_verified = true;
-
-        // 更新本地存儲
-        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-        storedUser.is_phone_verified = true;
-        localStorage.setItem("user", JSON.stringify(storedUser));
+        store.dispatch("user/updateProfile", {
+          is_phone_verified: true,
+        });
       };
 
       const handleShowEmailChange = async (newValue, callbacks = {}) => {
@@ -966,17 +886,11 @@
           const response = await apiService.users.updateEmail(tempNewEmail);
 
           if (response.success) {
-            // 更新用戶資訊
-            user.value.email = tempNewEmail;
-            user.value.is_email_verified = false;
+            await store.dispatch("user/updateProfile", {
+              email: tempNewEmail,
+              is_email_verified: false,
+            });
 
-            // 更新本地存儲
-            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-            storedUser.email = tempNewEmail;
-            storedUser.is_email_verified = false;
-            localStorage.setItem("user", JSON.stringify(storedUser));
-
-            // 通知 EditableField 儲存成功
             if (callbacks.success) callbacks.success();
           } else {
             if (callbacks.error)
@@ -1002,15 +916,10 @@
           const response = await apiService.users.updatePhone(tempNewPhone);
 
           if (response.success) {
-            // 更新用戶資訊
-            user.value.phone = tempNewPhone;
-            user.value.is_phone_verified = false;
-
-            // 更新本地存儲
-            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-            storedUser.phone = tempNewPhone;
-            storedUser.is_phone_verified = false;
-            localStorage.setItem("user", JSON.stringify(storedUser));
+            await store.dispatch("user/updateProfile", {
+              phone: tempNewPhone,
+              is_phone_verified: false,
+            });
 
             // 通知 EditableField 儲存成功
             if (callbacks.success) callbacks.success();
@@ -1032,6 +941,15 @@
 
       const handlePasswordChangeSuccess = () => {
         showPasswordModal.value = false;
+      };
+
+      const handleLogout = async () => {
+        try {
+          await store.dispatch("user/logout");
+          router.push("/login");
+        } catch (error) {
+          console.error("登出失敗:", error);
+        }
       };
 
       const goToLogin = () => {
@@ -1179,20 +1097,32 @@
     height: 16px;
   }
 
-  .edit-profile-btn {
+  .logout-btn {
     position: absolute;
     top: 30px;
     right: 30px;
     padding: 10px 20px;
-    background-color: #f0f0f0;
+    background-color: #dc3545;
+    color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-
-  .edit-profile-btn:hover {
-    background-color: #e0e0e0;
+  
+  .logout-btn:hover {
+    background-color: #c82333;
+  }
+  
+  .logout-btn .material-symbols-outlined {
+    font-size: 1.2rem;
+    margin-right: 8px;
+    display: inline-flex;
+    vertical-align: middle;
   }
 
   .profile-content {
@@ -1632,11 +1562,11 @@
     border: none;
     border-radius: 6px;
     cursor: pointer;
+    transition: all 0.3s ease; /* 添加過渡效果 */
+    position: relative; /* 為點擊效果添加定位 */
+    overflow: hidden; /* 防止漣漪效果溢出 */
   }
 
-  .contact-btn:hover{
-    
-  }
 
   /* 租屋操作按鈕樣式優化 */
 .lease-actions {
@@ -1644,6 +1574,38 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 15px;
   padding: 20px 0;
+}
+
+.contact-btn:hover {
+  background-color: #0056b3; /* 深一點的藍色 */
+  transform: translateY(-2px); /* 輕微上浮 */
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2); /* 添加陰影 */
+}
+
+/* 點擊效果 */
+.contact-btn:active {
+  transform: translateY(0); /* 回到原位 */
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.1); /* 縮小陰影 */
+  background-color: #0050a6; /* 更深的藍色 */
+}
+
+/* 添加漣漪效果 */
+.contact-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.contact-btn:active::after {
+  width: 200px;
+  height: 200px;
 }
 
 .action-btn {
@@ -2005,19 +1967,19 @@
   }
 
   /* 帳戶設置 */
-.account-settings {
-  padding: 35px;
-  max-width: 900px;
-  margin: 0 auto;
-}
+  .account-settings {
+    padding: 35px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
 
-.settings-section {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 25px;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
+  .settings-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
 
 .settings-section h2 {
   font-size: 1.5rem;
@@ -2036,116 +1998,116 @@
   gap: 15px;
 }
 
-.settings-item:last-child {
-  border-bottom: none;
-}
+  .settings-item:last-child {
+    border-bottom: none;
+  }
 
-.settings-item:hover {
-  background-color: #f8fafc;
-}
+  .settings-item:hover {
+    background-color: #f8fafc;
+  }
 
-.settings-label {
-  width: 180px;
-  font-weight: 600;
-  color: #374151;
-  font-size: 0.95rem;
-}
+  .settings-label {
+    width: 180px;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+  }
 
-.settings-content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
+  .settings-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
 
-/* 開關按鈕樣式優化 */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 52px;
-  height: 26px;
-}
+  /* 開關按鈕樣式優化 */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 26px;
+  }
 
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #e5e7eb;
-  transition: 0.3s;
-  border-radius: 34px;
-}
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e5e7eb;
+    transition: 0.3s;
+    border-radius: 34px;
+  }
 
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
 
-input:checked + .slider {
-  background-color: #3b82f6;
-}
+  input:checked + .slider {
+    background-color: #3b82f6;
+  }
 
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
+  input:checked + .slider:before {
+    transform: translateX(26px);
+  }
 
-/* 下拉選單樣式優化 */
-.settings-select {
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  width: 200px;
-  font-size: 0.95rem;
-  color: #4b5563;
-  background-color: white;
-  transition: all 0.2s ease;
-}
+  /* 下拉選單樣式優化 */
+  .settings-select {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    width: 200px;
+    font-size: 0.95rem;
+    color: #4b5563;
+    background-color: white;
+    transition: all 0.2s ease;
+  }
 
-.settings-select:hover {
-  border-color: #cbd5e1;
-}
+  .settings-select:hover {
+    border-color: #cbd5e1;
+  }
 
-.settings-select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
+  .settings-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
 
-/* 按鈕樣式優化 */
-.settings-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+  /* 按鈕樣式優化 */
+  .settings-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
 
-.settings-btn.highlight {
-  background-color: #3b82f6;
-  color: white;
-}
+  .settings-btn.highlight {
+    background-color: #3b82f6;
+    color: white;
+  }
 
-.settings-btn.highlight:hover {
-  background-color: #2563eb;
-  transform: translateY(-1px);
-}
+  .settings-btn.highlight:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+  }
 
-.settings-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+  .settings-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
 /* 租屋小幫手樣式優化 */
 .user-assistant {

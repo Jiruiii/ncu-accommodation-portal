@@ -157,6 +157,7 @@ export const apiService = {
     register: (userData) => apiService.post("/api/auth/register", userData),
     logout: () => apiService.post("/api/auth/logout"),
     checkSession: () => apiService.get("/api/auth/status"),
+    verifyToken: () => apiService.get("/api/auth/verify-token"),
     forgotPassword: (email) =>
       apiService.post("/api/auth/forgot-password", { email }),
     resetPassword: (token, newPassword) =>
@@ -323,6 +324,51 @@ export const apiService = {
       apiService.put(`/api/admin/users/${userId}`, userData, true),
     deleteUser: (userId) =>
       apiService.post(`/api/admin/delete/users/${userId}`, true),
+
+    // 獲取評論列表
+    getComments: (params = {}) => {
+      // 構建查詢參數
+      const queryParams = new URLSearchParams();
+      for (const key in params) {
+        queryParams.append(key, params[key]);
+      }
+
+      return apiService.get(`/api/admin/comments?${queryParams.toString()}`);
+    },
+
+    // 獲取評論詳情
+    getCommentDetails: (commentId) => {
+      return apiService.get(`/api/admin/comments/${commentId}`);
+    },
+
+    // 更新評論
+    updateComment: (commentId, data) => {
+      return apiService.put(`/api/admin/comments/${commentId}`, data);
+    },
+
+    // 刪除評論
+    deleteComment: (commentId) => {
+      return apiService.delete(`/api/admin/comments/${commentId}`);
+    },
+
+    // 更新回覆
+    updateReply: (replyId, data) => {
+      return apiService.put(`/api/admin/replies/${replyId}`, data);
+    },
+
+    // 刪除回覆
+    deleteReply: (replyId) => {
+      return apiService.delete(`/api/admin/replies/${replyId}`);
+    },
+
+    getReports: (params = {}) =>
+      apiService.get(
+        `/api/admin/reports?page=${params.page || 1}&per_page=${
+          params.per_page || 10
+        }${params.status ? `&status=${params.status}` : ""}`
+      ),
+    updateReportStatus: (reportId, data) =>
+      apiService.put(`/api/admin/reports/${reportId}`, data),
   },
 
   verification: {
@@ -372,44 +418,58 @@ export const apiService = {
   // 評論相關 API
   comments: {
     // 獲取特定房源的評論
-    getPropertyComments: (propertyId, { page = 1, perPage = 20 } = {}) => 
-      apiService.get(`/api/comments/property/${propertyId}?page=${page}&per_page=${perPage}`),
-    
+    getPropertyComments: (propertyId, { page = 1, perPage = 20 } = {}) =>
+      apiService.get(
+        `/api/comments/property/${propertyId}?page=${page}&per_page=${perPage}`
+      ),
+
     // 新增評論
-    createComment: (propertyId, data) => 
+    createComment: (propertyId, data) =>
       apiService.post(`/api/comments/property/${propertyId}`, data),
-    
+
     // 更新評論
-    updateComment: (commentId, data) => 
+    updateComment: (commentId, data) =>
       apiService.put(`/api/comments/${commentId}`, data),
-    
+
     // 刪除評論
-    deleteComment: (commentId) => 
+    deleteComment: (commentId) =>
       apiService.delete(`/api/comments/${commentId}`),
-    
+
     // 獲取評論的回覆
-    getReplies: (commentId, { page = 1, perPage = 50 } = {}) => 
-      apiService.get(`/api/comments/${commentId}/replies?page=${page}&per_page=${perPage}`),
-    
+    getReplies: (commentId, { page = 1, perPage = 50 } = {}) =>
+      apiService.get(
+        `/api/comments/${commentId}/replies?page=${page}&per_page=${perPage}`
+      ),
+
     // 新增回覆
-    createReply: (commentId, data) => 
+    createReply: (commentId, data) =>
       apiService.post(`/api/comments/${commentId}/replies`, data),
-    
+
     // 更新回覆
-    updateReply: (replyId, data) => 
+    updateReply: (replyId, data) =>
       apiService.put(`/api/comments/replies/${replyId}`, data),
-    
+
     // 刪除回覆
-    deleteReply: (replyId) => 
+    deleteReply: (replyId) =>
       apiService.delete(`/api/comments/replies/${replyId}`),
-    
+
     // 點讚評論
-    likeComment: (commentId) => 
+    likeComment: (commentId) =>
       apiService.post(`/api/comments/${commentId}/like`),
-    
+
     // 點讚回覆
-    likeReply: (replyId) => 
+    likeReply: (replyId) =>
       apiService.post(`/api/comments/replies/${replyId}/like`),
+
+    // 舉報內容
+    reportContent: (data) => apiService.post(`/api/comments/report`, data),
+
+    // 獲取用戶舉報列表
+    getUserReports: ({ page = 1, perPage = 20 } = {}) =>
+      apiService.get(`/api/comments/reports?page=${page}&per_page=${perPage}`),
+
+    // 獲取舉報詳情
+    getReport: (reportId) => apiService.get(`/api/comments/report/${reportId}`),
   },
 };
 

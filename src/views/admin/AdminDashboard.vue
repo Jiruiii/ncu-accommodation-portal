@@ -1,8 +1,8 @@
-<!-- filepath: c:\Users\USER\Desktop\ncu-accommodation-portal\src\views\admin\AdminDashboard.vue -->
 <template>
   <div class="admin-dashboard">
-    <h1>資料庫管理儀表板</h1>
+    <h1>管理儀表板</h1>
 
+    <!-- 統計卡片 -->
     <div class="stats-cards">
       <div class="stat-card" v-for="(value, key) in stats.counts" :key="key">
         <h2>{{ formatTitle(key) }}</h2>
@@ -10,33 +10,12 @@
       </div>
     </div>
 
-    <div class="tabs">
-      <button
-        v-for="tab in ['tables', 'recent']"
-        :key="tab"
-        :class="{ active: activeTab === tab }"
-        @click="activeTab = tab"
-      >
-        {{ tab === "tables" ? "資料表管理" : "最近數據" }}
-      </button>
-    </div>
-
-    <div v-if="activeTab === 'tables'" class="tables-section">
-      <h2>資料表列表</h2>
-      <div class="tables-container">
-        <div
-          v-for="table in tables"
-          :key="table"
-          class="table-item"
-          @click="navigateToTable(table)"
-        >
-          <span class="table-name">{{ table }}</span>
-          <span class="table-action">查看 →</span>
-        </div>
+    <!-- 最近數據區域 -->
+    <div class="recent-section">
+      <div class="section-header">
+        <h2>最近數據</h2>
       </div>
-    </div>
-
-    <div v-else class="recent-section">
+      
       <div class="recent-data-container">
         <div class="recent-data-card">
           <h3>最近註冊用戶</h3>
@@ -61,7 +40,7 @@
             </tbody>
           </table>
           <div class="card-footer">
-            <button @click="navigateToTable('users')">查看所有用戶</button>
+            <router-link to="/admin/users" class="view-all-btn">查看所有用戶</router-link>
           </div>
         </div>
 
@@ -86,9 +65,7 @@
             </tbody>
           </table>
           <div class="card-footer">
-            <button @click="navigateToTable('accommodations')">
-              查看所有住所
-            </button>
+            <router-link to="/admin/tables/accommodations" class="view-all-btn">查看所有住所</router-link>
           </div>
         </div>
 
@@ -117,277 +94,341 @@
             </tbody>
           </table>
           <div class="card-footer">
-            <button @click="navigateToTable('sublets')">查看所有轉租</button>
+            <router-link to="/admin/tables/sublets" class="view-all-btn">查看所有轉租</router-link>
           </div>
         </div>
+      </div>
+    </div>
+    
+    <!-- 待處理舉報預覽 -->
+    <div class="pending-reports-section">
+      <div class="section-header">
+        <h2>待處理舉報</h2>
+        <router-link to="/admin/reports" class="view-all-btn">查看所有舉報</router-link>
+      </div>
+      
+      <div class="reports-preview" v-if="!loadingReports">
+        <div v-if="pendingReports.length === 0" class="no-reports">
+          沒有待處理的舉報
+        </div>
+        <div v-else class="report-card" v-for="report in pendingReports.slice(0, 3)" :key="report.id">
+          <div class="report-header">
+            <div class="report-type">
+              {{ report.content_type === 'comment' ? '評論舉報' : '回覆舉報' }}
+            </div>
+            <div class="report-status pending">待處理</div>
+          </div>
+          <div class="report-content">
+            <div class="report-info">
+              <div><strong>舉報時間:</strong> {{ formatDate(report.created_at) }}</div>
+              <div><strong>原因:</strong> {{ report.reasons.join(', ') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="loading-reports">
+        載入舉報中...
       </div>
     </div>
   </div>
 </template>
 
 <script>
-  import { ref, onMounted } from "vue";
-  import { useRouter } from "vue-router";
-  import apiService from "@/services/api";
+import { ref, onMounted } from "vue";
+import apiService from "@/services/api";
+import MessageService from "@/services/MessageService";
 
-  export default {
-    setup() {
-      const router = useRouter();
-      const tables = ref([]);
-      const stats = ref({
-        counts: {},
-        recent_data: {
-          users: [],
-          accommodations: [],
-          sublets: [],
-        },
-      });
-      const activeTab = ref("tables");
+export default {
+  setup() {
+    const stats = ref({
+      counts: {},
+      recent_data: {
+        users: [],
+        accommodations: [],
+        sublets: [],
+      },
+    });
+    
+    // 舉報相關狀態
+    const pendingReports = ref([]);
+    const loadingReports = ref(false);
 
-      const loadTables = async () => {
-        try {
-          const response = await apiService.admin.getTables();
-          tables.value = response.tables;
-        } catch (error) {
-          console.error("無法載入資料表:", error);
-        }
-      };
+    const loadDashboardData = async () => {
+      try {
+        const response = await apiService.admin.getDashboard();
+        stats.value = response;
+      } catch (error) {
+        console.error("無法載入儀表板數據:", error);
+        MessageService.error("無法載入儀表板數據");
+      }
+    };
 
-      const loadDashboardData = async () => {
-        try {
-          const response = await apiService.admin.getDashboard();
-          stats.value = response;
-        } catch (error) {
-          console.error("無法載入儀表板數據:", error);
-        }
-      };
-
-      const navigateToTable = (tableName) => {
-        router.push(`/admin/tables/${tableName}`);
-      };
-
-      const formatTitle = (key) => {
-        const titles = {
-          users: "用戶",
-          accommodations: "住所",
-          reviews: "評論",
-          sublets: "轉租",
+    const loadPendingReports = async () => {
+      try {
+        loadingReports.value = true;
+        const params = {
+          page: 1,
+          per_page: 3,
+          status: 'pending'
         };
+        
+        const response = await apiService.admin.getReports(params);
+        
+        if (response.success) {
+          pendingReports.value = response.reports;
+        } else {
+          MessageService.error("載入舉報失敗");
+        }
+      } catch (error) {
+        console.error("無法載入舉報:", error);
+        MessageService.error("無法載入舉報數據");
+      } finally {
+        loadingReports.value = false;
+      }
+    };
 
-        return titles[key] || key;
+    const formatTitle = (key) => {
+      const titles = {
+        users: "用戶",
+        accommodations: "住所",
+        reviews: "評論",
+        sublets: "轉租",
+        reports: "舉報",
       };
 
-      const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
+      return titles[key] || key;
+    };
 
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat("zh-TW", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        }).format(date);
-      };
+    const formatDate = (dateString) => {
+      if (!dateString) return "N/A";
 
-      onMounted(() => {
-        loadTables();
-        loadDashboardData();
-      });
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat("zh-TW", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
+    };
 
-      return {
-        tables,
-        stats,
-        activeTab,
-        navigateToTable,
-        formatTitle,
-        formatDate,
-      };
-    },
-  };
+    onMounted(() => {
+      loadDashboardData();
+      loadPendingReports();
+    });
+
+    return {
+      stats,
+      pendingReports,
+      loadingReports,
+      formatTitle,
+      formatDate
+    };
+  },
+};
 </script>
 
 <style scoped>
-  .admin-dashboard {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
 
-  .stats-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-  }
+h1 {
+  margin: 0 0 20px 0;
+  font-size: 1.8rem;
+  color: #2d3748;
+}
 
-  .stat-card {
-    background-color: #fff;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-  }
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
 
-  .stat-card h2 {
-    margin: 0;
-    font-size: 1rem;
-    color: #666;
-  }
+.section-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #2d3748;
+}
 
-  .stat-card .count {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin: 10px 0;
-    color: #3a86ff;
-  }
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
 
-  .tabs {
-    display: flex;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #ddd;
-  }
+.stat-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
-  .tabs button {
-    background: none;
-    border: none;
-    padding: 10px 20px;
-    font-size: 1rem;
-    cursor: pointer;
-    position: relative;
-  }
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
 
-  .tabs button.active {
-    font-weight: bold;
-    color: #3a86ff;
-  }
+.stat-card h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #666;
+}
 
-  .tabs button.active:after {
-    content: "";
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: #3a86ff;
-  }
+.stat-card .count {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 10px 0;
+  color: #3a86ff;
+}
 
-  .tables-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 15px;
-  }
+.recent-section,
+.pending-reports-section {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
 
-  .table-item {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
+.recent-data-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
 
-  .table-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  }
+.recent-data-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
 
-  .table-name {
-    font-weight: 500;
-  }
+.recent-data-card h3 {
+  margin: 0;
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  font-size: 1rem;
+}
 
-  .table-action {
-    color: #3a86ff;
-    font-weight: bold;
-  }
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-  .recent-data-container {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-  }
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
 
-  .recent-data-card {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-  }
+th {
+  background-color: #f8f9fa;
+  font-weight: 500;
+  color: #4a5568;
+}
 
-  .recent-data-card h3 {
-    margin: 0;
-    padding: 15px 20px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #eee;
-  }
+tr:hover {
+  background-color: #f8f9fa;
+}
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
+.status {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
 
-  th,
-  td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-  }
+.status.active {
+  background-color: #e6f7ee;
+  color: #0e9f6e;
+}
 
-  th {
-    background-color: #f8f9fa;
-    font-weight: 500;
-  }
+.status.pending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
 
-  tr:hover {
-    background-color: #f8f9fa;
-  }
+.card-footer {
+  padding: 15px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #eee;
+}
 
-  .status {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-  }
+.view-all-btn {
+  padding: 8px 16px;
+  background-color: #3a86ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
 
-  .status.active {
-    background-color: #e6f7ee;
-    color: #0e9f6e;
-  }
+.view-all-btn:hover {
+  background-color: #2667cc;
+}
 
-  .status.pending {
-    background-color: #fef3c7;
-    color: #d97706;
-  }
+.reports-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
 
-  .status.fulfilled,
-  .status.expired,
-  .status.canceled {
-    background-color: #f3f4f6;
-    color: #6b7280;
-  }
+.report-card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+}
 
-  .card-footer {
-    padding: 15px;
-    display: flex;
-    justify-content: flex-end;
-    border-top: 1px solid #eee;
-  }
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 15px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
 
-  button {
-    padding: 8px 16px;
-    background-color: #3a86ff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.2s;
-  }
+.report-type {
+  font-weight: 500;
+}
 
-  button:hover {
-    background-color: #2667cc;
-  }
+.report-status {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.report-content {
+  padding: 15px;
+}
+
+.report-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.no-reports {
+  padding: 20px;
+  text-align: center;
+  color: #718096;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px dashed #e2e8f0;
+}
+
+.loading-reports {
+  padding: 20px;
+  text-align: center;
+  color: #718096;
+}
 </style>
