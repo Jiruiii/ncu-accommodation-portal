@@ -40,7 +40,10 @@
             {{ user.phone }}
           </div>
           <div v-if="user.school_email">
-            <i>🏫</i> {{ user.school_email }}
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="#666" d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+            </svg>
+            {{ user.school_email }}
           </div>
           <!-- 保留管理員角色標記 -->
           <div v-if="isAdmin" class="admin-badge">
@@ -468,7 +471,6 @@
 
         <div class="settings-section">
           <h2>隱私設置</h2>
-
           <div class="settings-item">
             <div class="settings-label">個人資料可見度</div>
             <div class="settings-content">
@@ -489,32 +491,33 @@
               </label>
             </div>
           </div>
+          </div>
 
           <!-- 添加小幫手功能 -->
           <div class="user-assistant">
-            <div class="assistant-header">
-              <h3>租屋小幫手</h3>
-              <button class="toggle-assistant-btn">開啟</button>
-            </div>
+              <h2>租屋小幫手</h2>
             <div class="assistant-feature">
-              <div class="feature-icon">🔔</div>
-              <div class="feature-content">
-                <h4>租約到期提醒</h4>
-                <p>
-                  您的租約將於 45 天後到期，建議您盡快聯繫房東討論續約事宜。
-                </p>
-                <button class="feature-action-btn">聯繫房東</button>
-              </div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path fill="#3b82f6" d="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21"/>
+            </svg>
+          </div>
+          <div class="feature-content">
+            <h4>租約到期提醒</h4>
+            <p>您的租約將於 45 天後到期，建議您盡快聯繫房東討論續約事宜。</p>
+            <button class="feature-action-btn">聯繫房東</button>
+          </div>
+        </div>
+          <div class="assistant-feature">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                <path fill="#3b82f6" d="M12,2A7,7 0 0,0 5,9C5,11.38 6.19,13.47 8,14.74V17A1,1 0 0,0 9,18H15A1,1 0 0,0 16,17V14.74C17.81,13.47 19,11.38 19,9A7,7 0 0,0 12,2M9,21A1,1 0 0,0 10,22H14A1,1 0 0,0 15,21V20H9V21Z"/>
+              </svg>
             </div>
-            <div class="assistant-feature">
-              <div class="feature-icon">💡</div>
-              <div class="feature-content">
-                <h4>租屋建議</h4>
-                <p>
-                  根據您的搜尋歷史，我們推薦您查看近中央大學的 3 間新上架套房。
-                </p>
-                <button class="feature-action-btn">查看推薦</button>
-              </div>
+            <div class="feature-content">
+              <h4>租屋建議</h4>
+              <p>根據您的搜尋歷史，我們推薦您查看近中央大學的 3 間新上架套房。</p>
+              <button class="feature-action-btn">查看推薦</button>
             </div>
           </div>
         </div>
@@ -549,7 +552,13 @@
 
         <div class="danger-zone">
           <h2>危險區域</h2>
-          <button class="danger-btn">刪除帳戶</button>
+          <p>請注意：刪除帳戶將永久移除您的所有資料，包括租屋記錄、聊天紀錄等。此操作無法復原。</p>
+          <button class="danger-btn" @click="deleteAccount">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+            </svg>
+            刪除帳戶
+          </button>
         </div>
 
         <!-- 電子郵件驗證彈窗 -->
@@ -1145,6 +1154,27 @@
     width: 100%;
     margin-top: 10px;
   }
+  /* 危險區塊 */
+  .danger-zone {
+    padding: 20px;
+    margin: 20px 0;
+  }
+  
+  .danger-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+
+  .assistant-feature {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .feature-icon {
+    margin-bottom: 12px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1370,51 +1400,37 @@
   justify-content: center;
   gap: 8px;
   transition: all 0.3s ease;
+  color: #ffffff;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.action-btn:hover {
-  transform: translateY(-2px);
-}
-
+/* 每個按鈕使用不同的柔和漸層色 */
 .action-btn.report {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.action-btn.report:hover {
-  background-color: #43A047;
-  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  color: #1565C0;
 }
 
 .action-btn.extend {
-  background-color: #2196F3;
-  color: white;
-}
-
-.action-btn.extend:hover {
-  background-color: #1E88E5;
-  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+  background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
+  color: #7B1FA2;
 }
 
 .action-btn.terminate {
-  background-color: #FF5722;
-  color: white;
-}
-
-.action-btn.terminate:hover {
-  background-color: #F4511E;
-  box-shadow: 0 4px 8px rgba(255, 87, 34, 0.3);
+  background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+  color: #2E7D32;
 }
 
 .action-btn.receipt {
-  background-color: #9C27B0;
-  color: white;
+  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+  color: #E65100;
 }
 
-.action-btn.receipt:hover {
-  background-color: #8E24AA;
-  box-shadow: 0 4px 8px rgba(156, 39, 176, 0.3);
+/* 懸浮效果 */
+.action-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* 響應式設計 */
@@ -1653,6 +1669,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 
+<<<<<<< HEAD
   .settings-section h2 {
     font-size: 1.5rem;
     color: #2c3e50;
@@ -1668,6 +1685,24 @@
     border-bottom: 1px solid #f5f7fa;
     transition: background-color 0.2s ease;
   }
+=======
+.settings-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #eef2f7;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.settings-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 20px 0;
+  border-bottom: 1px solid #f5f7fa;
+  gap: 15px;
+}
+>>>>>>> thomas
 
   .settings-item:last-child {
     border-bottom: none;
@@ -1780,6 +1815,7 @@
     cursor: not-allowed;
   }
 
+<<<<<<< HEAD
   /* 危險區域樣式優化 */
   .danger-zone {
     margin-top: 40px;
@@ -1818,6 +1854,130 @@
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
   }
+=======
+/* 租屋小幫手樣式優化 */
+.user-assistant {
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.user-assistant h2 {
+  font-size: 1.5rem;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #eef2f7;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.assistant-feature {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  transition: transform 0.3s ease;
+}
+
+.assistant-feature:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: #f0f9ff;
+  border-radius: 12px;
+  font-size: 24px;
+}
+
+.feature-content {
+  flex: 1;
+}
+
+.feature-content h4 {
+  margin: 0 0 8px 0;
+  color: #1e40af;
+  font-size: 1.1rem;
+}
+
+.feature-content p {
+  color: #64748b;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.feature-action-btn {
+  background: transparent;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.feature-action-btn:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* 危險區域 */
+.danger-zone {
+  margin-top: 40px;
+  padding: 30px;
+  background: #fff5f5;
+  border-radius: 12px;
+  border: 2px solid #fecaca;
+  position: relative;
+}
+
+.danger-zone h2 {
+  font-size: 1.5rem;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #eef2f7;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.danger-zone p {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.danger-btn {
+  background-color: #dc2626;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.danger-btn:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+>>>>>>> thomas
 
   .verified-tag {
     padding: 2px 8px;
@@ -1909,12 +2069,6 @@
     background-color: #fff5f5;
     border-radius: 8px;
     border: 1px solid #ffcccc;
-  }
-
-  .danger-zone h2 {
-    color: #dc3545;
-    font-size: 1.2rem;
-    margin-bottom: 15px;
   }
 
   .danger-btn {
