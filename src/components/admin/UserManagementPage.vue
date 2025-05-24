@@ -372,7 +372,7 @@
 
       const getCurrentUser = async () => {
         try {
-          const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+          const userStr = localStorage.getItem("user") || sessionStorage.getItem('user');
           if (userStr) {
             currentUser.value = JSON.parse(userStr);
           } else {

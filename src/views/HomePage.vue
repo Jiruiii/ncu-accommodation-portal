@@ -395,10 +395,10 @@
         // 根據不同用戶類型導向不同頁面或帶上參數
         if (userType === 'tenant') {
           // 租客登入
-          router.push({ path: "/login", query: { type: "tenant" }});
+          router.push("/login");
         } else if (userType === 'landlord') {
           // 房東登入
-          router.push({ path: "/login", query: { type: "landlord" }});
+          router.push("/login");
         } else {
           // 默認登入頁
           router.push("/login");

@@ -226,8 +226,7 @@
       onMounted(async () => {
         try {
           // 從本地存儲獲取用戶資訊
-          const userStr =
-            localStorage.getItem("user") || sessionStorage.getItem("user");
+          const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
           if (userStr) {
             currentUser.value = JSON.parse(userStr);
           } else {

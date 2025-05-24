@@ -55,13 +55,14 @@
     nextTick,
   } from "vue";
   import { useStore } from "vuex";
-  import { useRouter } from "vue-router";
+  import { useRouter, useRoute } from "vue-router";
   import { gsap } from "gsap";
 
   export default {
     name: "CircleNavigation",
     setup() {
       const router = useRouter();
+      const route = useRoute();
       const store = useStore();
 
       const isOpen = computed(() => store.state.isNavOpen);
@@ -145,6 +146,12 @@
                 }
               }, 600);
             }
+          }
+        },
+        () => route.name,
+        (newRouteName) => {
+          if (newRouteName && store.state.currentRoute !== newRouteName) {
+            store.commit("SET_CURRENTROUTE", newRouteName);
           }
         }
       );
@@ -704,9 +711,9 @@
 
         toggleNavigation();
 
-        router.push({ name: route });
-
         store.commit("SET_CURRENTROUTE", route);
+        
+        router.push({ name: route });
 
         store.commit("CLOSE_NAV");
       };

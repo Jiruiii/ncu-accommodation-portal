@@ -1,5 +1,10 @@
 <template>
-  <div class="profile-page">
+  <div v-if="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>載入中...</p>
+  </div>
+
+  <div class="profile-page" v-else-if="user">
     <div class="profile-header">
       <div class="profile-avatar">
         <img :src="avatarUrl" alt="用戶頭像" />
@@ -29,26 +34,38 @@
         <div class="profile-meta">
           <div>
             <svg viewBox="0 0 24 24" width="16" height="16">
-              <path fill="#666" d="M20,4H4C2.9,4,2,4.9,2,6v12c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2V6C22,4.9,21.1,4,20,4z M20,8l-8,5L4,8V6l8,5l8-5V8z"/>
+              <path
+                fill="#666"
+                d="M20,4H4C2.9,4,2,4.9,2,6v12c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2V6C22,4.9,21.1,4,20,4z M20,8l-8,5L4,8V6l8,5l8-5V8z"
+              />
             </svg>
             {{ user.email }}
           </div>
           <div v-if="user.phone">
             <svg viewBox="0 0 24 24" width="16" height="16">
-              <path fill="#666" d="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z"/>
+              <path
+                fill="#666"
+                d="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z"
+              />
             </svg>
             {{ user.phone }}
           </div>
           <div v-if="user.school_email">
             <svg viewBox="0 0 24 24" width="16" height="16">
-              <path fill="#666" d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+              <path
+                fill="#666"
+                d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"
+              />
             </svg>
             {{ user.school_email }}
           </div>
           <!-- 保留管理員角色標記 -->
           <div v-if="isAdmin" class="admin-badge">
             <svg viewBox="0 0 24 24" width="16" height="16">
-              <path fill="#b91c1c" d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.1 14.8,9.5V11C15.4,11 16,11.6 16,12.3V15.8C16,16.4 15.4,17 14.7,17H9.2C8.6,17 8,16.4 8,15.7V12.2C8,11.6 8.6,11 9.2,11V9.5C9.2,8.1 10.6,7 12,7M12,8.2C11.2,8.2 10.5,8.7 10.5,9.5V11H13.5V9.5C13.5,8.7 12.8,8.2 12,8.2Z"/>
+              <path
+                fill="#b91c1c"
+                d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.1 14.8,9.5V11C15.4,11 16,11.6 16,12.3V15.8C16,16.4 15.4,17 14.7,17H9.2C8.6,17 8,16.4 8,15.7V12.2C8,11.6 8.6,11 9.2,11V9.5C9.2,8.1 10.6,7 12,7M12,8.2C11.2,8.2 10.5,8.7 10.5,9.5V11H13.5V9.5C13.5,8.7 12.8,8.2 12,8.2Z"
+              />
             </svg>
             {{ user.user_role === "superuser" ? "超級管理員" : "管理員" }}
           </div>
@@ -134,7 +151,10 @@
               <h3>優質學生套房 - 中央大學旁</h3>
               <div class="address">
                 <svg viewBox="0 0 24 24" width="16" height="16">
-                  <path fill="#EA4335" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  <path
+                    fill="#EA4335"
+                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                  />
                 </svg>
                 中壢區中大路300號附近
               </div>
@@ -491,32 +511,40 @@
               </label>
             </div>
           </div>
-          </div>
-
-          <!-- 添加小幫手功能 -->
-          <div class="user-assistant">
-              <h2>租屋小幫手</h2>
-            <div class="assistant-feature">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" width="24" height="24">
-              <path fill="#3b82f6" d="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21"/>
-            </svg>
-          </div>
-          <div class="feature-content">
-            <h4>租約到期提醒</h4>
-            <p>您的租約將於 45 天後到期，建議您盡快聯繫房東討論續約事宜。</p>
-            <button class="feature-action-btn">聯繫房東</button>
-          </div>
         </div>
+
+        <!-- 添加小幫手功能 -->
+        <div class="user-assistant">
+          <h2>租屋小幫手</h2>
           <div class="assistant-feature">
             <div class="feature-icon">
               <svg viewBox="0 0 24 24" width="24" height="24">
-                <path fill="#3b82f6" d="M12,2A7,7 0 0,0 5,9C5,11.38 6.19,13.47 8,14.74V17A1,1 0 0,0 9,18H15A1,1 0 0,0 16,17V14.74C17.81,13.47 19,11.38 19,9A7,7 0 0,0 12,2M9,21A1,1 0 0,0 10,22H14A1,1 0 0,0 15,21V20H9V21Z"/>
+                <path
+                  fill="#3b82f6"
+                  d="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21"
+                />
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h4>租約到期提醒</h4>
+              <p>您的租約將於 45 天後到期，建議您盡快聯繫房東討論續約事宜。</p>
+              <button class="feature-action-btn">聯繫房東</button>
+            </div>
+          </div>
+          <div class="assistant-feature">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                <path
+                  fill="#3b82f6"
+                  d="M12,2A7,7 0 0,0 5,9C5,11.38 6.19,13.47 8,14.74V17A1,1 0 0,0 9,18H15A1,1 0 0,0 16,17V14.74C17.81,13.47 19,11.38 19,9A7,7 0 0,0 12,2M9,21A1,1 0 0,0 10,22H14A1,1 0 0,0 15,21V20H9V21Z"
+                />
               </svg>
             </div>
             <div class="feature-content">
               <h4>租屋建議</h4>
-              <p>根據您的搜尋歷史，我們推薦您查看近中央大學的 3 間新上架套房。</p>
+              <p>
+                根據您的搜尋歷史，我們推薦您查看近中央大學的 3 間新上架套房。
+              </p>
               <button class="feature-action-btn">查看推薦</button>
             </div>
           </div>
@@ -552,10 +580,15 @@
 
         <div class="danger-zone">
           <h2>危險區域</h2>
-          <p>請注意：刪除帳戶將永久移除您的所有資料，包括租屋記錄、聊天紀錄等。此操作無法復原。</p>
+          <p>
+            請注意：刪除帳戶將永久移除您的所有資料，包括租屋記錄、聊天紀錄等。此操作無法復原。
+          </p>
           <button class="danger-btn" @click="deleteAccount">
             <svg viewBox="0 0 24 24" width="16" height="16">
-              <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+              <path
+                fill="currentColor"
+                d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"
+              />
             </svg>
             刪除帳戶
           </button>
@@ -593,6 +626,10 @@
 
       <ChatRoom v-if="activeTab === 'chatroom'" />
     </div>
+  </div>
+
+  <div v-else class="error-container">
+    <p>無法載入用戶資料，請<a href="#" @click="goToLogin">重新登入</a></p>
   </div>
 </template>
 
@@ -912,8 +949,8 @@
 
       const handleLogout = async () => {
         try {
-          await store.dispatch("user/logout");
           router.push("/login");
+          await store.dispatch("user/logout");
         } catch (error) {
           console.error("登出失敗:", error);
         }
@@ -1080,11 +1117,11 @@
     align-items: center;
     justify-content: center;
   }
-  
+
   .logout-btn:hover {
     background-color: #c82333;
   }
-  
+
   .logout-btn .material-symbols-outlined {
     font-size: 1.2rem;
     margin-right: 8px;
@@ -1105,111 +1142,110 @@
   }
 
   @media (max-width: 768px) {
-  .profile-header {
-    flex-direction: column;
-    text-align: center;
-    padding: 20px;
+    .profile-header {
+      flex-direction: column;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .profile-avatar {
+      margin-right: 0;
+      margin-bottom: 20px;
+    }
+
+    .profile-meta {
+      justify-content: center;
+    }
+
+    .edit-profile-btn {
+      position: static;
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    .admin-dashboard-btn {
+      position: static;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .property-card {
+      flex-direction: column;
+    }
+
+    .property-image {
+      width: 100%;
+      height: 200px;
+    }
+
+    .property-details {
+      padding: 15px;
+    }
+
+    .landlord {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .contact-btn {
+      width: 100%;
+      margin-top: 10px;
+    }
+    /* 危險區塊 */
+    .danger-zone {
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .danger-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .assistant-feature {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 12px;
+    }
+
+    .feature-icon {
+      margin-bottom: 12px;
+    }
   }
 
-  .profile-avatar {
-    margin-right: 0;
-    margin-bottom: 20px;
-  }
+  @media (max-width: 480px) {
+    .profile-meta {
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
 
-  .profile-meta {
-    justify-content: center;
-  }
+    .profile-info h1 {
+      font-size: 1.5rem;
+      flex-direction: column;
+      align-items: center;
+    }
 
-  .edit-profile-btn {
-    position: static;
-    margin-top: 20px;
-    width: 100%;
-  }
+    .verified {
+      margin-top: 5px;
+    }
 
-  .admin-dashboard-btn {
-    position: static;
-    margin-top: 10px;
-    width: 100%;
-  }
+    .lease-details {
+      flex-direction: column;
+      gap: 10px;
+    }
 
-  .property-card {
-    flex-direction: column;
-  }
+    .landlord {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
 
-  .property-image {
-    width: 100%;
-    height: 200px;
+    .landlord-avatar {
+      margin-right: 0;
+      margin-bottom: 10px;
+    }
   }
-
-  .property-details {
-    padding: 15px;
-  }
-
-  .landlord {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .contact-btn {
-    width: 100%;
-    margin-top: 10px;
-  }
-  /* 危險區塊 */
-  .danger-zone {
-    padding: 20px;
-    margin: 20px 0;
-  }
-  
-  .danger-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-
-  .assistant-feature {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 12px;
-  }
-
-  .feature-icon {
-    margin-bottom: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .profile-meta {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .profile-info h1 {
-    font-size: 1.5rem;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .verified {
-    margin-top: 5px;
-  }
-
-  .lease-details {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .landlord {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .landlord-avatar {
-    margin-right: 0;
-    margin-bottom: 10px;
-  }
-}
 
   .nav-item {
     padding: 20px 30px;
@@ -1322,10 +1358,10 @@
     font-size: 0.9rem;
   }
 
-.address svg {
-  min-width: 16px;
-  height: 16px;
-}
+  .address svg {
+    min-width: 16px;
+    height: 16px;
+  }
 
   .password-field {
     display: flex;
@@ -1381,76 +1417,76 @@
   }
 
   /* 租屋操作按鈕樣式優化 */
-.lease-actions {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
-  padding: 20px 0;
-}
-
-.action-btn {
-  padding: 15px 20px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  color: #ffffff;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* 每個按鈕使用不同的柔和漸層色 */
-.action-btn.report {
-  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-  color: #1565C0;
-}
-
-.action-btn.extend {
-  background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
-  color: #7B1FA2;
-}
-
-.action-btn.terminate {
-  background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
-  color: #2E7D32;
-}
-
-.action-btn.receipt {
-  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-  color: #E65100;
-}
-
-/* 懸浮效果 */
-.action-btn:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* 響應式設計 */
-@media (max-width: 768px) {
   .lease-actions {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    padding: 20px 0;
   }
-  
+
   .action-btn {
-    padding: 12px 15px;
-    font-size: 0.9rem;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    color: #ffffff;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
-}
 
-@media (max-width: 480px) {
-  .lease-actions {
-    grid-template-columns: 1fr;
+  /* 每個按鈕使用不同的柔和漸層色 */
+  .action-btn.report {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1565c0;
   }
-}
+
+  .action-btn.extend {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+  }
+
+  .action-btn.terminate {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    color: #2e7d32;
+  }
+
+  .action-btn.receipt {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    color: #e65100;
+  }
+
+  /* 懸浮效果 */
+  .action-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* 響應式設計 */
+  @media (max-width: 768px) {
+    .lease-actions {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .action-btn {
+      padding: 12px 15px;
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .lease-actions {
+      grid-template-columns: 1fr;
+    }
+  }
 
   .report {
     background-color: #f8f9fa;
@@ -1669,22 +1705,22 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 
-.settings-section h2 {
-  font-size: 1.5rem;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #eef2f7;
-  font-weight: 600;
-  color: #2c3e50;
-}
+  .settings-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eef2f7;
+    font-weight: 600;
+    color: #2c3e50;
+  }
 
-.settings-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 20px 0;
-  border-bottom: 1px solid #f5f7fa;
-  gap: 15px;
-}
+  .settings-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 20px 0;
+    border-bottom: 1px solid #f5f7fa;
+    gap: 15px;
+  }
 
   .settings-item:last-child {
     border-bottom: none;
@@ -1797,128 +1833,128 @@
     cursor: not-allowed;
   }
 
-/* 租屋小幫手樣式優化 */
-.user-assistant {
-  background: linear-gradient(145deg, #ffffff, #f8f9fa);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-}
+  /* 租屋小幫手樣式優化 */
+  .user-assistant {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  }
 
-.user-assistant h2 {
-  font-size: 1.5rem;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #eef2f7;
-  font-weight: 600;
-  color: #2c3e50;
-}
+  .user-assistant h2 {
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eef2f7;
+    font-weight: 600;
+    color: #2c3e50;
+  }
 
-.assistant-feature {
-  display: flex;
-  gap: 16px;
-  padding: 16px;
-  background: white;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  transition: transform 0.3s ease;
-}
+  .assistant-feature {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    transition: transform 0.3s ease;
+  }
 
-.assistant-feature:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
+  .assistant-feature:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  }
 
-.feature-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: #f0f9ff;
-  border-radius: 12px;
-  font-size: 24px;
-}
+  .feature-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: #f0f9ff;
+    border-radius: 12px;
+    font-size: 24px;
+  }
 
-.feature-content {
-  flex: 1;
-}
+  .feature-content {
+    flex: 1;
+  }
 
-.feature-content h4 {
-  margin: 0 0 8px 0;
-  color: #1e40af;
-  font-size: 1.1rem;
-}
+  .feature-content h4 {
+    margin: 0 0 8px 0;
+    color: #1e40af;
+    font-size: 1.1rem;
+  }
 
-.feature-content p {
-  color: #64748b;
-  margin: 0 0 12px 0;
-  line-height: 1.5;
-}
+  .feature-content p {
+    color: #64748b;
+    margin: 0 0 12px 0;
+    line-height: 1.5;
+  }
 
-.feature-action-btn {
-  background: transparent;
-  color: #3b82f6;
-  border: 1px solid #3b82f6;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
+  .feature-action-btn {
+    background: transparent;
+    color: #3b82f6;
+    border: 1px solid #3b82f6;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
 
-.feature-action-btn:hover {
-  background: #3b82f6;
-  color: white;
-  transform: translateY(-1px);
-}
+  .feature-action-btn:hover {
+    background: #3b82f6;
+    color: white;
+    transform: translateY(-1px);
+  }
 
-/* 危險區域 */
-.danger-zone {
-  margin-top: 40px;
-  padding: 30px;
-  background: #fff5f5;
-  border-radius: 12px;
-  border: 2px solid #fecaca;
-  position: relative;
-}
+  /* 危險區域 */
+  .danger-zone {
+    margin-top: 40px;
+    padding: 30px;
+    background: #fff5f5;
+    border-radius: 12px;
+    border: 2px solid #fecaca;
+    position: relative;
+  }
 
-.danger-zone h2 {
-  font-size: 1.5rem;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #eef2f7;
-  font-weight: 600;
-  color: #dc2626;
-}
+  .danger-zone h2 {
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eef2f7;
+    font-weight: 600;
+    color: #dc2626;
+  }
 
-.danger-zone p {
-  color: #666;
-  margin-bottom: 20px;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
+  .danger-zone p {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
 
-.danger-btn {
-  background-color: #dc2626;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
+  .danger-btn {
+    background-color: #dc2626;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-.danger-btn:hover {
-  background-color: #b91c1c;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
-}
+  .danger-btn:hover {
+    background-color: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+  }
 
   .verified-tag {
     padding: 2px 8px;

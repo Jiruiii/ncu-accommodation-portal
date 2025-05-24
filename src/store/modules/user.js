@@ -1,22 +1,21 @@
 import apiService from "@/services/api";
 import router from "@/router";
 
-// 使用 sessionStorage 替代 localStorage 來儲存敏感資訊
-// sessionStorage 會在瀏覽器關閉時自動清除
+// 獲取存儲的用戶資料，優先使用 sessionStorage
 const getStoredUser = () => {
   try {
-    // 優先使用 sessionStorage (較安全)
+    // 優先從 sessionStorage 讀取（瀏覽器關閉時會自動清除）
     const sessionUser = sessionStorage.getItem("user");
     if (sessionUser) {
       return JSON.parse(sessionUser);
     }
 
-    // 當 sessionStorage 無資料時，再檢查 localStorage (用於"記住我"功能)
+    // 如果 sessionStorage 中沒有，且允許使用 localStorage，則嘗試從 localStorage 讀取
     const localUser = localStorage.getItem("user");
     if (localUser) {
-      // 從 localStorage 讀取後，優先存入 sessionStorage 以提高安全性
+      // 找到 localStorage 中的用戶資料，將其也存入 sessionStorage
       const userData = JSON.parse(localUser);
-      sessionStorage.setItem("user", JSON.stringify(userData));
+      sessionStorage.setItem("user", localUser);
       return userData;
     }
 
@@ -27,24 +26,17 @@ const getStoredUser = () => {
   }
 };
 
-// 根據「記住我」選項選擇適當的儲存方式
+// 保存用戶資料，依據 rememberMe 決定是否同時存入 localStorage
 const saveUserData = (userData, rememberMe = false) => {
   try {
-    // 總是存入 sessionStorage (會在關閉瀏覽器時清除)
+    // 總是存入 sessionStorage
     sessionStorage.setItem("user", JSON.stringify(userData));
-
-    // 如果用戶選擇「記住我」，同時存入 localStorage
+    
+    // 如果選擇記住我，也存入 localStorage
     if (rememberMe) {
-      // 注意：可以考慮僅存儲必要的非敏感資訊
-      const safeUserData = {
-        ...userData,
-        // 移除敏感資訊，例如：
-        // token: undefined,  // 不儲存完整 token
-        // tokenExpiry: userData.tokenExpiry
-      };
-      localStorage.setItem("user", JSON.stringify(safeUserData));
+      localStorage.setItem("user", JSON.stringify(userData));
     } else {
-      // 如果未選擇「記住我」，確保清除 localStorage 中的使用者資料
+      // 確保清除 localStorage 中的資料
       localStorage.removeItem("user");
     }
   } catch (error) {
@@ -52,6 +44,7 @@ const saveUserData = (userData, rememberMe = false) => {
   }
 };
 
+// 清除用戶資料
 const clearUserData = () => {
   sessionStorage.removeItem("user");
   localStorage.removeItem("user");
@@ -65,8 +58,8 @@ export default {
     isAuthenticated: !!getStoredUser(),
     authError: null,
     loading: false,
-    rememberMe: false, // 記住我選項
     lastVerified: 0, // 最後驗證時間戳
+    rememberMe: localStorage.getItem("user") !== null, // 檢查 localStorage 判斷是否記住用戶
   },
 
   mutations: {
@@ -84,10 +77,6 @@ export default {
       state.loading = status;
     },
 
-    SET_REMEMBER_ME(state, status) {
-      state.rememberMe = status;
-    },
-
     UPDATE_USER_PROFILE(state, profileData) {
       state.user = { ...state.user, ...profileData };
     },
@@ -95,21 +84,25 @@ export default {
     SET_LAST_VERIFIED(state, timestamp) {
       state.lastVerified = timestamp;
     },
+    
+    SET_REMEMBER_ME(state, status) {
+      state.rememberMe = status;
+    },
   },
 
   actions: {
     // 登入動作
-    async login({ commit, state }, { email, password, rememberMe }) {
+    async login({ commit, state }, { email, password, rememberMe = false }) {
       try {
         commit("SET_LOADING", true);
         commit("SET_AUTH_ERROR", null);
-        commit("SET_REMEMBER_ME", rememberMe);
 
         const response = await apiService.auth.login({ email, password });
 
         if (response && response.success) {
           // 儲存使用者資料
           commit("SET_USER", response.user);
+          commit("SET_REMEMBER_ME", rememberMe);
           saveUserData(response.user, rememberMe);
           commit("SET_LAST_VERIFIED", Date.now());
           return true;
@@ -126,20 +119,37 @@ export default {
     },
 
     // 登出動作
-    async logout({ commit }) {
+    async logout({ commit, state }) {
       try {
-        await apiService.auth.logout();
+        // 先導航到登入頁，再清除資料，避免渲染錯誤
+        router.push("/login");
+
+        // 短暫延遲確保導航完成
+        setTimeout(async () => {
+          // 清除用戶資料
+          commit("SET_USER", null);
+          commit("SET_REMEMBER_ME", false);
+          clearUserData();
+
+          // 調用 API 登出
+          try {
+            await apiService.auth.logout();
+          } catch (error) {
+            console.error("API 登出請求失敗:", error);
+            // 即使 API 呼叫失敗，我們仍然希望客戶端登出
+          }
+        }, 100);
       } catch (error) {
         console.error("登出失敗:", error);
-      } finally {
+
+        // 即使出錯，也要確保用戶被登出
         commit("SET_USER", null);
+        commit("SET_REMEMBER_ME", false);
         clearUserData();
-        // 導向登入頁
-        router.push("/login");
       }
     },
 
-    // 註冊動作
+    // 註冊動作 (保持不變)
     async register({ commit }, userData) {
       try {
         commit("SET_LOADING", true);
@@ -167,8 +177,7 @@ export default {
       try {
         // 如果最近已驗證過，跳過再次獲取
         const now = Date.now();
-        if (now - state.lastVerified < 300000) {
-          // 5分鐘內已驗證
+        if (now - state.lastVerified < 300000) { // 5分鐘內已驗證
           return state.user;
         }
 
@@ -178,7 +187,7 @@ export default {
         if (response && response.user) {
           commit("UPDATE_USER_PROFILE", response.user);
 
-          // 更新存儲的資料
+          // 更新存儲的資料，保持 rememberMe 狀態
           saveUserData({ ...state.user, ...response.user }, state.rememberMe);
           commit("SET_LAST_VERIFIED", now);
 
@@ -204,7 +213,7 @@ export default {
         if (response && response.success) {
           commit("UPDATE_USER_PROFILE", profileData);
 
-          // 更新存儲的資料
+          // 更新存儲的資料，保持 rememberMe 狀態
           saveUserData({ ...state.user, ...profileData }, state.rememberMe);
           return true;
         } else {
@@ -229,7 +238,7 @@ export default {
           const profileData = { profile_image: response.profile_image };
           commit("UPDATE_USER_PROFILE", profileData);
 
-          // 更新存儲的資料
+          // 更新存儲的資料，保持 rememberMe 狀態
           saveUserData({ ...state.user, ...profileData }, state.rememberMe);
           return response.profile_image;
         } else {
@@ -243,7 +252,7 @@ export default {
       }
     },
 
-    // 修改密碼
+    // 修改密碼 (保持不變)
     async changePassword({ commit }, { currentPassword, newPassword }) {
       try {
         commit("SET_LOADING", true);
@@ -272,8 +281,7 @@ export default {
 
         // 如果最近已驗證過，跳過再次驗證
         const now = Date.now();
-        if (now - state.lastVerified < 300000) {
-          // 5分鐘內已驗證
+        if (now - state.lastVerified < 300000) { // 5分鐘內已驗證
           return true;
         }
 
@@ -284,7 +292,7 @@ export default {
           // 如果用戶資料有更新，更新 store
           if (response.user) {
             commit("SET_USER", response.user);
-            // 更新儲存的資料
+            // 更新儲存的資料，保持 rememberMe 狀態
             saveUserData(response.user, state.rememberMe);
           }
 
@@ -309,7 +317,7 @@ export default {
       }
     },
 
-    // 檢查用戶是否已登入並有相應權限
+    // 檢查用戶是否已登入並有相應權限 (保持不變)
     async checkAuth({ dispatch, state }, requiredRole = null) {
       // 先驗證登入狀態
       const isAuthenticated = await dispatch("verifyAuth");
@@ -389,5 +397,8 @@ export default {
       // 否則拼接 API 基礎 URL
       return `http://localhost:5000${state.user.profile_image}`;
     },
+
+    // 添加 rememberMe 狀態
+    rememberMe: (state) => state.rememberMe,
   },
 };

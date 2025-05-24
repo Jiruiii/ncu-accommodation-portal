@@ -74,13 +74,37 @@ export default {
         // 登入成功
         localStorage.removeItem('oauth_action');
         
-        // 存儲用戶資訊
-        localStorage.setItem('user', JSON.stringify(response.user));
+        // 使用 Vuex Store 保存用戶信息
+        store.commit('user/SET_USER', response.user);
+        
+        // 設置是否記住我 (Portal 登入預設不記住)
+        const rememberMe = false; 
+        store.commit('user/SET_REMEMBER_ME', rememberMe);
+        
+        // 使用 store 中的方法保存用戶資料
+        const saveUserData = (userData, remember) => {
+          // 總是存入 sessionStorage
+          sessionStorage.setItem("user", JSON.stringify(userData));
+          
+          // 如果選擇記住我，也存入 localStorage
+          if (remember) {
+            localStorage.setItem("user", JSON.stringify(userData));
+          } else {
+            // 確保清除 localStorage 中的資料
+            localStorage.removeItem("user");
+          }
+        };
+        
+        // 保存用戶資料
+        saveUserData(response.user, rememberMe);
         
         message.value = 'Portal 快速登入成功，正在跳轉...';
         setTimeout(() => {
           router.push('/profile');
-          store.commit('SET_CURRENTROUTE', 'profile');
+          // 如果使用路由狀態管理
+          if (store.state.route) {
+            store.commit('SET_CURRENTROUTE', 'profile');
+          }
         }, 1000);
       } else {
         // 登入失敗
@@ -98,6 +122,12 @@ export default {
     const handleBindingResponse = (response) => {
       if (response.success) {
         message.value = 'Portal 綁定成功！';
+        
+        // 如果綁定成功，更新用戶資料
+        if (store.getters["user/isLoggedIn"]) {
+          store.dispatch("user/fetchUserProfile");
+        }
+        
         setTimeout(() => {
           router.push('/profile');
         }, 1500);

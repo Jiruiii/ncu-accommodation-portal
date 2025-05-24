@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useStore } from "vuex";
 
 const HomePage = () => import("@/views/HomePage.vue");
 const AccommodationList = () => import("@/views/AccommodationList.vue");
@@ -14,10 +15,13 @@ const ChatRoom = () => import("@/components/ChatRoom.vue");
 const AdminLayout = () => import("@/components/admin/AdminLayout.vue");
 const AdminDashboard = () => import("@/views/admin/AdminDashboard.vue");
 const TableView = () => import("@/components/admin/TableView.vue");
-const UserManagement = () => import("@/components/admin/UserManagementPage.vue");
+const UserManagement = () =>
+  import("@/components/admin/UserManagementPage.vue");
 const AdminLoginPage = () => import("@/views/admin/AdminLoginPage.vue");
-const ReportsManagementPage = () => import("@/components/admin/ReportsManagementPage.vue");
-const CommentManagementPage = () => import("@/components/admin/CommentManagementPage.vue");
+const ReportsManagementPage = () =>
+  import("@/components/admin/ReportsManagementPage.vue");
+const CommentManagementPage = () =>
+  import("@/components/admin/CommentManagementPage.vue");
 const AdminSettingsPage = () => import("@/views/admin/AdminSettingsPage.vue");
 
 const LandLordVerificationPage = () =>
@@ -162,8 +166,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  const userStr =
-    localStorage.getItem("user") || sessionStorage.getItem("user");
+  const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
   const isLoggedIn = !!userStr;
 
   // 探查是否已登入
@@ -234,6 +237,29 @@ router.beforeEach(async (to, from, next) => {
   } else {
     // 用戶已登入或頁面不需要認證
     next();
+  }
+});
+
+router.afterEach((to) => {
+  // 根據路由名稱映射到 CircleNavigation 使用的標識符
+  const routeMapping = {
+    home: "home",
+    "accommodation-list": "accommodation-list",
+    "map-search": "map-search",
+    profile: "profile",
+    favorites: "favorites",
+    sublet: "sublet",
+  };
+
+  // 獲取當前路由名稱，轉為小寫以避免大小寫問題
+  const routeName = to.name ? to.name.toLowerCase() : "";
+
+  // 如果是主要導航路由，更新 store 中的當前路由
+  if (routeMapping[routeName]) {
+    const store = useStore();
+    if (store) {
+      store.commit("SET_CURRENTROUTE", routeMapping[routeName]);
+    }
   }
 });
 
