@@ -4,6 +4,15 @@
 
     <CircleNavigation v-if="isLoggedIn" class="desktop-nav" />
     <MobileNavBar v-if="isLoggedIn" class="mobile-nav" />
+
+    <MessageToast
+      :message="messageState.message"
+      :type="messageState.type"
+      :visible="messageState.visible"
+      :duration="messageState.duration"
+      :show-close-button="messageState.showCloseButton"
+      @close="closeMessage"
+    />
   </div>
 </template>
 
@@ -169,12 +178,6 @@ body {
   }
 }
 
-/* Add padding to prevent content from being hidden behind the mobile nav bar */
-@media screen and (max-width: 767px) {
-  .app-container {
-    padding-bottom: 60px;
-  }
-}
 /* Add padding to prevent content from being hidden behind the mobile nav bar */
 @media screen and (max-width: 767px) {
   .app-container {

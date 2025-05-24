@@ -180,7 +180,6 @@
   </div>
 </template>
 
-<!-- filepath: c:\Users\USER\Desktop\ncu-accommodation-portal\src\views\LoginPage.vue -->
 <script>
   import { ref, computed } from "vue";
   import { useRoute, useRouter } from "vue-router";
@@ -519,7 +518,7 @@
     position: relative;
     width: 100%;
     min-height: calc(100vh - 60px);
-    background: #272727;
+    background: #272727; /* 恢復桌面版為黑色背景 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -529,7 +528,7 @@
     position: relative;
     width: 900px;
     height: 600px;
-    background: #f0f0f0;
+    background: #5b5b5b;
     border-radius: 10px;
     box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
     display: flex;
@@ -582,13 +581,14 @@
     gap: 20px;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.8s ease, visibility 0.8s ease;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
   }
 
   form.active,
   .info-panel.active {
     opacity: 1;
     visibility: visible;
+    z-index: 5;
   }
 
   /* 按鈕樣式 */

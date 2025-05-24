@@ -1,7 +1,7 @@
 """add chat message table
 
 Revision ID: 7b3fd510431f
-Revises: e191f1c1fe8c
+Revises: 9b2bf9f0bf9f
 Create Date: 2025-05-18 23:10:55.923793
 
 """

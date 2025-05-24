@@ -5,21 +5,21 @@
       <div class="overlay"></div>
       <div class="hero-content">
         <h1>中央大學校外外宿網</h1>
-          <p>整合式的校外住宿資訊平台，讓你的找房體驗更輕鬆</p>
-            <div class="search-container" style="border-radius: 8px;">
-            <div class="search-input">
-              <i class="search-icon"></i>
-              <input
-                type="text"
-                placeholder="一站式找房，讓住宿不再煩惱"
-                readonly
-                style="border-radius: 0; height: 50px; cursor: default; pointer-events: none;"
-              />
-            </div>
-            <div class="search-button" style="border-radius: 0;" @click="navigateToLogin">立即開始</div>
+        <p>整合式的校外住宿資訊平台，讓你的找房體驗更輕鬆</p>
+        
+        <!-- 將按鈕放在這裡，確保它在文字下方 -->
+        <div class="login-buttons-container">
+          <button class="login-btn tenant-btn" @click="navigateToLogin('tenant')">
+            <i class="user-icon"></i>
+            租客登入
+          </button>
+          <button class="login-btn landlord-btn" @click="navigateToLogin('landlord')">
+            <i class="home-icon"></i>
+            房東登入
+          </button>
         </div>
       </div>
-</div>
+    </div>
 
 <!-- 介紹版塊 -->
 <div class="intro-section">
@@ -351,8 +351,7 @@
   </div>
 </div>
 
-<!-- 頁尾 -->
-</div>
+<!-- 頁尾 --></div>
 </template>
 
 <script>
@@ -2127,5 +2126,116 @@
     }
   }
 
+  /* 登入按鈕區域 */
+.login-buttons-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 50px;
+  margin-top: 100px;
+  margin-bottom: 25px;
+  position: relative;
+  z-index: 2;
+}
+
+.login-btn {
+  width: 220px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #2196F3, #0D47A1);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 按鈕邊緣裝飾效果 */
+.login-btn:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent 10%, rgba(255, 255, 255, 0.2) 10%, rgba(255, 255, 255, 0.2) 20%, transparent 20%);
+  background-size: 200% 200%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 200%;
+  }
+}
+
+.login-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
+  background: linear-gradient(135deg, #1E88E5, #0D47A1);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+}
+
+/* 按鈕圖示 */
+.user-icon, .home-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.user-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+}
+
+.home-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>');
+}
+
+/* 特殊樣式 - 租客和房東分別的顏色變化 */
+.tenant-btn {
+  background: linear-gradient(135deg, #2196F3, #0D47A1);
+}
+
+.landlord-btn {
+  background: linear-gradient(135deg, #1976D2, #01579B);
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+  .login-btn {
+    width: 180px;
+    font-size: 0.9rem;
+    padding: 10px 16px;
+  }
+  
+  .login-buttons-container {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-btn {
+    width: 160px;
+    font-size: 0.85rem;
+  }
+}
   
 </style>

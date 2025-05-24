@@ -10,6 +10,7 @@ from app.models.lease import Lease
 from app.models.comments import Comment, Reply, Report, CommentLike
 from app.extensions import db
 from sqlalchemy import inspect, text # type: ignore
+from sqlalchemy.sql import func # type: ignore
 from functools import wraps
 import datetime
 from datetime import timedelta
