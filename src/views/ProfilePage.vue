@@ -153,10 +153,41 @@
                   <div class="landlord-name">張先生</div>
                   <div class="landlord-contact">0912-345-678</div>
                 </div>
-                <button class="contact-btn">聯絡房東</button>
+                <button class="contact-btn" @click="showContactModal = true">
+                  聯絡房東
+                </button>
               </div>
             </div>
           </div>
+
+          <div v-if="showContactModal" class="modal-overlay" @click="showContactModal = false">
+          <div class="modal-container" @click.stop>
+            <div class="modal-header">
+              <h3>房東聯絡資訊</h3>
+              <button class="modal-close" @click="showContactModal = false">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="contact-info-item">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path fill="#666" d="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z"/>
+                </svg>
+                <span>手機：0912-345-678</span>
+              </div>
+              <div class="contact-info-item">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path fill="#666" d="M20,4H4C2.9,4,2,4.9,2,6v12c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2V6C22,4.9,21.1,4,20,4z M20,8l-8,5L4,8V6l8,5l8-5V8z"/>
+                </svg>
+                <span>Email：landlord@example.com</span>
+              </div>
+              <div class="contact-info-item">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path fill="#666" d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z"/>
+                </svg>
+                <span>Line ID：landlord_123</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
           <div class="lease-actions">
             <button class="action-btn report">報修申請</button>
@@ -213,12 +244,12 @@
               <p>冷氣開機後無法正常製冷，可能是需要添加冷媒。</p>
               <div class="maintenance-photos">
                 <img
-                  src="https://picsum.photos/id/100/100/100"
+                  v-for="(image, index) in ['https://picsum.photos/id/100/800/600', 'https://picsum.photos/id/101/800/600', 'https://picsum.photos/id/102/800/600']"
+                  :key="index"
+                  :src="image"
                   alt="故障照片"
-                />
-                <img
-                  src="https://picsum.photos/id/101/100/100"
-                  alt="故障照片"
+                  @click="openImagePreview(image)"
+                  class="maintenance-photo"
                 />
               </div>
             </div>
@@ -242,8 +273,12 @@
               <p>浴室排水口排水緩慢，洗澡時容易積水。</p>
               <div class="maintenance-photos">
                 <img
-                  src="https://picsum.photos/id/102/100/100"
+                  v-for="(image, index) in ['https://picsum.photos/id/100/800/600', 'https://picsum.photos/id/101/800/600', 'https://picsum.photos/id/102/800/600']"
+                  :key="index"
+                  :src="image"
                   alt="故障照片"
+                  @click="openImagePreview(image)"
+                  class="maintenance-photo"
                 />
               </div>
             </div>
@@ -254,6 +289,15 @@
           </div>
         </div>
       </div>
+
+      <Transition name="modal">
+        <div v-if="showImagePreview" class="image-preview-modal" @click="closeImagePreview">
+          <div class="preview-content" @click.stop>
+            <img :src="selectedImage" alt="預覽圖片" class="preview-image">
+            <button class="close-preview" @click="closeImagePreview">&times;</button>
+          </div>
+        </div>
+      </Transition>
 
       <!-- 我的發布 -->
       <div v-if="activeTab === 'posts'" class="my-posts">
@@ -638,11 +682,24 @@
       const showEmailVerificationModal = ref(false);
       const showPhoneVerificationModal = ref(false);
 
+      const showImagePreview = ref(false);
+      const selectedImage = ref('');
+
+      const openImagePreview = (image) => {
+        selectedImage.value = image;
+        showImagePreview.value = true;
+      };
+      const closeImagePreview = () => {
+        showImagePreview.value = false;
+      };
+
       const isProcessingPortal = ref(false);
 
       const fileInput = ref(null);
       const isUploading = ref(false);
       const uploadError = ref(null);
+
+      const showContactModal = ref(false);
 
       const user = computed(() => store.getters["user/currentUser"]);
       const isAdmin = computed(() => store.getters["user/isAdmin"]);
@@ -963,7 +1020,11 @@
         handleShowEmailChange,
         handleShowPhoneChange,
         handleShowPasswordChange,
-        handleLogout,
+        showContactModal,
+        showImagePreview,
+        selectedImage,
+        openImagePreview,
+        closeImagePreview,
       };
     },
   };
@@ -1104,6 +1165,170 @@
     border-bottom: 1px solid #eee;
   }
 
+  .maintenance-history {
+  display: grid;
+  gap: 20px;
+  padding: 10px 0;
+}
+
+.maintenance-item {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eef2f7;
+  position: relative;
+}
+
+.maintenance-status {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.maintenance-status.resolved {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.maintenance-status.pending {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+
+.maintenance-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 15px;
+  padding-right: 100px;
+}
+
+.maintenance-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+.maintenance-date {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.maintenance-details {
+  padding: 15px 0;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.maintenance-details p {
+  margin: 0 0 15px 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+/* 維修照片樣式 */
+.maintenance-photos {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 5px 0;
+}
+
+.maintenance-photo {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.maintenance-photo:hover {
+  transform: scale(1.05);
+}
+
+/* 圖片預覽 Modal 樣式 */
+.image-preview-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.preview-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90vh;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  animation: zoomIn 0.3s ease;
+}
+
+.close-preview {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 10px;
+  transition: color 0.2s ease;
+}
+
+.close-preview:hover {
+  color: #ddd;
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+.maintenance-response,
+.maintenance-resolution {
+  margin-top: 15px;
+}
+
+.response-header,
+.resolution-header {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.maintenance-response p,
+.maintenance-resolution p {
+  color: #475569;
+  line-height: 1.5;
+  margin: 0;
+}
+
   @media (max-width: 768px) {
   .profile-header {
     flex-direction: column;
@@ -1154,6 +1379,7 @@
     width: 100%;
     margin-top: 10px;
   }
+
   /* 危險區塊 */
   .danger-zone {
     padding: 20px;
@@ -1174,6 +1400,30 @@
 
   .feature-icon {
     margin-bottom: 12px;
+  }
+
+  .maintenance-item {
+    padding: 15px;
+  }
+
+  .maintenance-status {
+    position: static;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+
+  .maintenance-header {
+    flex-direction: column;
+    padding-right: 0;
+  }
+
+  .maintenance-photos {
+    flex-wrap: wrap;
+  }
+
+  .maintenance-photos img {
+    width: calc(50% - 5px);
+    height: 120px;
   }
 }
 
@@ -1209,6 +1459,13 @@
     margin-right: 0;
     margin-bottom: 10px;
   }
+  
+  .settings-btn,
+  .field-action-group button {
+    width: auto;  /* 改為自動寬度 */
+    align-self: flex-end;  /* 靠右對齊 */
+  }
+  
 }
 
   .nav-item {
@@ -1258,22 +1515,36 @@
   .field-action-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 20px;
     width: 100%;
   }
 
   .field-action-group .editable-field {
     flex: 1;
+    margin-right: 10px;
+  }
+
+  .field-action-group button {
+    white-space: nowrap; /* 確保按鈕文字不換行 */
+    min-width: 80px; /* 設置最小寬度 */
+    justify-content: center;
   }
 
   .verify-btn {
     background-color: #4caf50;
     color: white;
     white-space: nowrap;
+    min-width: 80px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
   }
 
   .verify-btn:hover {
     background-color: #43a047;
+    transform: translateY(-1px);
   }
 
   .settings-btn {
@@ -1378,7 +1649,11 @@
     border: none;
     border-radius: 6px;
     cursor: pointer;
+    transition: all 0.3s ease; /* 添加過渡效果 */
+    position: relative; /* 為點擊效果添加定位 */
+    overflow: hidden; /* 防止漣漪效果溢出 */
   }
+
 
   /* 租屋操作按鈕樣式優化 */
 .lease-actions {
@@ -1400,55 +1675,147 @@
   justify-content: center;
   gap: 8px;
   transition: all 0.3s ease;
-  color: #ffffff;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* 每個按鈕使用不同的柔和漸層色 */
-.action-btn.report {
-  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  background: linear-gradient(135deg, #EBF3FE 0%, #E0EEFE 100%);
   color: #1565C0;
-}
-
-.action-btn.extend {
-  background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
-  color: #7B1FA2;
-}
-
-.action-btn.terminate {
-  background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
-  color: #2E7D32;
-}
-
-.action-btn.receipt {
-  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-  color: #E65100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* 懸浮效果 */
 .action-btn:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.15);
   filter: brightness(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
+.action-btn.report,
+.action-btn.extend,
+.action-btn.terminate,
+.action-btn.receipt {
+  background: linear-gradient(135deg, #EBF3FE 0%, #E0EEFE 100%);
+  color: #1565C0;
+}
+
+
 
 /* 響應式設計 */
-@media (max-width: 768px) {
-  .lease-actions {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-  
-  .action-btn {
-    padding: 12px 15px;
-    font-size: 0.9rem;
-  }
-}
 
 @media (max-width: 480px) {
+  /* 個人資料頭部 */
+  .profile-meta {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .profile-info h1 {
+    font-size: 1.5rem;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .verified {
+    margin-top: 5px;
+  }
+
+  /* 租屋操作按鈕 */
   .lease-actions {
     grid-template-columns: 1fr;
+  }
+
+  /* 租屋詳情 */
+  .lease-details {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* 房東資訊 */
+  .landlord {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .landlord-avatar {
+    margin: 0 auto 10px;
+  }
+
+  /* 設置欄位 */
+  .field-action-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .settings-btn,
+  .field-action-group button {
+    width: 100%;
+  }
+
+  /* 危險區域 */
+  .danger-zone {
+    padding: 15px;
+    margin: 15px 0;
+  }
+
+  .danger-btn {
+    width: 100%;
+  }
+
+  /* 歷史記錄項目 */
+  .history-item {
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+  }
+
+  .history-date {
+    width: 100%;
+  }
+
+  /* 管理員功能 */
+  .admin-features {
+    grid-template-columns: 1fr;
+  }
+
+  .login-history-item {
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+  }
+
+  .login-time,
+  .login-device,
+  .login-ip {
+    width: 100%;
+  }
+
+  .landlord {
+    flex-direction: row;  /* 改為水平排列 */
+    align-items: center;
+    justify-content: flex-start;  /* 左對齊 */
+    text-align: left;  /* 文字左對齊 */
+    gap: 12px;  /* 元素之間的間距 */
+  }
+
+  .landlord-avatar {
+    margin: 0;  /* 移除原本的 margin */
+    width: 40px;  /* 稍微縮小頭像 */
+    height: 40px;
+  }
+
+  .contact-btn {
+    margin: 0;  /* 移除原本的 margin */
+    padding: 8px 12px;  /* 稍微縮小按鈕 */
+    font-size: 0.9rem;  /* 稍微縮小文字 */
+    white-space: nowrap;  /* 防止文字換行 */
+  }
+
+  .landlord > div {
+    flex: 1;  /* 讓中間的文字資訊可以自適應寬度 */
+    min-width: 0;  /* 防止文字溢出 */
+  }
+
+  .landlord-name,
+  .landlord-contact {
+    text-align: left;  /* 確保文字左對齊 */
   }
 }
 
@@ -2186,6 +2553,125 @@
     animation: spin 1s linear infinite;
     margin-right: 5px;
   }
+
+  .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .preview-content,
+.modal-leave-active .preview-content {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from {
+  opacity: 0;
+}
+
+.modal-enter-from .preview-content {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-leave-to .preview-content {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+
+.contact-info-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.contact-info-item:hover {
+  background: #f0f0f0;
+}
+
+.contact-info-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 動畫效果 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
   @keyframes spin {
     to {
