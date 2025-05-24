@@ -1,7 +1,25 @@
-<template>
+ <template>
   <div class="container">
     <div v-if="message" :class="['message', messageType]">
       {{ message }}
+    </div>
+
+        <!-- 新增手機版 Tab 切換區塊 -->
+    <div class="mobile-tabs">
+      <div 
+        class="tab" 
+        :class="{ active: !isSignUp }"
+        @click="isSignUp = false"
+      >
+        登入帳號
+      </div>
+      <div 
+        class="tab" 
+        :class="{ active: isSignUp }"
+        @click="isSignUp = true"
+      >
+        註冊帳號
+      </div>
     </div>
 
     <div class="forms-container" :class="{ 'sign-up-mode': isSignUp }">
@@ -543,7 +561,7 @@
     position: relative;
     width: 100%;
     min-height: calc(100vh - 60px);
-    background: #272727;
+    background: #272727; /* 恢復桌面版為黑色背景 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -553,7 +571,7 @@
     position: relative;
     width: 900px;
     height: 600px;
-    background: #f0f0f0;
+    background: #5b5b5b;
     border-radius: 10px;
     box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
     display: flex;
@@ -606,13 +624,14 @@
     gap: 20px;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.8s ease, visibility 0.8s ease;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
   }
 
   form.active,
   .info-panel.active {
     opacity: 1;
     visibility: visible;
+    z-index: 5;
   }
 
   /* 按鈕樣式 */
@@ -849,5 +868,241 @@
 
   .bound-text .material-symbols-outlined {
     color: white;
+  }
+
+  /* 手機版 Tab 樣式 */
+  .mobile-tabs {
+    display: none;
+    width: 100%;
+    background: #333333;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .mobile-tabs .tab {
+    flex: 1;
+    text-align: center;
+    color: #fff;
+    padding: 15px 0;
+    cursor: pointer;
+    position: relative;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .mobile-tabs .tab.active {
+    background-color: #5b5b5b;
+  }
+
+  .mobile-tabs .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #fff;
+  }
+
+  /* 響應式設計調整 */
+  @media screen and (max-width: 767px) {
+    /* 強制整個頁面可滾動 */
+    html, body {
+      overflow-y: auto !important;
+      height: 100% !important;
+      position: relative !important;
+      margin: 0;
+      padding: 0;
+      background: #5b5b5b; /* 手機版保持灰色背景 */
+    }
+
+    /* 確保容器允許滾動 */
+    .container {
+      position: relative !important;
+      min-height: 100vh; 
+      height: auto !important;
+      padding: 0;
+      background: #5b5b5b; /* 手機版保持灰色背景 */
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      overflow-y: visible !important;
+      overflow-x: hidden;
+      display: block !important;
+      touch-action: pan-y !important; /* 允許觸控滑動 */
+    }
+    
+    /* 修改頂部 Tab 背景色，確保與整體一致 */
+    .mobile-tabs {
+      display: flex !important;
+      justify-content: space-around;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #4a4a4a; /* 稍微深一點的灰色來區分標籤和內容 */
+    }
+
+    .forms-container {
+      position: relative !important; /* 從 static 改為 relative */
+      width: 100%;
+      height: auto !important;
+      min-height: unset !important; /* 移除最小高度限制 */
+      max-height: none !important; /* 確保沒有高度限制 */
+      border-radius: 0;
+      background: #5b5b5b;
+      overflow: visible !important;
+      box-shadow: none;
+      display: block;
+    }
+
+    /* 左側面板調整 */
+    .left-panel {
+      position: relative !important; /* 從 static 改為 relative */
+      width: 100%;
+      height: auto !important;
+      min-height: auto;
+      transform: none !important;
+      overflow-y: visible !important;
+      display: block;
+      z-index: 5;
+    }
+
+    /* 表單基本樣式調整 */
+    form {
+      position: relative !important; /* 從 static 改為 relative */
+      height: auto !important; 
+      padding: 20px 20px 100px;
+      transform: none !important;
+      overflow-y: visible !important;
+      display: none; /* 默認隱藏 */
+    }
+
+    /* 活動表單樣式調整 */
+    form.active {
+      position: relative !important;
+      justify-content: flex-start;
+      padding-top: 30px;
+      padding-bottom: 120px;
+      display: flex !important; /* 強制顯示活動表單 */
+      flex-direction: column;
+      align-items: center;
+      opacity: 1;
+      visibility: visible;
+      gap: 15px;
+    }
+
+    /* 縮小表單元素間距 */
+    .login-form input,
+    .register-form input,
+    .portal-binding-option,
+    .terms-agreement {
+      margin-bottom: 10px; /* 從15px減少到10px */
+    }
+    
+    /* 減小註冊表單的內邊距，讓按鈕更容易看到 */
+    .register-form.active {
+      padding-bottom: 80px !important;
+    }
+    
+    /* 調整Portal登入區塊的間距 */
+    .portal-login {
+      margin-top: 15px; /* 從25px減少到15px */
+    }
+    
+    /* 確保模態框使用固定定位 */
+    .modal-overlay {
+      position: fixed !important;
+      z-index: 2000;
+    }
+    
+    /* 移除可能影響滾動的樣式 */
+    body.no-scroll {
+      overflow: auto !important;
+    }
+    
+    /* 處理滾動問題修復 */
+    .js-focus-visible :focus:not(.focus-visible) {
+      outline: none !important;
+    }
+    
+    /* 添加頁腳間距，確保所有內容可見 */
+    .register-form::after {
+      content: "";
+      display: block;
+      height: 100px;
+      width: 100%;
+    }
+    
+    /* 解決iOS滾動問題 */
+    * {
+      -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* 徹底隱藏右側面板及其內容 */
+    .right-panel {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+      overflow: hidden !important;
+      z-index: -1 !important;
+    }
+
+    /* 確保左側面板占滿整個寬度 */
+    .left-panel {
+      position: relative !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: auto;
+      transform: none !important;
+      overflow-y: visible !important;
+      display: block;
+      z-index: 5;
+      left: 0 !important;
+    }
+
+    /* 覆蓋任何可能的轉換效果 */
+    .forms-container.sign-up-mode .left-panel,
+    .forms-container.sign-up-mode .right-panel {
+      transform: none !important;
+    }
+    
+    /* 確保頁面底部不會出現空白或其他顏色 */
+    .forms-container::after {
+      content: "";
+      display: block;
+      height: 20px;
+      background: #5b5b5b;
+    }
+  }
+
+  /* 保持桌面版固定高度不可滾動 */
+  @media screen and (min-width: 768px) {
+    .container {
+      background: #272727; /* 再次確認桌面版保持黑色背景 */
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .forms-container {
+      overflow: hidden;
+      position: relative;
+    }
+
+    form, .info-panel {
+      position: absolute;
+      height: 100%;
+    }
+    
+    .mobile-tabs {
+      display: none;
+    }
   }
 </style>

@@ -1,11 +1,10 @@
 {
-  "last_export": {
-    "timestamp": "20250521_181744",
-    "filename": "db_export_20250521_181744.json",
-    "user": "USER"
-  },
   "last_import": {
+<<<<<<< HEAD
     "timestamp": "20250523_002305",
+=======
+    "timestamp": "20250521_231611",
+>>>>>>> 14f92d15d5249e9fb3ac08713ba8a21868f7f596
     "filename": "db_export_20250521_181744.json",
     "user": "88693"
   }

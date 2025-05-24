@@ -1,13 +1,11 @@
 import { createStore } from "vuex";
-import commentsModule from "@/store/modules/comments";
 import apiService from "@/services/api";
+
+import commentsModule from "@/store/modules/comments";
+import userModule from "@/store/modules/user";
 
 export default createStore({
   state: {
-    // 使用者資訊
-    user: null,
-    isAuthenticated: false,
-
     // 導航狀態
     navigationOpen: false,
     currentRoute: localStorage.getItem("currentRoute") || "home",
@@ -35,21 +33,9 @@ export default createStore({
     mapView: false,
     mapCenter: { lat: 24.968, lng: 121.1944 }, // 中央大學座標
     mapZoom: 15,
-
-    // 修改：評論資料結構，空物件準備從資料庫加載
-    comments: {},
   },
 
   mutations: {
-    SET_USER(state, user) {
-      state.user = user;
-      state.isAuthenticated = !!user;
-    },
-
-    SET_AUTHENTICATED(state, value) {
-      state.isAuthenticated = value;
-    },
-
     TOGGLE_NAVIGATION(state) {
       state.navigationOpen = !state.navigationOpen;
     },
@@ -179,7 +165,7 @@ export default createStore({
 
   actions: {
     // 初始化應用程式
-    async initializeApp({ commit, dispatch }) {
+    async initializeApp({ commit, dispatch, rootState }) {
       try {
         // 嘗試從 localStorage 載入收藏
         const savedFavorites = localStorage.getItem("favoriteAccommodations");
@@ -212,16 +198,11 @@ export default createStore({
           await dispatch("fetchAccommodations");
         }
 
-        // 檢查用戶登入狀態
-        const userFromLocal = localStorage.getItem("user");
-        const userFromSession = sessionStorage.getItem("user");
+        // 檢查用戶登入狀態 (使用新的 user 模組)
+        await dispatch("user/verifyAuth");
 
-        if (userFromLocal || userFromSession) {
-          const userData = JSON.parse(userFromLocal || userFromSession);
-          commit("SET_USER", userData);
-          commit("SET_AUTHENTICATED", true);
-
-          // 如果用戶已登入，嘗試同步收藏
+        // 如果用戶已登入，嘗試同步收藏
+        if (rootState.user.isAuthenticated) {
           dispatch("syncFavorites");
         }
       } catch (error) {
@@ -716,8 +697,6 @@ export default createStore({
   },
 
   getters: {
-    isLoggedIn: (state) => state.isAuthenticated,
-    currentUser: (state) => state.user,
     allAccommodations: (state) => state.accommodations,
     filteredAccommodations: (state) => state.filteredAccommodations,
     selectedAccommodation: (state) => state.selectedAccommodation,
@@ -727,30 +706,11 @@ export default createStore({
         state.favoriteIds.includes(property.編碼 || 0)
       );
     },
-    getPropertyComments: (state) => (propertyId) => {
-      return state.comments[propertyId] || [];
-    },
-
-    // 計算每個房源的平均評分
-    getPropertyRating: (state) => (propertyId) => {
-      const comments = state.comments[propertyId] || [];
-      if (comments.length === 0) return 0;
-
-      const sum = comments.reduce(
-        (total, comment) => total + comment.rating,
-        0
-      );
-      return (sum / comments.length).toFixed(1);
-    },
-
-    // 計算每個房源的評論數量
-    getPropertyCommentCount: (state) => (propertyId) => {
-      return (state.comments[propertyId] || []).length;
-    },
   },
 
   modules: {
     commentsModule,
+    user: userModule,
   },
 });
 
