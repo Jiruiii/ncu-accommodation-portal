@@ -1,7 +1,11 @@
 {
   "last_import": {
+<<<<<<< HEAD
     "timestamp": "20250523_002302",
+=======
+    "timestamp": "20250523_002305",
+>>>>>>> yenyu
     "filename": "db_export_20250521_181744.json",
-    "user": "USER"
+    "user": "88693"
   }
 }
