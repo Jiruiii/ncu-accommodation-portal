@@ -157,6 +157,7 @@ export const apiService = {
     register: (userData) => apiService.post("/api/auth/register", userData),
     logout: () => apiService.post("/api/auth/logout"),
     checkSession: () => apiService.get("/api/auth/status"),
+    verifyToken: () => apiService.get("/api/auth/verify-token"),
     forgotPassword: (email) =>
       apiService.post("/api/auth/forgot-password", { email }),
     resetPassword: (token, newPassword) =>
