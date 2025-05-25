@@ -1,5 +1,4 @@
 import json
-from operator import or_
 import pytz
 from flask import Blueprint, request, jsonify
 from flask_socketio import SocketIO # type: ignore
@@ -17,17 +16,12 @@ from flask_socketio import join_room as socketio_join_room # type: ignore
 # 分隔不同的聊天室
 @socketio.on("join_room")
 def handle_join_room(data):
-    try:
-        if isinstance(data, str):
-            data = json.loads(data)  # 若收到的是 JSON 字串則解析
+    room = data.get("room")
 
-        user_id = data.get("user_id")
-        socketio_join_room(user_id) # 讓用戶加入指定的 WebSocket 房間
+    if room:
+        socketio_join_room(room) # 讓用戶加入指定的 WebSocket 房間
 
-        logging.info(f"User {user_id} 已加入房間")
-
-    except json.JSONDecodeError:
-        logging.info("錯誤: 接收到的 `data` 不是 JSON 格式")
+        logging.info(f"使用者加入房間 {room}")
 
 # 發送訊息給特定用戶
 @socketio.on("new_message")
@@ -36,6 +30,7 @@ def handle_private_message(data):
     receiver_id = str(data["receiver"])  
     message = data["message"]
     time_str = data.get("time")
+    room = data.get("room")
 
     tz = pytz.timezone("Asia/Taipei")  # 設定台灣時區
 
@@ -56,13 +51,16 @@ def handle_private_message(data):
     logging.info(f"User {sender_id} 發送訊息給 {receiver_id}: {message}")
 
     # 存入資料庫
-    save_message(sender_id, receiver_id, message, time)
+    new_message = Message(sender_id=sender_id, receiver_id=receiver_id, message=message, time=time)
+    db.session.add(new_message)
+    db.session.commit()
 
     socketio.emit("new_message", {
         "sender": sender_id,
+        "receiver": receiver_id,
         "message": message,
         "time": formatted_time
-    }, room=str(receiver_id))
+    }, room=room)
 
 # 存入訊息
 def save_message(sender, receiver, message, time):
@@ -70,20 +68,26 @@ def save_message(sender, receiver, message, time):
     db.session.add(new_message)
     db.session.commit()
 
+from sqlalchemy import or_, and_ # type: ignore
+
 @api_bp.route('/chat/history', methods=["GET"])
 def get_chat_history():
-    sender_id = request.args.get("sender_id")
-    receiver_id = request.args.get("receiver_id")
+    sender_id = int(request.args.get("sender_id", 0))
+    receiver_id = int(request.args.get("receiver_id", 0))
 
     # 從資料庫中找出符合條件的訊息
     messages = Message.query.filter(
         or_(
-            Message.sender_id == sender_id,
-            Message.receiver_id == sender_id
+            and_(Message.sender_id == sender_id, Message.receiver_id == receiver_id),
+            and_(Message.sender_id == receiver_id, Message.receiver_id == sender_id)
         )
     ).order_by(Message.time).all() # 訊息案時間排序
     
     return jsonify([
-        {"sender": msg.sender_id, "text": msg.message, "timestamp": msg.time.isoformat()}
+        {
+            "sender": msg.sender_id, 
+            "receiver": msg.receiver_id,
+            "text": msg.message, 
+            "timestamp": msg.time.isoformat()}
         for msg in messages
     ])

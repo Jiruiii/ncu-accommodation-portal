@@ -56,7 +56,10 @@ def superuser_required(f):
 def get_tables():
     inspector = inspect(db.engine)
     tables = inspector.get_table_names()
-    return jsonify({"tables": tables}), 200
+    return jsonify({
+        "success": True,
+        "tables": tables
+    }), 200
 
 # 獲取資料表結構
 @api_bp.route('/admin/tables/<table_name>/structure', methods=['GET'])
@@ -80,6 +83,7 @@ def get_table_structure(table_name):
         column_info.append(column_data)
     
     return jsonify({
+        "success": True,
         "table_name": table_name,
         "columns": column_info
     }), 200
@@ -169,6 +173,7 @@ def get_table_data(table_name):
         rows.append(processed_row)
     
     return jsonify({
+        "success": True,
         "data": rows,
         "total": total,
         "page": page,
@@ -288,6 +293,7 @@ def add_table_row(table_name):
         last_id = db.session.execute(text(last_id_query)).scalar()
         
         return jsonify({
+            "success": True,
             "message": "數據已添加", 
             "id": last_id
         }), 201
@@ -342,6 +348,7 @@ def get_dashboard_data():
     ]
     
     return jsonify({
+        "success": True,
         "counts": {
             "users": user_count,
             "accommodations": accommodation_count,
@@ -406,6 +413,7 @@ def get_users():
             })
         
         return jsonify({
+            "success": True,
             "items": users,
             "total": pagination.total,
             "pages": pagination.pages,
@@ -429,6 +437,7 @@ def get_user(user_id):
     user = User.query.get_or_404(user_id)
     
     return jsonify({
+        "success": True,
         'user_id': user.user_id,
         'username': user.username,
         'email': user.email,
@@ -484,6 +493,7 @@ def update_user(user_id):
     db.session.commit()
     
     return jsonify({
+        "success": True,
         'message': '用戶更新成功',
         'user_id': user.user_id
     })
@@ -507,6 +517,7 @@ def delete_user(user_id):
     db.session.commit()
     
     return jsonify({
+        "success": True,
         'message': '用戶已刪除'
     })
     
@@ -525,6 +536,7 @@ def check_auth():
         headers = {key: value for key, value in request.headers.items()}
         
         return jsonify({
+            "success": True,
             "authenticated": user_id is not None,
             "user_id": user_id,
             "auth_header": auth_header,
@@ -560,6 +572,7 @@ def get_all_reports():
     reports_pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     
     result = {
+        "success": True,
         'success': True,
         'reports': [report.to_dict() for report in reports_pagination.items],
         'total': reports_pagination.total,

@@ -24,11 +24,17 @@ def register():
     
     # 檢查必要欄位
     if not all(k in data for k in ['username', 'email', 'password']):
-        return jsonify({'message': '缺少必要欄位'}), 400
+        return jsonify({
+            'success': False,
+            'message': '缺少必要欄位'
+        }), 400
     
     # 檢查電子郵件是否已存在
     if User.query.filter_by(email=data['email']).first():
-        return jsonify({'message': '此電子郵件已被註冊'}), 400
+        return jsonify({
+            'success': False,
+            'message': '此電子郵件已被註冊'
+        }), 400
     
     # 建立新用戶
     user = User(
@@ -50,6 +56,7 @@ def register():
     db.session.commit()
     
     return jsonify({
+        'success': True,
         'message': '註冊成功',
         'user_id': user.user_id
     }), 200
@@ -81,6 +88,7 @@ def login():
     session.permanent = True
     
     return jsonify({
+        'success': True,
         'message': '登入成功',
         'user': {
             "user_id": user.user_id,
@@ -118,6 +126,7 @@ def check_auth_status():
         
         # 返回當前用戶信息
         return jsonify({
+            "success": True,
             "authenticated": True,
             "user": {
                 "user_id": user.user_id,
@@ -172,6 +181,7 @@ def verify_token():
         
         # 返回有效的驗證結果
         return jsonify({
+            "success": True,
             "valid": True,
             "user": {
                 "user_id": user.user_id,
