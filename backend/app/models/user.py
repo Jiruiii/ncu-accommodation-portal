@@ -29,7 +29,7 @@ class User(db.Model):
     reviews = db.relationship('Review', foreign_keys='Review.reviewer_id',
                             backref='reviewer', lazy='dynamic')
     favorites = db.relationship('Favorite', foreign_keys='Favorite.user_id',
-                              backref='user', lazy='dynamic')
+                              backref='user', lazy='dynamic', cascade='all, delete-orphan')
     tenant_leases = db.relationship('Lease', foreign_keys='Lease.tenant_id',
                                   backref='tenant', lazy='dynamic')
     landlord_leases = db.relationship('Lease', foreign_keys='Lease.landlord_id',

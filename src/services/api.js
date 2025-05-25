@@ -151,6 +151,10 @@ export const apiService = {
     }
   },
 
+  stats: {
+    getStats: () => apiService.get("/api/stats"),
+  },
+  
   // 身份驗證相關 API
   auth: {
     login: (userData) => apiService.post("/api/auth/login", userData),

@@ -94,12 +94,18 @@ def login():
             "user_id": user.user_id,
             "username": user.username,
             "email": user.email,
+            "school_email": user.school_email,
             "phone": user.phone,
             "profile_image": user.profile_image,
             "user_role": user.user_role,
-            "has_protal_id": bool(user.portal_id), 
-            'is_admin': user.is_admin(),
-            'is_superuser': user.is_superuser(),
+            "is_verified": user.is_verified,
+            "is_email_verified": user.is_email_verified,
+            "is_phone_verified": user.is_phone_verified,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+            "has_portal_id": bool(user.portal_id),
+            "is_admin": user.is_admin(),
+            "is_superuser": user.is_superuser(),
         }
     }), 200
     
@@ -187,14 +193,16 @@ def verify_token():
                 "user_id": user.user_id,
                 "username": user.username,
                 "email": user.email,
+                "school_email": user.school_email,
+                "phone": user.phone,
                 "profile_image": user.profile_image,
                 "user_role": user.user_role,
-                "is_admin": user.is_admin(),
-                "is_superuser": user.is_superuser(),
                 "is_verified": user.is_verified,
                 "is_email_verified": user.is_email_verified,
                 "is_phone_verified": user.is_phone_verified,
-                "has_portal_id": bool(user.portal_id)
+                "created_at": user.created_at.isoformat() if user.created_at else None,
+                "last_login": user.last_login.isoformat() if user.last_login else None,
+                "has_portal_id": bool(user.portal_id), 
             }
         })
     except Exception as e:
@@ -286,13 +294,18 @@ def portal_callback():
                     "user_id": user.user_id,
                     "username": user.username,
                     "email": user.email,
+                    "school_email": user.school_email,
                     "phone": user.phone,
                     "profile_image": user.profile_image,
                     "user_role": user.user_role,
-                    "has_portal_id": True,
-                    "school_email": user.school_email,
-                    'is_admin': user.is_admin(),
-                    'is_superuser': user.is_superuser(),
+                    "is_verified": user.is_verified,
+                    "is_email_verified": user.is_email_verified,
+                    "is_phone_verified": user.is_phone_verified,
+                    "created_at": user.created_at.isoformat() if user.created_at else None,
+                    "last_login": user.last_login.isoformat() if user.last_login else None,
+                    "has_portal_id": bool(user.portal_id),
+                    "is_admin": user.is_admin(),
+                    "is_superuser": user.is_superuser(),
                 }
             })
             

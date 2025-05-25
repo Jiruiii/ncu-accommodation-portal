@@ -635,7 +635,7 @@
 
 <script>
   import { ref, computed, onMounted, reactive } from "vue";
-  import { useRouter } from "vue-router";
+  import { useRouter, useRoute } from "vue-router";
   import { useStore } from "vuex";
   import apiService from "@/services/api";
   import EmailVerificationModal from "@/components/verification/EmailVerificationModal.vue";
@@ -661,6 +661,7 @@
     },
     setup() {
       const store = useStore();
+      const route = useRoute();
       const router = useRouter();
 
       const activeTab = ref("housing");
@@ -866,6 +867,8 @@
                 has_portal_id: false,
                 school_email: null,
               });
+
+              await store.dispatch("user/fetchUserProfile");
             } else {
               throw new Error(response.message || "解除綁定失敗");
             }
@@ -878,6 +881,7 @@
         } else {
           // 導向 Portal 授權頁面
           isProcessingPortal.value = true;
+
           window.location.href = apiService.auth.portal.getBindingUrl();
         }
       };
@@ -999,6 +1003,11 @@
 
       onMounted(() => {
         fetchUserData();
+
+        const tabParam = route.query.tab;
+        if (tabParam && tabs.value.some((tab) => tab.id === tabParam)) {
+          activeTab.value = tabParam;
+        }
       });
 
       return {

@@ -1,4 +1,4 @@
- <template>
+<template>
   <div class="home-page">
     <!-- 全屏背景視頻/圖片區 -->
     <div class="hero-section">
@@ -6,14 +6,20 @@
       <div class="hero-content">
         <h1>中央大學校外外宿網</h1>
         <p>整合式的校外住宿資訊平台，讓你的找房體驗更輕鬆</p>
-        
+
         <!-- 將按鈕放在這裡，確保它在文字下方 -->
         <div class="login-buttons-container">
-          <button class="login-btn tenant-btn" @click="navigateToLogin('tenant')">
+          <button
+            class="login-btn tenant-btn"
+            @click="navigateToLogin('tenant')"
+          >
             <i class="user-icon"></i>
             租客登入
           </button>
-          <button class="login-btn landlord-btn" @click="navigateToLogin('landlord')">
+          <button
+            class="login-btn landlord-btn"
+            @click="navigateToLogin('landlord')"
+          >
             <i class="home-icon"></i>
             房東登入
           </button>
@@ -21,358 +27,427 @@
       </div>
     </div>
 
-<!-- 介紹版塊 -->
-<div class="intro-section">
-  <div class="intro-content">
-    <div class="intro-text">
-      <h2>為中央大學學生解決租屋困擾</h2>
-      <p>每年開學季，找房成為許多學生最大的挑戰。我們針對中央大學學生租屋痛點，提供完整解決方案。</p>
-      <ul class="intro-points">
-        <li><i class="check-icon"></i> 改善資訊集中與查詢效率</li>
-        <li><i class="check-icon"></i> 提供即時更新與透明資訊</li>
-        <li><i class="check-icon"></i> 增設評價與回饋機制</li>
-        <li><i class="check-icon"></i> 集中轉租資訊降低詐騙風險</li>
-      </ul>
-      <button class="learn-more-btn">了解更多</button>
-    </div>
-  </div>
-  
-  <div class="solution-cards">
-    <div class="solution-card">
-      <div class="solution-icon verify-icon"></div>
-      <h3>房源驗證制度</h3>
-      <p>每個房源都經過實地訪查，確保資訊真實可靠，杜絕詐騙風險。</p>
-    </div>
-    <div class="solution-card">
-      <div class="solution-icon compare-icon"></div>
-      <h3>價格對比分析</h3>
-      <p>智能分析周邊房價，讓你清楚了解市場行情，避免租金陷阱。</p>
-    </div>
-    <div class="solution-card">
-      <div class="solution-icon community-icon"></div>
-      <h3>社區評分系統</h3>
-      <p>整合周邊生活機能、安全、交通等多維度評分，幫助選擇理想社區。</p>
-    </div>
-    <div class="solution-card">
-      <div class="solution-icon support-icon"></div>
-      <h3>租屋諮詢服務</h3>
-      <p>提供專業租屋建議，從合約審查到糾紛處理，全程為學生把關。</p>
-    </div>
-  </div>
-</div>
-
-<!-- 統計資訊區 -->
-<div class="stats-container" style="background-image: url('https://images.unsplash.com/photo-1518481852452-9415b262eba4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80'); background-size: cover; background-position: center; position: relative; padding: 80px 20px; min-height: 300px;">
-  <div class="stats-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7);"></div>
-  <div class="stat-item" style="position: relative; z-index: 2; color: white;">
-    <h2>{{ clients }}</h2>
-    <p>租屋用戶</p>
-  </div>
-  <div class="stat-item" style="position: relative; z-index: 2; color: white;">
-    <h2>{{ listings }}</h2>
-    <p>房源數量</p>
-  </div>
-  <div class="stat-item" style="position: relative; z-index: 2; color: white;">
-    <h2>{{ inquiries }}</h2>
-    <p>聯絡詢問次數</p>
-  </div>
-  <div class="stat-item" style="position: relative; z-index: 2; color: white;">
-    <h2>{{ agents }}</h2>
-    <p>合作房仲</p>
-  </div>
-</div>
-
-<!-- 服務內容 -->
-<div class="features-section">
-  <div class="section-header">
-    <h2 class="features-title">服務內容</h2>
-    <div class="section-underline"></div>
-  </div>
-  <div class="feature-card" v-for="(feature, idx) in features" :key="idx">
-    <div class="feature-icon" :class="feature.iconClass"></div>
-    <h3>{{ feature.title }}</h3>
-    <p>{{ feature.description }}</p>
-  </div>
-</div>
-
-<!-- 本月精選輪播 -->
-<div class="featured-listings">
-  <div class="section-header">
-    <h2>本月精選</h2>
-    <div class="section-underline"></div>
-  </div>
-  
-  <div class="listing-carousel-wrapper" style="position: relative; overflow: hidden; padding: 40px 0;">
-    <button class="carousel-arrow prev-arrow" @click="prevListing" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;">
-      <i class="arrow-icon left"></i>
-    </button>
-    
-    <div class="listings-carousel" ref="listingContainer">
-      <div
-        class="listing-card"
-        v-for="(listing, index) in featuredListings"
-        :key="listing.id"
-        @click="viewListing(listing)"
-        :class="{ 'active': currentListing === index, 'prev': currentListing === (index + 1) % featuredListings.length, 'next': currentListing === (index - 1 + featuredListings.length) % featuredListings.length }"
-        :style="{
-          transform: getCardTransform(index),
-          opacity: getCardOpacity(index),
-          zIndex: getCardZIndex(index),
-          transition: 'all 0.8s ease-in-out'
-        }"
-      >
-        <div
-          class="listing-image"
-          :style="`background-image: url(${listing.photo})`"
-        >
-          <div class="listing-price">NT$ {{ listing.price }} / 月</div>
+    <!-- 介紹版塊 -->
+    <div class="intro-section">
+      <div class="intro-content">
+        <div class="intro-text">
+          <h2>為中央大學學生解決租屋困擾</h2>
+          <p>
+            每年開學季，找房成為許多學生最大的挑戰。我們針對中央大學學生租屋痛點，提供完整解決方案。
+          </p>
+          <ul class="intro-points">
+            <li><i class="check-icon"></i> 改善資訊集中與查詢效率</li>
+            <li><i class="check-icon"></i> 提供即時更新與透明資訊</li>
+            <li><i class="check-icon"></i> 增設評價與回饋機制</li>
+            <li><i class="check-icon"></i> 集中轉租資訊降低詐騙風險</li>
+          </ul>
+          <button class="learn-more-btn">了解更多</button>
         </div>
-        <div class="listing-content">
-          <h3>{{ listing.title }}</h3>
-          <div class="listing-info">
-            <span><i class="location-icon"></i>{{ listing.distance }}km 至中央大學</span>
-            <span><i class="home-type-icon"></i>{{ listing.roomType }}</span>
-          </div>
-          <div class="listing-rating">
-            <div class="stars">
-              <i
-                class="star-icon"
-                v-for="n in 5"
-                :key="n"
-                :class="n <= listing.rating ? 'filled' : ''"
-              ></i>
-            </div>
-            <span>{{ listing.reviews }} 評價</span>
-          </div>
+      </div>
+
+      <div class="solution-cards">
+        <div class="solution-card">
+          <div class="solution-icon verify-icon"></div>
+          <h3>房源驗證制度</h3>
+          <p>每個房源都經過實地訪查，確保資訊真實可靠，杜絕詐騙風險。</p>
+        </div>
+        <div class="solution-card">
+          <div class="solution-icon compare-icon"></div>
+          <h3>價格對比分析</h3>
+          <p>智能分析周邊房價，讓你清楚了解市場行情，避免租金陷阱。</p>
+        </div>
+        <div class="solution-card">
+          <div class="solution-icon community-icon"></div>
+          <h3>社區評分系統</h3>
+          <p>整合周邊生活機能、安全、交通等多維度評分，幫助選擇理想社區。</p>
+        </div>
+        <div class="solution-card">
+          <div class="solution-icon support-icon"></div>
+          <h3>租屋諮詢服務</h3>
+          <p>提供專業租屋建議，從合約審查到糾紛處理，全程為學生把關。</p>
         </div>
       </div>
     </div>
-    
-    <button class="carousel-arrow next-arrow" @click="nextListing" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;">
-      <i class="arrow-icon right"></i>
-    </button>
-  </div>
-  
-  <div class="carousel-dots">
-    <span 
-      v-for="(_, index) in featuredListings" 
-      :key="index" 
-      :class="['dot', currentListing === index ? 'active' : '']"
-      @click="goToListing(index)"
-    ></span>
-  </div>
-</div>
 
-<!-- 使用者心得 -->
-<div class="testimonials">
-  <div class="section-header">
-    <h2>使用心得</h2>
-    <div class="section-underline"></div>
-  </div>
-  <div class="testimonial-carousel">
-    <button class="carousel-arrow prev-arrow" @click="prevTestimonial">
-      <i class="arrow-icon left"></i>
-    </button>
-    
-    <div class="testimonial-container" ref="testimonialContainer">
-      <div
-        class="testimonial"
-        v-for="(testimonial, idx) in testimonials"
-        :key="idx"
-      >
-        <div class="testimonial-content">
-          <p>"{{ testimonial.content }}"</p>
-        </div>
-        <div class="testimonial-author">
-          <div
-            class="author-avatar"
-            :style="`background-image: url(${testimonial.avatar})`"
-          ></div>
-          <div class="author-info">
-            <h4>{{ testimonial.name }}</h4>
-            <p>{{ testimonial.department }}</p>
-            <span class="author-role">學生</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <button class="carousel-arrow next-arrow" @click="nextTestimonial">
-      <i class="arrow-icon right"></i>
-    </button>
-    
-    <div class="carousel-dots">
-      <span 
-        v-for="(_, index) in testimonials" 
-        :key="index" 
-        :class="['dot', currentTestimonial === index ? 'active' : '']"
-        @click="goToTestimonial(index)"
-      ></span>
-    </div>
-  </div>
-</div>
-
-<!-- 常見問題 -->
-<div class="faq-section">
-  <div class="section-header">
-    <h2>常見問題</h2>
-    <div class="section-underline"></div>
-  </div>
-  <div class="faq-container">
-    <div 
-      class="faq-item" 
-      v-for="(item, index) in faqs" 
-      :key="index"
-      :class="{ 'active': item.isOpen }"
-      @click="toggleFaq(index)"
+    <!-- 統計資訊區 -->
+    <div
+      class="stats-container"
+      style="
+        background-image: url('https://images.unsplash.com/photo-1518481852452-9415b262eba4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80');
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        padding: 80px 20px;
+        min-height: 300px;
+      "
     >
-      <div class="faq-question">
-        <h3>{{ item.question }}</h3>
-        <div class="faq-icon"></div>
+      <div
+        class="stats-overlay"
+        style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.7);
+        "
+      ></div>
+      <div
+        class="stat-item"
+        style="position: relative; z-index: 2; color: white"
+      >
+        <h2>{{ clients }}</h2>
+        <p>租屋用戶</p>
       </div>
-      <div class="faq-answer" v-show="item.isOpen">
-        <p>{{ item.answer }}</p>
+      <div
+        class="stat-item"
+        style="position: relative; z-index: 2; color: white"
+      >
+        <h2>{{ listings }}</h2>
+        <p>房源數量</p>
+      </div>
+      <div
+        class="stat-item"
+        style="position: relative; z-index: 2; color: white"
+      >
+        <h2>{{ inquiries }}</h2>
+        <p>聯絡詢問次數</p>
+      </div>
+      <div
+        class="stat-item"
+        style="position: relative; z-index: 2; color: white"
+      >
+        <h2>{{ agents }}</h2>
+        <p>合作房仲</p>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- 聯絡我們 -->
-<div class="contact-section">
-  <div class="section-header">
-    <h2>聯絡我們</h2>
-    <div class="section-underline"></div>
-  </div>
-  
-  <div class="contact-container">
-    <!-- 左側：聯絡資訊 -->
-    <div class="contact-info">
-      <div class="info-header">
-        <h3 class="info-title">聯絡資訊</h3>
+    <!-- 服務內容 -->
+    <div class="features-section">
+      <div class="section-header">
+        <h2 class="features-title">服務內容</h2>
+        <div class="section-underline"></div>
       </div>
-      
-      <p class="contact-intro">
-        有任何關於租屋、網站使用或合作提案的問題，歡迎隨時聯繫我們。
-        我們的團隊將在24小時內回覆您的疑問，為您提供專業的租屋建議與協助。
-      </p>
-      
-      <div class="contact-method">
-        <div class="contact-icon">
-          <i class="email-icon"></i>
-        </div>
-        <div class="contact-detail">
-          <h4>電子郵件</h4>
-          <p>accommodation@ncu.edu.tw</p>
-        </div>
-            </div>
-            
-            <div class="contact-method">
-        <div class="contact-icon">
-          <i class="phone-icon"></i>
-        </div>
-        <div class="contact-detail">
-          <h4>電話</h4>
-          <p>(03) 422-7151 #57282</p>
-        </div>
-            </div>
-            
-            <div class="contact-method">
-        <div class="contact-icon">
-          <i class="location-pin"></i>
-        </div>
-        <div class="contact-detail">
-          <h4>地址</h4>
-          <p>32001 桃園市中壢區中大路300號<br>學務處住宿服務組</p>
-        </div>
-            </div>
-            
-            <div class="contact-method">
-        <div class="contact-icon">
-          <i class="social-icon"></i>
-        </div>
-        <div class="contact-detail">
-          <h4>社群媒體</h4>
-          <p>@ncu_accommodation</p>
-        </div>
-            </div>
-      
+      <div class="feature-card" v-for="(feature, idx) in features" :key="idx">
+        <div class="feature-icon" :class="feature.iconClass"></div>
+        <h3>{{ feature.title }}</h3>
+        <p>{{ feature.description }}</p>
+      </div>
     </div>
-    
-    <!-- 右側：聯絡表單 -->
-    <div class="contact-form-container">
-      <form class="contact-form" @submit.prevent="submitForm">
-        <div class="form-group">
-          <label for="name">姓名</label>
-          <input 
-            type="text" 
-            id="name" 
-            v-model="contactForm.name" 
-            placeholder="請輸入您的姓名" 
-            required
-          />
-        </div>
-        
-        <div class="form-group">
-          <label for="email">電子郵件</label>
-          <input 
-            type="email" 
-            id="email" 
-            v-model="contactForm.email" 
-            placeholder="請輸入您的電子郵件" 
-            required
-          />
-        </div>
-        
-        <div class="form-group">
-          <label for="subject">主題</label>
-          <input 
-            type="text" 
-            id="subject" 
-            v-model="contactForm.subject" 
-            placeholder="請輸入訊息主題" 
-            required
-          />
-        </div>
-        
-        <div class="form-group">
-          <label for="message">訊息</label>
-          <textarea 
-            id="message" 
-            v-model="contactForm.message" 
-            placeholder="請輸入您的訊息內容" 
-            required
-            rows="5"
-          ></textarea>
-        </div>
-        
-        <button type="submit" class="submit-btn">發送訊息</button>
-      </form>
-    </div>
-  </div>
-</div>
 
-<!-- 頁尾 --></div>
+    <!-- 本月精選輪播 -->
+    <div class="featured-listings">
+      <div class="section-header">
+        <h2>本月精選</h2>
+        <div class="section-underline"></div>
+      </div>
+
+      <div
+        class="listing-carousel-wrapper"
+        style="position: relative; overflow: hidden; padding: 40px 0"
+      >
+        <button
+          class="carousel-arrow prev-arrow"
+          @click="prevListing"
+          style="
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+          "
+        >
+          <i class="arrow-icon left"></i>
+        </button>
+
+        <div class="listings-carousel" ref="listingContainer">
+          <div
+            class="listing-card"
+            v-for="(listing, index) in featuredListings"
+            :key="listing.id"
+            @click="viewListing(listing)"
+            :class="{
+              active: currentListing === index,
+              prev: currentListing === (index + 1) % featuredListings.length,
+              next:
+                currentListing ===
+                (index - 1 + featuredListings.length) % featuredListings.length,
+            }"
+            :style="{
+              transform: getCardTransform(index),
+              opacity: getCardOpacity(index),
+              zIndex: getCardZIndex(index),
+              transition: 'all 0.8s ease-in-out',
+            }"
+          >
+            <div
+              class="listing-image"
+              :style="`background-image: url(${listing.photo})`"
+            >
+              <div class="listing-price">NT$ {{ listing.price }} / 月</div>
+            </div>
+            <div class="listing-content">
+              <h3>{{ listing.title }}</h3>
+              <div class="listing-info">
+                <span
+                  ><i class="location-icon"></i>{{ listing.distance }}km
+                  至中央大學</span
+                >
+                <span
+                  ><i class="home-type-icon"></i>{{ listing.roomType }}</span
+                >
+              </div>
+              <div class="listing-rating">
+                <div class="stars">
+                  <i
+                    class="star-icon"
+                    v-for="n in 5"
+                    :key="n"
+                    :class="n <= listing.rating ? 'filled' : ''"
+                  ></i>
+                </div>
+                <span>{{ listing.reviews }} 評價</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          class="carousel-arrow next-arrow"
+          @click="nextListing"
+          style="
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+          "
+        >
+          <i class="arrow-icon right"></i>
+        </button>
+      </div>
+
+      <div class="carousel-dots">
+        <span
+          v-for="(_, index) in featuredListings"
+          :key="index"
+          :class="['dot', currentListing === index ? 'active' : '']"
+          @click="goToListing(index)"
+        ></span>
+      </div>
+    </div>
+
+    <!-- 使用者心得 -->
+    <div class="testimonials">
+      <div class="section-header">
+        <h2>使用心得</h2>
+        <div class="section-underline"></div>
+      </div>
+      <div class="testimonial-carousel">
+        <button class="carousel-arrow prev-arrow" @click="prevTestimonial">
+          <i class="arrow-icon left"></i>
+        </button>
+
+        <div class="testimonial-container" ref="testimonialContainer">
+          <div
+            class="testimonial"
+            v-for="(testimonial, idx) in testimonials"
+            :key="idx"
+          >
+            <div class="testimonial-content">
+              <p>"{{ testimonial.content }}"</p>
+            </div>
+            <div class="testimonial-author">
+              <div
+                class="author-avatar"
+                :style="`background-image: url(${testimonial.avatar})`"
+              ></div>
+              <div class="author-info">
+                <h4>{{ testimonial.name }}</h4>
+                <p>{{ testimonial.department }}</p>
+                <span class="author-role">學生</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="carousel-arrow next-arrow" @click="nextTestimonial">
+          <i class="arrow-icon right"></i>
+        </button>
+
+        <div class="carousel-dots">
+          <span
+            v-for="(_, index) in testimonials"
+            :key="index"
+            :class="['dot', currentTestimonial === index ? 'active' : '']"
+            @click="goToTestimonial(index)"
+          ></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 常見問題 -->
+    <div class="faq-section">
+      <div class="section-header">
+        <h2>常見問題</h2>
+        <div class="section-underline"></div>
+      </div>
+      <div class="faq-container">
+        <div
+          class="faq-item"
+          v-for="(item, index) in faqs"
+          :key="index"
+          :class="{ active: item.isOpen }"
+          @click="toggleFaq(index)"
+        >
+          <div class="faq-question">
+            <h3>{{ item.question }}</h3>
+            <div class="faq-icon"></div>
+          </div>
+          <div class="faq-answer" v-show="item.isOpen">
+            <p>{{ item.answer }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 聯絡我們 -->
+    <div class="contact-section">
+      <div class="section-header">
+        <h2>聯絡我們</h2>
+        <div class="section-underline"></div>
+      </div>
+
+      <div class="contact-container">
+        <!-- 左側：聯絡資訊 -->
+        <div class="contact-info">
+          <div class="info-header">
+            <h3 class="info-title">聯絡資訊</h3>
+          </div>
+
+          <p class="contact-intro">
+            有任何關於租屋、網站使用或合作提案的問題，歡迎隨時聯繫我們。
+            我們的團隊將在24小時內回覆您的疑問，為您提供專業的租屋建議與協助。
+          </p>
+
+          <div class="contact-method">
+            <div class="contact-icon">
+              <i class="email-icon"></i>
+            </div>
+            <div class="contact-detail">
+              <h4>電子郵件</h4>
+              <p>accommodation@ncu.edu.tw</p>
+            </div>
+          </div>
+
+          <div class="contact-method">
+            <div class="contact-icon">
+              <i class="phone-icon"></i>
+            </div>
+            <div class="contact-detail">
+              <h4>電話</h4>
+              <p>(03) 422-7151 #57282</p>
+            </div>
+          </div>
+
+          <div class="contact-method">
+            <div class="contact-icon">
+              <i class="location-pin"></i>
+            </div>
+            <div class="contact-detail">
+              <h4>地址</h4>
+              <p>32001 桃園市中壢區中大路300號<br />學務處住宿服務組</p>
+            </div>
+          </div>
+
+          <div class="contact-method">
+            <div class="contact-icon">
+              <i class="social-icon"></i>
+            </div>
+            <div class="contact-detail">
+              <h4>社群媒體</h4>
+              <p>@ncu_accommodation</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右側：聯絡表單 -->
+        <div class="contact-form-container">
+          <form class="contact-form" @submit.prevent="submitForm">
+            <div class="form-group">
+              <label for="name">姓名</label>
+              <input
+                type="text"
+                id="name"
+                v-model="contactForm.name"
+                placeholder="請輸入您的姓名"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="email">電子郵件</label>
+              <input
+                type="email"
+                id="email"
+                v-model="contactForm.email"
+                placeholder="請輸入您的電子郵件"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="subject">主題</label>
+              <input
+                type="text"
+                id="subject"
+                v-model="contactForm.subject"
+                placeholder="請輸入訊息主題"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="message">訊息</label>
+              <textarea
+                id="message"
+                v-model="contactForm.message"
+                placeholder="請輸入您的訊息內容"
+                required
+                rows="5"
+              ></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">發送訊息</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 頁尾 -->
+  </div>
 </template>
 
 <script>
   import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
   import { useStore } from "vuex";
   import { useRouter } from "vue-router";
+  import apiService from "@/services/api";
 
   export default {
     name: "HomePage",
     setup() {
       const store = useStore();
       const router = useRouter();
-      
+
       const searchQuery = ref("");
-      
+
       // 統計資訊 (目標值)
-      const clientsTarget = 232;
-      const listingsTarget = 521;
-      const inquiriesTarget = 1453;
-      const agentsTarget = 32;
-      
+      // const clientsTarget = 232;
+      // const listingsTarget = 521;
+      // const inquiriesTarget = 1453;
+      // const agentsTarget = 32;
+
       // 用於動畫的ref值
       const clients = ref(0);
       const listings = ref(0);
@@ -384,19 +459,19 @@
         name: "",
         email: "",
         subject: "",
-        message: ""
+        message: "",
       });
 
       // 更新導航功能，根據用戶類型 (tenant 或 landlord) 進行導航
       const navigateToLogin = (userType) => {
         // 可以將用戶類型存儲在 store 或 localStorage 中，以便登入頁面使用
-        localStorage.setItem('userLoginType', userType);
-        
+        localStorage.setItem("userLoginType", userType);
+
         // 根據不同用戶類型導向不同頁面或帶上參數
-        if (userType === 'tenant') {
+        if (userType === "tenant") {
           // 租客登入
           router.push("/login");
-        } else if (userType === 'landlord') {
+        } else if (userType === "landlord") {
           // 房東登入
           router.push("/login");
         } else {
@@ -409,16 +484,16 @@
       const submitForm = () => {
         // 這裡可以添加表單驗證
         // console.log("提交表單數據:", contactForm.value);
-        
+
         // 成功提交後顯示提示
         alert("感謝您的訊息！我們會盡快回覆您。");
-        
+
         // 重置表單
         contactForm.value = {
           name: "",
           email: "",
           subject: "",
-          message: ""
+          message: "",
         };
       };
 
@@ -426,66 +501,78 @@
       const faqs = ref([
         {
           question: "如何開始在此平台尋找房源？",
-          answer: "您可以使用首頁的搜尋功能輸入關鍵詞，或直接瀏覽推薦房源。我們的地圖功能也可以幫助您依照地理位置尋找理想房源。",
-          isOpen: false
+          answer:
+            "您可以使用首頁的搜尋功能輸入關鍵詞，或直接瀏覽推薦房源。我們的地圖功能也可以幫助您依照地理位置尋找理想房源。",
+          isOpen: false,
         },
         {
           question: "如何確認房源資訊的真實性？",
-          answer: "我們所有列出的房源都經過實地訪查與身分驗證。此外，您也可以查看其他學生對房源的評價和評分，以確保房源品質。",
-          isOpen: false
+          answer:
+            "我們所有列出的房源都經過實地訪查與身分驗證。此外，您也可以查看其他學生對房源的評價和評分，以確保房源品質。",
+          isOpen: false,
         },
         {
           question: "需要支付任何費用才能使用此平台嗎？",
-          answer: "不需要，本平台對中央大學學生完全免費。我們的目標是為學生提供便利的租屋資訊，不收取任何中介費或服務費。",
-          isOpen: false
+          answer:
+            "不需要，本平台對中央大學學生完全免費。我們的目標是為學生提供便利的租屋資訊，不收取任何中介費或服務費。",
+          isOpen: false,
         },
         {
           question: "如果遇到租屋糾紛該怎麼辦？",
-          answer: "我們提供租屋諮詢服務，您可以透過網站的「幫助中心」聯繫我們。我們有專業人員協助處理租屋糾紛和問題。",
-          isOpen: false
+          answer:
+            "我們提供租屋諮詢服務，您可以透過網站的「幫助中心」聯繫我們。我們有專業人員協助處理租屋糾紛和問題。",
+          isOpen: false,
         },
         {
           question: "如何與房東聯繫？",
-          answer: "每個房源頁面都有「聯繫房東」按鈕，點擊後可發送訊息或查看聯繫方式。我們建議透過平台進行初步溝通，以確保安全。",
-          isOpen: false
+          answer:
+            "每個房源頁面都有「聯繫房東」按鈕，點擊後可發送訊息或查看聯繫方式。我們建議透過平台進行初步溝通，以確保安全。",
+          isOpen: false,
         },
         {
           question: "什麼是「學生評價系統」？",
-          answer: "這是我們平台的特色功能，曾經入住的學生可以對房源進行評價和評分，包括環境、房東態度、設備等多個維度，幫助其他學生做出更明智的決定。",
-          isOpen: false
+          answer:
+            "這是我們平台的特色功能，曾經入住的學生可以對房源進行評價和評分，包括環境、房東態度、設備等多個維度，幫助其他學生做出更明智的決定。",
+          isOpen: false,
         },
         {
           question: "如何舉報可疑的房源資訊？",
-          answer: "在每個房源頁面底部有「舉報」按鈕，您可以選擇舉報原因並提交。我們的審核團隊會在24小時內處理您的舉報。",
-          isOpen: false
+          answer:
+            "在每個房源頁面底部有「舉報」按鈕，您可以選擇舉報原因並提交。我們的審核團隊會在24小時內處理您的舉報。",
+          isOpen: false,
         },
         {
           question: "平台上的房源資訊多久更新一次？",
-          answer: "我們的系統每天都會更新房源狀態。一旦房源出租，系統會立即標記為「已出租」。我們也定期聯繫房東確認資訊的準確性。",
-          isOpen: false
-        }
+          answer:
+            "我們的系統每天都會更新房源狀態。一旦房源出租，系統會立即標記為「已出租」。我們也定期聯繫房東確認資訊的準確性。",
+          isOpen: false,
+        },
       ]);
 
       // 服務內容
       const features = [
         {
           title: "租屋列表",
-          description: "整合來自各平台的租屋資訊，統一格式便於比較，快速篩選合適房源。",
+          description:
+            "整合來自各平台的租屋資訊，統一格式便於比較，快速篩選合適房源。",
           iconClass: "integration-icon",
         },
         {
           title: "地圖搜尋",
-          description: "直觀顯示房源位置、學校距離以及周邊便利設施，讓搜尋過程更加便捷。",
+          description:
+            "直觀顯示房源位置、學校距離以及周邊便利設施，讓搜尋過程更加便捷。",
           iconClass: "map-icon",
         },
         {
           title: "我的收藏",
-          description: "收藏您喜愛的房源，隨時查看並比較，快速有效做出最佳選擇。",
+          description:
+            "收藏您喜愛的房源，隨時查看並比較，快速有效做出最佳選擇。",
           iconClass: "review-icon",
         },
         {
           title: "轉租專區",
-          description: "提供專屬管道集中轉租資訊，並有防詐騙機制保障您的租賃安全。",
+          description:
+            "提供專屬管道集中轉租資訊，並有防詐騙機制保障您的租賃安全。",
           iconClass: "security-icon",
         },
       ];
@@ -571,27 +658,27 @@
       const getCardTransform = (index) => {
         const total = featuredListings.length;
         const currentIdx = currentListing.value;
-        
+
         // 計算卡片相對於當前顯示卡片的位置偏移
         let diff = (index - currentIdx + total) % total;
-        if (diff > total/2) diff -= total;
-        
+        if (diff > total / 2) diff -= total;
+
         // 根據位置偏移計算位置，縮小間距
         if (diff === 0) {
           // 當前卡片 (中心位置)
-          return 'translateX(0) scale(1.1)';
-        } else if (diff === 1 || diff === -total+1) {
+          return "translateX(0) scale(1.1)";
+        } else if (diff === 1 || diff === -total + 1) {
           // 右邊卡片，縮小間距
-          return 'translateX(110%) scale(0.85)';
-        } else if (diff === -1 || diff === total-1) {
+          return "translateX(110%) scale(0.85)";
+        } else if (diff === -1 || diff === total - 1) {
           // 左邊卡片，縮小間距
-          return 'translateX(-110%) scale(0.85)';
+          return "translateX(-110%) scale(0.85)";
         } else if (diff > 0) {
           // 右邊其他卡片 (隱藏)
-          return 'translateX(220%) scale(0.7)';
+          return "translateX(220%) scale(0.7)";
         } else {
           // 左邊其他卡片 (隱藏)
-          return 'translateX(-220%) scale(0.7)';
+          return "translateX(-220%) scale(0.7)";
         }
       };
 
@@ -599,12 +686,12 @@
       const getCardOpacity = (index) => {
         const total = featuredListings.length;
         const currentIdx = currentListing.value;
-        
+
         // 計算最短距離
         let diff = Math.abs((index - currentIdx + total) % total);
-        if (diff > total/2) diff = total - diff;
-        
-        if (diff === 0) return 1;  // 當前卡片
+        if (diff > total / 2) diff = total - diff;
+
+        if (diff === 0) return 1; // 當前卡片
         if (diff === 1) return 0.7; // 左右相鄰卡片，提高透明度
         return 0; // 其他卡片暫時隱藏
       };
@@ -613,13 +700,13 @@
       const getCardZIndex = (index) => {
         const total = featuredListings.length;
         const currentIdx = currentListing.value;
-        
+
         if (index === currentIdx) return 10; // 當前卡片最前
-        
+
         // 計算最短距離
         let diff = Math.abs((index - currentIdx + total) % total);
-        if (diff > total/2) diff = total - diff;
-        
+        if (diff > total / 2) diff = total - diff;
+
         return 10 - diff; // 距離越近，z-index越大
       };
 
@@ -627,9 +714,10 @@
       const nextListing = () => {
         if (isTransitioning.value) return;
         isTransitioning.value = true;
-        
-        currentListing.value = (currentListing.value + 1) % featuredListings.length;
-        
+
+        currentListing.value =
+          (currentListing.value + 1) % featuredListings.length;
+
         // 設定切換完成後的延遲
         setTimeout(() => {
           isTransitioning.value = false;
@@ -639,9 +727,11 @@
       const prevListing = () => {
         if (isTransitioning.value) return;
         isTransitioning.value = true;
-        
-        currentListing.value = (currentListing.value - 1 + featuredListings.length) % featuredListings.length;
-        
+
+        currentListing.value =
+          (currentListing.value - 1 + featuredListings.length) %
+          featuredListings.length;
+
         // 設定切換完成後的延遲
         setTimeout(() => {
           isTransitioning.value = false;
@@ -651,9 +741,9 @@
       const goToListing = (index) => {
         if (isTransitioning.value) return;
         isTransitioning.value = true;
-        
+
         currentListing.value = index;
-        
+
         // 設定切換完成後的延遲
         setTimeout(() => {
           isTransitioning.value = false;
@@ -713,7 +803,7 @@
           avatar: "https://randomuser.me/api/portraits/men/22.jpg",
           content:
             "平台提供的租屋諮詢服務真的很幫助，在簽約前解答了我很多法律相關的疑問，讓我更有信心。",
-        }
+        },
       ];
 
       // 使用者見證輪播功能
@@ -749,7 +839,7 @@
           const scrollAmount = testimonialContainer.value.clientWidth * index;
           testimonialContainer.value.scrollTo({
             left: scrollAmount,
-            behavior: 'smooth'
+            behavior: "smooth",
           });
         }
       };
@@ -778,40 +868,111 @@
       onMounted(() => {
         startAutoplay();
         startListingAutoplay();
-        
+
         // 為使用者心得容器添加懸停事件
         if (testimonialContainer.value) {
-          testimonialContainer.value.addEventListener('mouseenter', stopAutoplay);
-          testimonialContainer.value.addEventListener('mouseleave', startAutoplay);
+          testimonialContainer.value.addEventListener(
+            "mouseenter",
+            stopAutoplay
+          );
+          testimonialContainer.value.addEventListener(
+            "mouseleave",
+            startAutoplay
+          );
         }
-        
+
         // 為本月精選容器添加懸停事件
         if (listingContainer.value) {
-          listingContainer.value.addEventListener('mouseenter', stopListingAutoplay);
-          listingContainer.value.addEventListener('mouseleave', startListingAutoplay);
+          listingContainer.value.addEventListener(
+            "mouseenter",
+            stopListingAutoplay
+          );
+          listingContainer.value.addEventListener(
+            "mouseleave",
+            startListingAutoplay
+          );
         }
       });
-      
+
       // 組件卸載時清理
       onUnmounted(() => {
         stopAutoplay();
         stopListingAutoplay();
-        
+
         // 移除事件監聽器
         if (testimonialContainer.value) {
-          testimonialContainer.value.removeEventListener('mouseenter', stopAutoplay);
-          testimonialContainer.value.removeEventListener('mouseleave', startAutoplay);
+          testimonialContainer.value.removeEventListener(
+            "mouseenter",
+            stopAutoplay
+          );
+          testimonialContainer.value.removeEventListener(
+            "mouseleave",
+            startAutoplay
+          );
         }
-        
+
         if (listingContainer.value) {
-          listingContainer.value.removeEventListener('mouseenter', stopListingAutoplay);
-          listingContainer.value.removeEventListener('mouseleave', startListingAutoplay);
+          listingContainer.value.removeEventListener(
+            "mouseenter",
+            stopListingAutoplay
+          );
+          listingContainer.value.removeEventListener(
+            "mouseleave",
+            startListingAutoplay
+          );
         }
       });
 
       // FAQ切換功能
       const toggleFaq = (index) => {
         faqs.value[index].isOpen = !faqs.value[index].isOpen;
+      };
+
+      const fetchStatistics = async () => {
+        try {
+          const response = await apiService.stats.getStats();
+
+          if (response && response.success) {
+            const { user_count, property_count } = response.data;
+
+            // 設置目標值 - 使用後端實際數據
+            const clientsTarget = user_count || 0;
+            const listingsTarget = property_count || 0;
+            const inquiriesTarget = 45;
+            const agentsTarget = 33;
+
+            // 啟動數字動畫
+            animateCount(
+              clientsTarget,
+              clients.value,
+              (val) => (clients.value = val)
+            );
+            animateCount(
+              listingsTarget,
+              listings.value,
+              (val) => (listings.value = val)
+            );
+            animateCount(
+              inquiriesTarget,
+              inquiries.value,
+              (val) => (inquiries.value = val)
+            );
+            animateCount(
+              agentsTarget,
+              agents.value,
+              (val) => (agents.value = val)
+            );
+          } else {
+            console.error("無法獲取統計數據:", response?.message || "未知錯誤");
+          }
+        } catch (error) {
+          console.error("獲取統計數據失敗:", error);
+          // 如果無法獲取數據，設置默認值
+          animateCount(12, clients.value, (val) => (clients.value = val));
+          animateCount(73, listings.value, (val) => (listings.value = val));
+          animateCount(44, inquiries.value, (val) => (inquiries.value = val));
+          animateCount(33, agents.value, (val) => (agents.value = val));
+        } 
       };
 
       // 數字動畫函數
@@ -821,7 +982,7 @@
         const stepTime = duration / steps; // 每步的時間
         const increment = target / steps; // 每步增加的數值
         let currentStep = 0;
-        
+
         const timer = setInterval(() => {
           currentStep++;
           if (currentStep >= steps) {
@@ -835,23 +996,23 @@
 
       // 觀察器，當元素進入視野時觸發動畫
       const observeStats = () => {
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              // 開始動畫
-              animateCount(clientsTarget, clients.value, val => clients.value = val);
-              animateCount(listingsTarget, listings.value, val => listings.value = val);
-              animateCount(inquiriesTarget, inquiries.value, val => inquiries.value = val);
-              animateCount(agentsTarget, agents.value, val => agents.value = val);
-              // 只觸發一次
-              observer.disconnect();
-            }
-          });
-        }, { threshold: 0.1 });
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                // 開始獲取統計數據
+                fetchStatistics();
+                // 只觸發一次
+                observer.disconnect();
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
 
         // 觀察統計區域
         setTimeout(() => {
-          const statsElement = document.querySelector('.stats-container');
+          const statsElement = document.querySelector(".stats-container");
           if (statsElement) observer.observe(statsElement);
         }, 100);
       };
@@ -913,7 +1074,7 @@
         toggleFaq,
         // 聯絡表單
         contactForm,
-        submitForm
+        submitForm,
       };
     },
   };
@@ -1187,7 +1348,7 @@
     .intro-section {
       flex-direction: column;
     }
-    
+
     .solution-cards {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -1226,7 +1387,11 @@
   .section-underline {
     width: 80px;
     height: 4px;
-    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    background: linear-gradient(
+      90deg,
+      var(--primary-color),
+      var(--secondary-color)
+    );
     border-radius: 2px;
     margin: 0 auto;
   }
@@ -1622,42 +1787,42 @@
     .testimonials {
       padding: 60px 15px;
     }
-    
+
     .testimonial-carousel {
       padding: 10px 0;
       width: calc(100% - 20px);
       margin: 0 auto;
     }
-    
+
     .testimonial {
       padding: 25px 15px;
       border-radius: 12px;
       min-width: 100%;
       width: 100%;
     }
-    
+
     .testimonial-content p {
       font-size: 0.95rem;
       line-height: 1.6;
     }
-    
+
     .testimonial-author {
       gap: 10px;
     }
-    
+
     .author-avatar {
       width: 60px;
       height: 60px;
     }
-    
+
     .author-info h4 {
       font-size: 1.1rem;
     }
-    
+
     .author-info p {
       font-size: 0.85rem;
     }
-    
+
     .carousel-arrow {
       width: 36px;
       height: 36px;
@@ -1668,37 +1833,37 @@
     .testimonials h2 {
       font-size: 1.7rem;
     }
-    
+
     .testimonial-carousel {
       width: 100%;
     }
-    
+
     .testimonial {
       padding: 20px 12px;
       width: 100%;
     }
-    
+
     .testimonial-content p {
       font-size: 0.9rem;
     }
-    
+
     .author-avatar {
       width: 50px;
       height: 50px;
     }
-    
+
     .author-info h4 {
       font-size: 1rem;
     }
-    
+
     .prev-arrow {
       left: 5px;
     }
-    
+
     .next-arrow {
       right: 5px;
     }
-    
+
     .carousel-arrow {
       width: 32px;
       height: 32px;
@@ -1772,8 +1937,9 @@
     transition: transform 0.3s ease;
   }
 
-  .faq-icon:before, .faq-icon:after {
-    content: '';
+  .faq-icon:before,
+  .faq-icon:after {
+    content: "";
     position: absolute;
     background-color: var(--primary-color);
     transition: all 0.3s ease;
@@ -1816,15 +1982,15 @@
     .faq-section {
       padding: 60px 15px;
     }
-    
+
     .faq-question {
       padding: 15px 20px;
     }
-    
+
     .faq-question h3 {
       font-size: 1rem;
     }
-    
+
     .faq-answer {
       padding: 0 20px 15px;
       font-size: 0.95rem;
@@ -2056,13 +2222,12 @@
     .contact-container {
       flex-direction: column;
     }
-    
+
     .contact-form-container,
     .contact-info {
       width: 100%;
     }
   }
-
 
   /* 統計數字*/
   .stats-container {
@@ -2119,7 +2284,7 @@
       height: 50px;
       border-radius: 0 0 16px 16px;
     }
-    
+
     /* Hide stats container on mobile */
     .stats-container {
       display: none;
@@ -2127,115 +2292,121 @@
   }
 
   /* 登入按鈕區域 */
-.login-buttons-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 50px;
-  margin-top: 100px;
-  margin-bottom: 25px;
-  position: relative;
-  z-index: 2;
-}
-
-.login-btn {
-  width: 220px;
-  padding: 12px 20px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #2196F3, #0D47A1);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 按鈕邊緣裝飾效果 */
-.login-btn:before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, transparent 10%, rgba(255, 255, 255, 0.2) 10%, rgba(255, 255, 255, 0.2) 20%, transparent 20%);
-  background-size: 200% 200%;
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 0% 0%;
-  }
-  100% {
-    background-position: 200% 200%;
-  }
-}
-
-.login-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
-  background: linear-gradient(135deg, #1E88E5, #0D47A1);
-}
-
-.login-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
-}
-
-/* 按鈕圖示 */
-.user-icon, .home-icon {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  margin-right: 10px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.user-icon {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
-}
-
-.home-icon {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>');
-}
-
-/* 特殊樣式 - 租客和房東分別的顏色變化 */
-.tenant-btn {
-  background: linear-gradient(135deg, #2196F3, #0D47A1);
-}
-
-.landlord-btn {
-  background: linear-gradient(135deg, #1976D2, #01579B);
-}
-
-/* 響應式調整 */
-@media (max-width: 768px) {
-  .login-btn {
-    width: 180px;
-    font-size: 0.9rem;
-    padding: 10px 16px;
-  }
-  
   .login-buttons-container {
-    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 50px;
+    margin-top: 100px;
+    margin-bottom: 25px;
+    position: relative;
+    z-index: 2;
   }
-}
 
-@media (max-width: 480px) {
   .login-btn {
-    width: 160px;
-    font-size: 0.85rem;
+    width: 220px;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #2196f3, #0d47a1);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-}
-  
+
+  /* 按鈕邊緣裝飾效果 */
+  .login-btn:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      45deg,
+      transparent 10%,
+      rgba(255, 255, 255, 0.2) 10%,
+      rgba(255, 255, 255, 0.2) 20%,
+      transparent 20%
+    );
+    background-size: 200% 200%;
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 200% 200%;
+    }
+  }
+
+  .login-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
+    background: linear-gradient(135deg, #1e88e5, #0d47a1);
+  }
+
+  .login-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+  }
+
+  /* 按鈕圖示 */
+  .user-icon,
+  .home-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .user-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+  }
+
+  .home-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>');
+  }
+
+  /* 特殊樣式 - 租客和房東分別的顏色變化 */
+  .tenant-btn {
+    background: linear-gradient(135deg, #2196f3, #0d47a1);
+  }
+
+  .landlord-btn {
+    background: linear-gradient(135deg, #1976d2, #01579b);
+  }
+
+  /* 響應式調整 */
+  @media (max-width: 768px) {
+    .login-btn {
+      width: 180px;
+      font-size: 0.9rem;
+      padding: 10px 16px;
+    }
+
+    .login-buttons-container {
+      margin-bottom: 20px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .login-btn {
+      width: 160px;
+      font-size: 0.85rem;
+    }
+  }
 </style>

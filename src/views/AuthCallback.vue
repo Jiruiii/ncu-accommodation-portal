@@ -8,199 +8,194 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useStore } from 'vuex';
-import apiService from '@/services/api';
+  import { ref, onMounted } from "vue";
+  import { useRouter } from "vue-router";
+  import { useStore } from "vuex";
+  import apiService from "@/services/api";
 
-export default {
-  setup() {
-    const router = useRouter();
-    const store = useStore();
-    const message = ref('驗證身份中，請稍候...');
-    
-    onMounted(async () => {
-      try {
-        // 從 URL 獲取認證碼和狀態
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-        const storedState = localStorage.getItem('oauth_state');
-        const actionType = localStorage.getItem('oauth_action');
-        
-        // 清除儲存的狀態
-        localStorage.removeItem('oauth_state');
-        
-        // 驗證狀態是否匹配以防止 CSRF 攻擊
-        if (!state || state !== storedState) {
-          throw new Error('無效的狀態值，可能是跨站請求偽造（CSRF）攻擊');
-        }
-        
-        // 使用 API 服務處理回調
-        const response = await apiService.auth.portal.handleCallback(code, actionType);
-        
-        // 根據操作類型處理結果
-        switch (actionType) {
-          case 'login':
-            // 處理登入
-            handleLoginResponse(response);
-            break;
-          case 'binding':
-            // 處理綁定
-            handleBindingResponse(response);
-            break;
-          case 'getinfo':
-            // 處理獲取資訊
-            handleGetInfoResponse(response);
-            break;
-          default:
-            throw new Error(`未知的操作類型: ${actionType}`);
-        }
-      } catch (error) {
-        console.error('Portal 處理錯誤:', error);
-        message.value = `處理失敗: ${error.message}`;
-        setTimeout(() => {
-          router.push({
-            path: '/login',
-            query: { error: encodeURIComponent(message.value) }
-          });
-        }, 2000);
-      }
-    });
-    
-    // 處理登入回應
-    const handleLoginResponse = (response) => {
-      if (response.success) {
-        // 登入成功
-        localStorage.removeItem('oauth_action');
-        
-        // 使用 Vuex Store 保存用戶信息
-        store.commit('user/SET_USER', response.user);
-        
-        // 設置是否記住我 (Portal 登入預設不記住)
-        const rememberMe = false; 
-        store.commit('user/SET_REMEMBER_ME', rememberMe);
-        
-        // 使用 store 中的方法保存用戶資料
-        const saveUserData = (userData, remember) => {
-          // 總是存入 sessionStorage
-          sessionStorage.setItem("user", JSON.stringify(userData));
-          
-          // 如果選擇記住我，也存入 localStorage
-          if (remember) {
-            localStorage.setItem("user", JSON.stringify(userData));
-          } else {
-            // 確保清除 localStorage 中的資料
-            localStorage.removeItem("user");
+  export default {
+    setup() {
+      const router = useRouter();
+      const store = useStore();
+      const message = ref("驗證身份中，請稍候...");
+
+      onMounted(async () => {
+        try {
+          // 從 URL 獲取認證碼和狀態
+          const urlParams = new URLSearchParams(window.location.search);
+          const code = urlParams.get("code");
+          const state = urlParams.get("state");
+          const storedState = localStorage.getItem("oauth_state");
+          const actionType = localStorage.getItem("oauth_action");
+
+          // 清除儲存的狀態
+          localStorage.removeItem("oauth_state");
+
+          // 驗證狀態是否匹配以防止 CSRF 攻擊
+          if (!state || state !== storedState) {
+            throw new Error("無效的狀態值，可能是跨站請求偽造（CSRF）攻擊");
           }
-        };
-        
-        // 保存用戶資料
-        saveUserData(response.user, rememberMe);
-        
-        message.value = 'Portal 快速登入成功，正在跳轉...';
-        setTimeout(() => {
-          router.push('/profile');
-          // 如果使用路由狀態管理
-          if (store.state.route) {
-            store.commit('SET_CURRENTROUTE', 'profile');
+
+          // 使用 API 服務處理回調
+          const response = await apiService.auth.portal.handleCallback(
+            code,
+            actionType
+          );
+
+          // 根據操作類型處理結果
+          switch (actionType) {
+            case "login":
+              // 處理登入
+              handleLoginResponse(response);
+              break;
+            case "binding":
+              // 處理綁定
+              handleBindingResponse(response);
+              break;
+            case "getinfo":
+              // 處理獲取資訊
+              handleGetInfoResponse(response);
+              break;
+            default:
+              throw new Error(`未知的操作類型: ${actionType}`);
           }
-        }, 1000);
-      } else {
-        // 登入失敗
-        message.value = response.message || 'Portal 登入失敗';
-        setTimeout(() => {
-          router.push({
-            path: '/login',
-            query: { error: encodeURIComponent(message.value) }
-          });
-        }, 2000);
-      }
-    };
-    
-    // 處理綁定回應
-    const handleBindingResponse = (response) => {
-      if (response.success) {
-        message.value = 'Portal 綁定成功！';
-        
-        // 如果綁定成功，更新用戶資料
-        if (store.getters["user/isLoggedIn"]) {
-          store.dispatch("user/fetchUserProfile");
+        } catch (error) {
+          console.error("Portal 處理錯誤:", error);
+          message.value = `處理失敗: ${error.message}`;
+          setTimeout(() => {
+            router.push({
+              path: "/login",
+              query: { error: encodeURIComponent(message.value) },
+            });
+          }, 2000);
         }
-        
-        setTimeout(() => {
-          router.push('/profile');
-        }, 1500);
-      } else {
-        message.value = response.message || 'Portal 綁定失敗';
-        setTimeout(() => {
-          router.push({
-            path: '/profile',
-            query: { error: encodeURIComponent(message.value) }
+      });
+
+      // 處理登入回應
+      const handleLoginResponse = async (response) => {
+        if (response.success) {
+          localStorage.removeItem("oauth_action");
+
+          store.commit("user/SET_USER", response.user);
+
+          // 設置是否記住我 (Portal 登入預設記住)
+          const rememberMe = true;
+          store.commit("user/SET_REMEMBER_ME", rememberMe);
+
+          await store.dispatch("user/fetchUserProfile");
+
+          message.value = "Portal 快速登入成功，正在跳轉...";
+
+          setTimeout(() => {
+            router.push("/profile");
+          }, 1500);
+        } else {
+          // 登入失敗
+          message.value = response.message || "Portal 登入失敗";
+          setTimeout(() => {
+            router.push({
+              path: "/login",
+              query: { error: encodeURIComponent(message.value) },
+            });
+          }, 2000);
+        }
+      };
+
+      // 處理綁定回應
+      const handleBindingResponse = async (response) => {
+        if (response.success) {
+          message.value = "Portal 綁定成功！";
+
+          // 如果綁定成功，更新用戶資料
+          await store.dispatch("user/updateProfile", {
+            has_portal_id: true,
+            school_email: response.user.school_email,
           });
-        }, 2000);
-      }
-    };
-    
-    // 處理獲取資訊回應
-    const handleGetInfoResponse = (response) => {
-      if (response.success) {
-        // 儲存 Portal 資訊用於後續註冊
-        localStorage.setItem('portalBound', 'true');
-        localStorage.setItem('portalInfo', JSON.stringify(response.portal_data));
-        
-        message.value = 'Portal 資訊獲取成功，返回註冊流程...';
-        setTimeout(() => {
-          router.push({
-            path: '/login',
-            query: { register: 'true' }
-          });
-        }, 1500);
-      } else {
-        // 獲取資訊失敗
-        message.value = response.message || 'Portal 資訊獲取失敗';
-        setTimeout(() => {
-          router.push({
-            path: '/login',
-            query: { error: encodeURIComponent(message.value) }
-          });
-        }, 2000);
-      }
-    };
-    
-    return {
-      message
-    };
-  }
-}
+
+          if (store.getters["user/isLoggedIn"]) {
+            store.dispatch("user/fetchUserProfile");
+          }
+
+          setTimeout(() => {
+            router.push("/profile?tab=settings");
+          }, 1500);
+        } else {
+          message.value = response.message || "Portal 綁定失敗";
+          setTimeout(() => {
+            router.push({
+              path: "/profile?tab=settings",
+              query: { error: encodeURIComponent(message.value) },
+            });
+          }, 2000);
+        }
+      };
+
+      // 處理獲取資訊回應
+      const handleGetInfoResponse = (response) => {
+        if (response.success) {
+          // 儲存 Portal 資訊用於後續註冊
+          localStorage.setItem("portalBound", "true");
+          localStorage.setItem(
+            "portalInfo",
+            JSON.stringify(response.portal_data)
+          );
+
+          message.value = "Portal 資訊獲取成功，返回註冊流程...";
+          setTimeout(() => {
+            router.push({
+              path: "/login",
+              query: { register: "true" },
+            });
+          }, 1500);
+        } else {
+          // 獲取資訊失敗
+          message.value = response.message || "Portal 資訊獲取失敗";
+          setTimeout(() => {
+            router.push({
+              path: "/login",
+              query: { error: encodeURIComponent(message.value) },
+            });
+          }, 2000);
+        }
+      };
+
+      return {
+        message,
+      };
+    },
+  };
 </script>
 
 <style scoped>
-.auth-callback-container {
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #272727;
-  color: white;
-}
+  .auth-callback-container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #272727;
+    color: white;
+  }
 
-.loading {
-  text-align: center;
-}
+  .loading {
+    text-align: center;
+  }
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  margin: 0 auto 20px;
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  border-top-color: #66b3ff;
-  animation: spin 1s infinite linear;
-}
+  .spinner {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 20px;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    border-top-color: #66b3ff;
+    animation: spin 1s infinite linear;
+  }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
 </style>

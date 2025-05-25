@@ -471,7 +471,7 @@ export default {
     const syncFavorites = async () => {
       isLoading.value = true;
       try {
-        if (store.getters.isLoggedIn) {
+        if (store.getters["user/isLoggedIn"]) {
           await store.dispatch("syncFavorites");
         }
       } catch (error) {
