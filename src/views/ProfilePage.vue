@@ -1464,49 +1464,43 @@
 
   /* 租屋操作按鈕樣式優化 */
   .lease-actions {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-    padding: 20px 0;
-  }
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  padding: 20px 0;
+}
 
-  .action-btn {
-    padding: 15px 20px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    color: #ffffff;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
+.action-btn {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #EBF3FE 0%, #E0EEFE 100%);
+  color: #1565C0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
 
-  /* 每個按鈕使用不同的柔和漸層色 */
-  .action-btn.report {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    color: #1565c0;
-  }
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.15);
+  filter: brightness(1.05);
+}
 
-  .action-btn.extend {
-    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-    color: #7b1fa2;
-  }
-
-  .action-btn.terminate {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-    color: #2e7d32;
-  }
-
-  .action-btn.receipt {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-    color: #e65100;
-  }
+/* 移除不同按鈕的顏色設定，保持統一風格 */
+.action-btn.report,
+.action-btn.extend,
+.action-btn.terminate,
+.action-btn.receipt {
+  background: linear-gradient(135deg, #EBF3FE 0%, #E0EEFE 100%);
+  color: #1565C0;
+}
 
   /* 懸浮效果 */
   .action-btn:hover {
