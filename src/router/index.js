@@ -166,7 +166,17 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
+  // if (from.name === 'map-search' && to.name !== 'map-search') {
+  //   // 先導航到目標頁面
+  //   next();
+
+  //   // 然後重新載入頁面
+  //   window.location.href = to.fullPath;
+  //   return;
+  // }
+
+  const userStr =
+    localStorage.getItem("user") || sessionStorage.getItem("user");
   const isLoggedIn = !!userStr;
 
   // 探查是否已登入
@@ -240,7 +250,7 @@ router.beforeEach(async (to, from, next) => {
   }
 });
 
-router.afterEach((to) => {
+router.afterEach((to, from) => {
   // 根據路由名稱映射到 CircleNavigation 使用的標識符
   const routeMapping = {
     home: "home",
@@ -260,6 +270,15 @@ router.afterEach((to) => {
     if (store) {
       store.commit("SET_CURRENTROUTE", routeMapping[routeName]);
     }
+  }
+
+  if (from.name === "map-search" && to.name !== "map-search") {
+    console.log("從地圖頁面離開，正在重新載入頁面...");
+
+    // 使用 setTimeout 確保頁面已經切換
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
   }
 });
 

@@ -489,7 +489,7 @@ def update_user(user_id):
     if 'is_verified' in data:
         user.is_verified = data['is_verified']
     
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.datetime.utcnow()
     db.session.commit()
     
     return jsonify({

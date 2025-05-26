@@ -33,6 +33,9 @@ export default createStore({
     mapView: false,
     mapCenter: { lat: 24.968, lng: 121.1944 }, // 中央大學座標
     mapZoom: 15,
+
+    // 收藏房源
+    favorites: [],
   },
 
   mutations: {
@@ -120,12 +123,8 @@ export default createStore({
       );
     },
 
-    TOGGLE_MAP_VIEW(state) {
-      state.mapView = !state.mapView;
-    },
-
-    SET_MAP_CENTER(state, center) {
-      state.mapCenter = center;
+    ADD_FAVORITE(state, property) {
+      state.favorites.push(property)
     },
 
     // 更新評論相關 mutations
@@ -160,7 +159,15 @@ export default createStore({
     SET_ALL_COMMENTS(state, comments) {
       // 替換所有評論數據
       state.comments = comments;
-    }
+    },
+
+    UPDATE_PROPERTY_LOCATION(state, { id, location }) {
+      const property = state.accommodations.find(p => p.編碼 === id)
+      if (property) {
+        property.latitude = location.latitude
+        property.longitude = location.longitude
+      }
+    },
   },
 
   actions: {
@@ -705,6 +712,17 @@ export default createStore({
       return state.accommodations.filter((property) =>
         state.favoriteIds.includes(property.編碼 || 0)
       );
+    },
+    favoriteProperties: (state) => {
+      return state.accommodations.filter((property) =>
+        state.favoriteIds.includes(property.編碼 || 0)
+      );
+    },
+    getPropertyComments: (state) => (propertyId) => {
+      return state.comments[propertyId] || [];
+    },
+    isFavorite: (state) => (id) => {
+      return state.favorites.some(item => item.編碼 === id)
     },
   },
 

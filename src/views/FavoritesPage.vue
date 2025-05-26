@@ -767,8 +767,7 @@ export default {
 
     // 前往租屋列表
     const goToList = () => {
-      router.push({ name: "accommmodation-list" });
-      
+      router.push({ name: "accommodation-list" });
     };
 
     // 檢查項目是否被選中
@@ -818,11 +817,14 @@ export default {
           ? selectedItems.value
           : favoriteItems.value.map((item) => item.id);
 
+      console.log("準備在地圖上顯示的房源 ID:", idsToShow);
+
       router.push({
         name: "map-search",
         query: {
           ids: idsToShow.join(","),
           source: "favorites",
+          selected: selectedItems.value.length > 0 ? "true" : "false" 
         },
       });
     };
