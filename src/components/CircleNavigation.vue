@@ -87,6 +87,10 @@
       const dragOffsetX = ref(0);
       const dragOffsetY = ref(0);
 
+      const dragStartX = ref(0);
+      const dragStartY = ref(0);
+      const dragTimerId = ref(null);
+
       // 紀錄拖拉相關變數
       const dragStartTime = ref(0);
       const hasDragged = ref(false);
@@ -144,7 +148,7 @@
                   navContainer.value.classList.remove("closing");
                   navContainer.value.classList.remove("animating");
                 }
-              }, 600);
+              }, 300);
             }
           }
         },
@@ -263,23 +267,42 @@
       const handleMouseMove = (event) => {
         if (!isDragging.value) return;
 
-        event.preventDefault();
+        // 計算拖動距離
+        const dragDistanceX = Math.abs(event.clientX - dragStartX.value);
+        const dragDistanceY = Math.abs(event.clientY - dragStartY.value);
+        const dragDistance = Math.sqrt(
+          dragDistanceX * dragDistanceX + dragDistanceY * dragDistanceY
+        );
 
-        hasDragged.value = true; // 標記為拖拉狀態
-
-        updatePosition(event.clientX, event.clientY);
+        // 關鍵：使用更小的閾值來判定拖動
+        if (dragDistance > 5) {
+          // 超級小的閾值，3像素
+          hasDragged.value = true;
+          event.preventDefault();
+          updatePosition(event.clientX, event.clientY);
+        }
       };
 
       // 觸摸拖動
       const handleTouchMove = (event) => {
         if (!isDragging.value) return;
 
-        event.preventDefault();
-
-        hasDragged.value = true; // 標記為拖拉狀態
-
         const touch = event.touches[0];
-        updatePosition(touch.clientX, touch.clientY);
+
+        // 計算拖動距離
+        const dragDistanceX = Math.abs(touch.clientX - dragStartX.value);
+        const dragDistanceY = Math.abs(touch.clientY - dragStartY.value);
+        const dragDistance = Math.sqrt(
+          dragDistanceX * dragDistanceX + dragDistanceY * dragDistanceY
+        );
+
+        // 關鍵：使用更小的閾值來判定拖動
+        if (dragDistance > 3) {
+          // 超級小的閾值，3像素
+          hasDragged.value = true;
+          event.preventDefault();
+          updatePosition(touch.clientX, touch.clientY);
+        }
       };
 
       // 更新位置
@@ -322,24 +345,54 @@
 
       // 拖動結束
       const handleMouseUp = (event) => {
+        // 清除拖動計時器
+        if (dragTimerId.value) {
+          clearTimeout(dragTimerId.value);
+          dragTimerId.value = null;
+        }
+
         if (isDragging.value) {
+          // 計算拖動距離
+          let dragDistance = 0;
+          if (event.type.startsWith("mouse")) {
+            const dragDistanceX = Math.abs(event.clientX - dragStartX.value);
+            const dragDistanceY = Math.abs(event.clientY - dragStartY.value);
+            dragDistance = Math.sqrt(
+              dragDistanceX * dragDistanceX + dragDistanceY * dragDistanceY
+            );
+          } else if (event.type.startsWith("touch")) {
+            // 處理觸摸事件
+            if (event.changedTouches && event.changedTouches.length > 0) {
+              const touch = event.changedTouches[0];
+              const dragDistanceX = Math.abs(touch.clientX - dragStartX.value);
+              const dragDistanceY = Math.abs(touch.clientY - dragStartY.value);
+              dragDistance = Math.sqrt(
+                dragDistanceX * dragDistanceX + dragDistanceY * dragDistanceY
+              );
+            }
+          }
+
+          // 關鍵：更嚴格的點擊判定 - 距離極小視為點擊
+          const isDragAction = dragDistance > 3; // 超過3像素視為拖動
+
+          // 先重置拖動狀態
           isDragging.value = false;
 
-          const isClick =
-            new Date().getTime() - dragStartTime.value < clickThreshold &&
-            !hasDragged.value;
-
-          // 如果不是點擊，立即重置狀態，避免誤觸發點擊事件
-          if (!isClick) {
+          // 判斷是點擊還是拖動
+          if (!isDragAction && event.target.closest(".main-nav-button")) {
+            // 是點擊主按鈕
             event.preventDefault();
             event.stopPropagation();
 
+            // 立即執行點擊，不再延遲
+            toggleNavigation();
+          } else if (isDragAction) {
+            // 是真正的拖動，執行吸附
             snapToNearestEdge();
           }
 
-          setTimeout(() => {
-            hasDragged.value = false;
-          }, 100);
+          // 重置拖動標記
+          hasDragged.value = isDragAction;
         }
       };
 
@@ -387,9 +440,7 @@
           }
 
           // 設置足夠的動畫時間
-          const animationDuration = isOpen.value
-            ? 600
-            : navOptions.length * 50 + 300;
+          const animationDuration = isOpen.value ? 300 : 200;
 
           setTimeout(() => {
             isAnimating.value = false;
@@ -712,7 +763,7 @@
         toggleNavigation();
 
         store.commit("SET_CURRENTROUTE", route);
-        
+
         router.push({ name: route });
 
         store.commit("CLOSE_NAV");
@@ -720,59 +771,63 @@
 
       // 處理主按鈕點擊
       const handleMainButtonClick = (event) => {
+        // 不再需要這個函數做任何事，因為在 mouseup/touchend 處理所有邏輯
         event.preventDefault();
         event.stopPropagation();
 
-        // 如果是拖拉結束後，不觸發點擊事件
-        if (hasDragged.value || isDragging.value) {
-          return;
+        // 僅當確實沒有發生拖動時才處理點擊
+        if (!hasDragged.value) {
+          toggleNavigation();
         }
-
-        // if (new Date().getTime() - dragStartTime.value < clickThreshold) {
-        toggleNavigation();
-        // }
       };
 
       // 處理主按鈕的鼠標按下事件
       const handleMainButtonMouseDown = (event) => {
         event.stopPropagation();
 
-        // 記錄開始時間和狀態
+        // 立即記錄起始位置，不管是否會拖動
         dragStartTime.value = new Date().getTime();
+        dragStartX.value = event.clientX;
+        dragStartY.value = event.clientY;
         hasDragged.value = false;
 
-        // 只有在菜單收起時才允許拖動主按鈕
-        if (!isOpen.value) {
-          // 獲取當前元素位置
-          const rect = navContainer.value.getBoundingClientRect();
+        // 獲取當前元素位置，為可能的拖動做準備
+        const rect = navContainer.value.getBoundingClientRect();
+        dragOffsetX.value = event.clientX - rect.left;
+        dragOffsetY.value = event.clientY - rect.top;
 
-          // 計算鼠標在元素內的相對位置
-          dragOffsetX.value = event.clientX - rect.left;
-          dragOffsetY.value = event.clientY - rect.top;
-
-          // 立即標記為拖拉狀態
-          isDragging.value = true;
+        // 如果是展開狀態，不允許拖動
+        if (isOpen.value) {
+          return;
         }
+
+        // 設置較短的延遲時間來判斷是否為拖动
+        dragTimerId.value = setTimeout(() => {
+          isDragging.value = true;
+        }, 100); // 更短的延遲，100ms 就足夠判斷是否為拖動意圖
       };
 
       // 處理主按鈕的觸摸開始事件
       const handleMainButtonTouchStart = (event) => {
         event.stopPropagation();
 
-        // 記錄開始時間和狀態
+        const touch = event.touches[0];
         dragStartTime.value = new Date().getTime();
+        dragStartX.value = touch.clientX;
+        dragStartY.value = touch.clientY;
         hasDragged.value = false;
 
-        // 獲取當前元素位置
         const rect = navContainer.value.getBoundingClientRect();
-
-        // 計算觸摸點在元素內的相對位置
-        const touch = event.touches[0];
         dragOffsetX.value = touch.clientX - rect.left;
         dragOffsetY.value = touch.clientY - rect.top;
 
-        // 立即標記為拖拉狀態
-        isDragging.value = true;
+        if (isOpen.value) {
+          return;
+        }
+
+        dragTimerId.value = setTimeout(() => {
+          isDragging.value = true;
+        }, 100);
       };
 
       // 修改吸附函數，避免吸附到角落
