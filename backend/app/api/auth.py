@@ -270,13 +270,32 @@ def portal_callback():
             user = User.query.filter_by(portal_id=identifier).first()
             
             if not user:
-                # 找不到對應的用戶，返回錯誤信息
-                return jsonify({
-                    "success": False,
-                    "message": "此 Portal 帳號尚未綁定，請先使用電子郵件登入後在個人資料頁面綁定"
-                }), 404
+                # 用戶不存在，自動建立新用戶
+                portal_email = user_info.get('email')
+                if portal_email:
+                    existing_user_by_email = User.query.filter_by(email=portal_email).first()
+                    if existing_user_by_email:
+                        # 如果電子郵件已存在但未綁定 Portal ID，提示用戶先登入再綁定
+                        return jsonify({
+                            "success": False,
+                            "message": "此電子郵件已被註冊，但尚未綁定 Portal 帳號。請先用電子郵件登入後，在個人資料頁面進行綁定。"
+                        }), 409
+
+                new_user = User(
+                    portal_id=identifier,
+                    username=user_info.get('chineseName') or 'Portal User',
+                    email=portal_email,
+                    school_email=portal_email,
+                    is_verified=True,
+                    user_role='student'  # 預設為學生
+                )
+                new_user.set_password(str(uuid.uuid4()))  # 設定一個隨機的、無法直接使用的密碼
+                
+                db.session.add(new_user)
+                db.session.commit()
+                user = new_user
             
-            # 找到用戶，執行登入
+            # 找到或創建用戶後，執行登入
             session['user_id'] = user.user_id
             session['username'] = user.username
             session['user_role'] = user.user_role
@@ -289,7 +308,7 @@ def portal_callback():
             # 返回用戶資訊
             return jsonify({
                 "success": True,
-                "message": "Portal 快速登入成功",
+                "message": "Portal 登入成功",
                 "user": {
                     "user_id": user.user_id,
                     "username": user.username,

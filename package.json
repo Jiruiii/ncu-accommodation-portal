@@ -27,7 +27,7 @@
   "devDependencies": {
     "@vue/cli-service": "~5.0.0",
     "autoprefixer": "^10.4.14",
-    "concurrently": "^9.1.2",
+    "concurrently": "^9.2.1",
     "globals": "^16.1.0",
     "postcss": "^8.4.23",
     "webpack": "^5.99.8",
