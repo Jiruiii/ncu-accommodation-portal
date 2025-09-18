@@ -174,7 +174,7 @@ export const apiService = {
     portal: {
       // 用於Portal綁定的URL
       getBindingUrl: () => {
-        const clientId = "20250507153856UyZ8gD4BXoY5";
+        const clientId = "20250918165350qQGrRKwccnPj";
         const redirectUri = encodeURIComponent(
           `${window.location.origin}/auth/callback`
         );
@@ -192,7 +192,7 @@ export const apiService = {
 
       // Portal 快速登入
       getLoginUrl: () => {
-        const clientId = "20250507153856UyZ8gD4BXoY5";
+        const clientId = "20250918165350qQGrRKwccnPj";
         const redirectUri = encodeURIComponent(
           `${window.location.origin}/auth/callback`
         );
@@ -210,7 +210,7 @@ export const apiService = {
 
       // 註冊時獲取 Portal 資訊
       getInfoUrl: () => {
-        const clientId = "20250507153856UyZ8gD4BXoY5";
+        const clientId = "20250918165350qQGrRKwccnPj";
         const redirectUri = encodeURIComponent(
           `${window.location.origin}/auth/callback`
         );
