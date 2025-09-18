@@ -229,19 +229,32 @@ def portal_callback():
         token_url = 'https://portal.ncu.edu.tw/oauth2/token'
         auth_header = base64.b64encode(f"{os.environ.get('NCU_OAUTH_CLIENT_ID')}:{os.environ.get('NCU_OAUTH_CLIENT_SECRET', '')}".encode()).decode()
         
-        token_response = requests.post(
-            token_url,
-            headers={
-                'Authorization': f'Basic {auth_header}',
-                'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            data={
-                'grant_type': 'authorization_code',
-                'code': code,
-                'redirect_uri': REDIRECT_URI
-            }
-        )
+        print(f"嘗試連接到 {token_url}")
+        
+        try:
+            token_response = requests.post(
+                token_url,
+                headers={
+                    'Authorization': f'Basic {auth_header}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                data={
+                    'grant_type': 'authorization_code',
+                    'code': code,
+                    'redirect_uri': REDIRECT_URI
+                },
+                timeout=10  # 添加 10 秒超時
+            )
+        except requests.exceptions.ConnectTimeout:
+            print("連接到 Portal 超時")
+            return jsonify({"success": False, "message": "連接到 NCU Portal 超時，請稍後再試"}), 503
+        except requests.exceptions.ConnectionError as e:
+            print(f"連接到 Portal 失敗: {str(e)}")
+            return jsonify({"success": False, "message": "無法連接到 NCU Portal 服務，請檢查網路連接或稍後再試"}), 503
+        except requests.exceptions.RequestException as e:
+            print(f"請求 Portal 時發生錯誤: {str(e)}")
+            return jsonify({"success": False, "message": "向 NCU Portal 發送請求時發生錯誤"}), 503
         
         token_data = token_response.json()
         
@@ -250,12 +263,24 @@ def portal_callback():
         
         # 2. 獲取用戶資訊
         user_info_url = 'https://portal.ncu.edu.tw/apis/oauth/v1/info'
-        user_response = requests.get(
-            user_info_url,
-            headers={
-                'Authorization': f'Bearer {token_data["access_token"]}'
-            }
-        )
+        
+        try:
+            user_response = requests.get(
+                user_info_url,
+                headers={
+                    'Authorization': f'Bearer {token_data["access_token"]}'
+                },
+                timeout=10  # 添加 10 秒超時
+            )
+        except requests.exceptions.ConnectTimeout:
+            print("獲取用戶資訊時連接超時")
+            return jsonify({"success": False, "message": "獲取用戶資訊時連接超時"}), 503
+        except requests.exceptions.ConnectionError as e:
+            print(f"獲取用戶資訊時連接失敗: {str(e)}")
+            return jsonify({"success": False, "message": "無法連接到 NCU Portal 獲取用戶資訊"}), 503
+        except requests.exceptions.RequestException as e:
+            print(f"獲取用戶資訊時發生錯誤: {str(e)}")
+            return jsonify({"success": False, "message": "獲取用戶資訊時發生錯誤"}), 503
         
         user_info = user_response.json()
         
@@ -473,7 +498,7 @@ def forgot_password():
         db.session.commit()
         
         # 生成重設鏈接 - 使用前端部署的URL (假設從環境變數取得)
-        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:8080')
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://140.115.16.216')
         reset_link = f"{frontend_url}/reset-password?token={reset_token}"
         
         # 準備郵件內容

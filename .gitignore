@@ -31,4 +31,12 @@ backend/**/**/**/__pycache__/
 
 # database files
 backend/data.sqlite
-backend/flask_session/
+backend/flask_session/backend/Miniconda3-latest-Linux-x86_64.sh
+backend/nohup.out
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/api/__pycache__/
+backend/app/models/__pycache__/
+backend/app/utils/__pycache__/
+**/__pycache__/
+*.pyc
