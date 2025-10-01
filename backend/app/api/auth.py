@@ -215,37 +215,62 @@ def verify_token():
 
 @api_bp.route('/auth/portal-callback', methods=['POST'])
 def portal_callback():
+    """Handle NCU Portal OAuth callback and exchange code for token per portal4g-doc."""
     data = request.json
-    
+
     if not data or not data.get('code'):
         return jsonify({"success": False, "message": "缺少授權碼"}), 400
-    
-    code = data.get('code')
+
+    code = data.get('code').strip()
+    # 如果前端提供 redirect_uri，優先使用以確保與授權時一致
+    redirect_uri_override = data.get('redirect_uri')
     # 修正參數名稱從 actiontype 改為 action_type
     action_type = data.get('action_type', 'login')
-    
+
     try:
-        # 1. 向 Portal 系統交換 token
+        # 1) 交換 token：先嘗試 Basic Auth，再嘗試 body 帶 client_id/client_secret（因部分伺服器僅接受其一）
         token_url = 'https://portal.ncu.edu.tw/oauth2/token'
-        auth_header = base64.b64encode(f"{os.environ.get('NCU_OAUTH_CLIENT_ID')}:{os.environ.get('NCU_OAUTH_CLIENT_SECRET', '')}".encode()).decode()
-        
+        auth_header = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
+
         print(f"嘗試連接到 {token_url}")
-        
-        try:
-            token_response = requests.post(
+
+        def request_token_with_basic():
+            return requests.post(
                 token_url,
                 headers={
                     'Authorization': f'Basic {auth_header}',
                     'Accept': 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 data={
                     'grant_type': 'authorization_code',
                     'code': code,
-                    'redirect_uri': REDIRECT_URI
+                    'redirect_uri': redirect_uri_override or REDIRECT_URI,
+                    # 某些供應商即使使用 Basic Auth 仍要求帶上 client_id
+                    'client_id': CLIENT_ID or '',
                 },
-                timeout=10  # 添加 10 秒超時
+                timeout=10,
             )
+
+        def request_token_with_body_creds():
+            return requests.post(
+                token_url,
+                headers={
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                data={
+                    'grant_type': 'authorization_code',
+                    'code': code,
+                    'redirect_uri': redirect_uri_override or REDIRECT_URI,
+                    'client_id': CLIENT_ID or '',
+                    'client_secret': CLIENT_SECRET or '',
+                },
+                timeout=10,
+            )
+
+        try:
+            token_response = request_token_with_basic()
         except requests.exceptions.ConnectTimeout:
             print("連接到 Portal 超時")
             return jsonify({"success": False, "message": "連接到 NCU Portal 超時，請稍後再試"}), 503
@@ -255,11 +280,53 @@ def portal_callback():
         except requests.exceptions.RequestException as e:
             print(f"請求 Portal 時發生錯誤: {str(e)}")
             return jsonify({"success": False, "message": "向 NCU Portal 發送請求時發生錯誤"}), 503
-        
-        token_data = token_response.json()
-        
+
+        # 嘗試解析 JSON；若非 JSON，建立占位資訊
+        def parse_token_response(resp):
+            try:
+                return resp.json()
+            except Exception:
+                return {"raw": resp.text}
+
+        token_data = parse_token_response(token_response)
+        tried = 'basic'
+
+        # 若第一次嘗試失敗且錯誤為 invalid_request/invalid_client，改用 body 夾帶 client_id/client_secret 再試一次
         if 'access_token' not in token_data:
-            return jsonify({"success": False, "message": "無法獲取訪問令牌"}), 401
+            first_error = token_data.get('error') if isinstance(token_data, dict) else None
+            if first_error in ('invalid_request', 'invalid_client', 'unauthorized_client'):
+                print("第一次嘗試（Basic Auth）失敗，改用 body 資格認證再試……")
+                token_response = request_token_with_body_creds()
+                token_data = parse_token_response(token_response)
+                tried = 'body-creds'
+
+        if 'access_token' not in token_data:
+            # 依官方建議，將 portal 返回的錯誤帶回前端以便對齊設定
+            error = token_data.get('error') if isinstance(token_data, dict) else None
+            description = token_data.get('error_description') if isinstance(token_data, dict) else None
+            debug = {
+                "status": token_response.status_code,
+                "error": error,
+                "error_description": description,
+                "using_redirect_uri": redirect_uri_override or REDIRECT_URI,
+                "client_id_suffix": (CLIENT_ID[-6:] if CLIENT_ID else None),
+                "grant_type": 'authorization_code',
+                "code_present": bool(code),
+                "code_length": len(code) if isinstance(code, str) else None,
+                "attempt": tried,
+                "raw": token_response.text[:500],
+            }
+            print(f"交換 token 失敗: {debug}")
+            import logging
+            logging.info("CLIENT_ID: %s", os.environ.get("NCU_OAUTH_CLIENT_ID"))
+            logging.info("CLIENT_SECRET: %s", os.environ.get("NCU_OAUTH_CLIENT_SECRET"))
+
+            message = "無法獲取訪問令牌"
+            if error:
+                message += f": {error}"
+            if description:
+                message += f" - {description}"
+            return jsonify({"success": False, "message": message, "debug": debug}), 401
         
         # 2. 獲取用戶資訊
         user_info_url = 'https://portal.ncu.edu.tw/apis/oauth/v1/info'
@@ -281,7 +348,8 @@ def portal_callback():
         except requests.exceptions.RequestException as e:
             print(f"獲取用戶資訊時發生錯誤: {str(e)}")
             return jsonify({"success": False, "message": "獲取用戶資訊時發生錯誤"}), 503
-        
+
+        # 解析用戶資訊
         user_info = user_response.json()
         
         # 3. 處理用戶資訊
@@ -445,7 +513,7 @@ def portal_callback():
             "success": False,
             "message": f"處理失敗: {str(e)}"
         }), 500
-    
+
 @api_bp.route('/auth/logout', methods=['POST'])
 def logout():
     """登出用戶，清除 session"""

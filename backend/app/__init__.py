@@ -9,7 +9,11 @@ from app.extensions import db, migrate, jwt
 from dotenv import load_dotenv
 import os 
 
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
+# 載入 .env 文件，先嘗試當前目錄，再嘗試父目錄
+env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+if not os.path.exists(env_path):
+    env_path = os.path.join(os.getcwd(), '.env')
+load_dotenv(env_path)
 socketio = SocketIO(cors_allowed_origins="*")
 
 def create_app(config_name='default'):
@@ -26,21 +30,36 @@ def create_app(config_name='default'):
     
     # 確保 Cookie 設置正確
     app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SECURE'] = False  # 開發環境設為 False，生產環境設為 True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    # 在生產環境請將 SESSION_COOKIE_SECURE 設為 True 並使用相同網域的前後端
+    app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
+    app.config['SESSION_COOKIE_SAMESITE'] = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
     
     # 初始化 Session
     Session(app)  
     
     # 初始化 CORS
-    CORS(app, 
-        supports_credentials=True, 
-        resources={r"/*": {
-            "origins": ["http://140.115.16.216", "http://140.115.16.216"],  
-            "methods": ["GET", "POST", "PUT", "DELETE","OPTIONS"],  
-            "allow_headers": ["Content-Type", "Authorization", "Cookie"],  # 添加 Cookie
-            "expose_headers": ["Content-Length", "X-JSON"],  
-        }}
+    allowed_origins = [
+        # production domains
+        "https://rooms.student.ncu.edu.tw",
+        "http://140.115.16.216",
+        "https://140.115.16.216",
+        # local dev
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8080",
+    ]
+
+    CORS(
+        app,
+        supports_credentials=True,
+        resources={
+            r"/*": {
+                "origins": allowed_origins,
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization", "Cookie"],
+                "expose_headers": ["Content-Length", "X-JSON"],
+            }
+        },
     )
     
     

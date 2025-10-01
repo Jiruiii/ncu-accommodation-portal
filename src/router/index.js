@@ -9,6 +9,7 @@ const FavoritesPage = () => import("@/views/FavoritesPage.vue");
 const SubletPage = () => import("@/views/SubletPage.vue");
 const LoginPage = () => import("@/views/LoginPage.vue");
 const AuthCallback = () => import("@/views/AuthCallback.vue");
+const AuthLoginView = () => import("@/views/AuthLogin.vue");
 const ResetPasswordPage = () => import("@/views/ResetPasswordPage.vue");
 const ChatRoom = () => import("@/components/ChatRoom.vue");
 
@@ -76,6 +77,13 @@ const routes = [
     path: "/auth/callback",
     name: "AuthCallback",
     component: AuthCallback,
+    meta: { requiresAuth: false },
+  },
+  // SSO Login entry: redirect user to Portal authorization and reuse callback view
+  {
+    path: "/auth/login",
+    name: "AuthLogin",
+      component: AuthLoginView,
     meta: { requiresAuth: false },
   },
   {

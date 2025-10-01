@@ -1,4 +1,19 @@
-const API_BASE_URL = "";
+// Read env from Vue CLI (webpack) style
+const API_BASE_URL = (typeof process !== 'undefined' && process.env && process.env.VUE_APP_API_BASE_URL) || "";
+
+// Portal OAuth config from env - 根據圖片中的正確配置
+const PORTAL_CLIENT_ID =
+  (typeof process !== 'undefined' && process.env && process.env.VUE_APP_PORTAL_CLIENT_ID) ||
+  '20250918165350qQGrRKwccnPj';  // 從圖片中的 Client ID
+
+const PORTAL_REDIRECT_URI =
+  (typeof process !== 'undefined' && process.env && process.env.VUE_APP_PORTAL_REDIRECT_URI) ||
+  'https://rooms.student.ncu.edu.tw/auth/callback';  // 從圖片中的 Return To Address
+
+// Default scopes suggested by portal4g-doc. Scopes are space-delimited.
+const PORTAL_SCOPES =
+  (typeof process !== 'undefined' && process.env && process.env.VUE_APP_PORTAL_SCOPES) ||
+  "identifier chinese-name english-name gender birthday personal-id student-id academy-records faculty-records email mobile-phone alternate-id";
 
 export const apiService = {
   // 通用 API 方法
@@ -172,62 +187,60 @@ export const apiService = {
 
     // NCU Portal OAuth 相關
     portal: {
+      // 產生 Portal OAuth 授權 URL（共用）
+      _buildAuthUrl: (state) => {
+        if (!PORTAL_CLIENT_ID) {
+          console.error("VITE_PORTAL_CLIENT_ID 未設定");
+        }
+        const clientId = encodeURIComponent(PORTAL_CLIENT_ID || "");
+        const redirectUri = encodeURIComponent(PORTAL_REDIRECT_URI);
+        // const redirectUri = encodeURIComponent('https://rooms.student.ncu.edu.tw/auth/callback');
+        const scopes = encodeURIComponent(PORTAL_SCOPES);
+        return `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&state=${state}`;
+      },
+
       // 用於Portal綁定的URL
       getBindingUrl: () => {
-        const clientId = "20250918165350qQGrRKwccnPj";
-        const redirectUri = encodeURIComponent(
-          `${window.location.origin}/auth/callback`
-        );
-        const scopes = encodeURIComponent(
-          "id identifier chinese-name student-id academy-records email mobile-phone"
-        );
         const state = generateRandomState();
-
-        // 保存 state 到 localStorage
         localStorage.setItem("oauth_state", state);
         localStorage.setItem("oauth_action", "binding");
-
-        return `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&state=${state}`;
+        return apiService.auth.portal._buildAuthUrl(state);
       },
 
       // Portal 快速登入
       getLoginUrl: () => {
-        const clientId = "20250918165350qQGrRKwccnPj";
-        const redirectUri = encodeURIComponent(
-          `${window.location.origin}/auth/callback`
-        );
-        const scopes = encodeURIComponent(
-          "id identifier chinese-name student-id academy-records email mobile-phone"
-        );
-        const state = generateRandomState();
+        const timestamp = Date.now();
+        const state = generateRandomState() + "_" + timestamp;
 
-        // 保存 state 到 localStorage
+        // 清除舊的 OAuth 相關數據
+        localStorage.removeItem("oauth_state");
+        localStorage.removeItem("oauth_action");
+        localStorage.removeItem("portal_auth_code");
+
+        // 保存新的 state 到 localStorage
         localStorage.setItem("oauth_state", state);
         localStorage.setItem("oauth_action", "login");
 
-        return `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&state=${state}`;
+        return `${apiService.auth.portal._buildAuthUrl(state)}&t=${timestamp}`;
       },
 
       // 註冊時獲取 Portal 資訊
       getInfoUrl: () => {
-        const clientId = "20250918165350qQGrRKwccnPj";
-        const redirectUri = encodeURIComponent(
-          `${window.location.origin}/auth/callback`
-        );
-        const scopes = encodeURIComponent(
-          "id identifier chinese-name student-id academy-records email mobile-phone"
-        );
         const state = generateRandomState();
-
-        // 保存 state 到 localStorage
         localStorage.setItem("oauth_state", state);
         localStorage.setItem("oauth_action", "getinfo");
         localStorage.setItem("bindingForRegistration", "true");
-
-        return `https://portal.ncu.edu.tw/oauth2/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes}&state=${state}`;
+        return apiService.auth.portal._buildAuthUrl(state);
       },
-      handleCallback: (code, action_type) =>
-        apiService.post("/api/auth/portal-callback", { code, action_type }),
+
+      // 將 code 與 redirect_uri 傳給後端交換 token（redirect_uri 必須與授權時完全一致）
+      handleCallback: (code, action_type, state) =>
+  apiService.post("/api/auth/portal-callback", {
+    code,
+    action_type,
+    state,
+    redirect_uri: PORTAL_REDIRECT_URI,
+  }),
     },
   },
 

@@ -1,0 +1,27 @@
+[Unit]
+Description=NCU Accommodation Portal Backend
+After=network.target
+
+[Service]
+Type=simple
+User=ncuroom
+Group=ncuroom
+WorkingDirectory=/var/www/ncu-accommodation-portal/backend
+Environment="PATH=/home/ncuroom/miniconda3/envs/ncu/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+Environment="FLASK_ENV=production"
+Environment="FLASK_DEBUG=False"
+ExecStart=/home/ncuroom/miniconda3/envs/ncu/bin/python /var/www/ncu-accommodation-portal/backend/app.py
+Restart=always
+RestartSec=10
+
+# 資源限制
+MemoryMax=512M
+CPUQuota=50%
+
+# 日誌配置
+StandardOutput=append:/var/log/ncu-accommodation-backend.log
+StandardError=append:/var/log/ncu-accommodation-backend-error.log
+
+[Install]
+WantedBy=multi-user.target
