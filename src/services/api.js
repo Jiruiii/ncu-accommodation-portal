@@ -1,14 +1,14 @@
 // Read env from Vue CLI (webpack) style
 const API_BASE_URL = (typeof process !== 'undefined' && process.env && process.env.VUE_APP_API_BASE_URL) || "";
 
-// Portal OAuth config from env - 根據圖片中的正確配置
+// Portal OAuth config from env - 更新為 2025-10-01 的新配置
 const PORTAL_CLIENT_ID =
   (typeof process !== 'undefined' && process.env && process.env.VUE_APP_PORTAL_CLIENT_ID) ||
-  '20250918165350qQGrRKwccnPj';  // 從圖片中的 Client ID
+  '20251001232123o3DLKkBpgKr3';  // 2025-10-01 更新的 Client ID
 
 const PORTAL_REDIRECT_URI =
   (typeof process !== 'undefined' && process.env && process.env.VUE_APP_PORTAL_REDIRECT_URI) ||
-  'https://rooms.student.ncu.edu.tw/auth/callback';  // 從圖片中的 Return To Address
+  'https://rooms.student.ncu.edu.tw/auth/callback';  // Redirect URI 保持不變
 
 // Default scopes suggested by portal4g-doc. Scopes are space-delimited.
 const PORTAL_SCOPES =
