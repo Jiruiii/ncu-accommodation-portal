@@ -173,7 +173,10 @@
       const map = ref(null);
       const isMapLoaded = ref(false);
       const mapLoadError = ref(false);
-      const API_KEY = "AIzaSyCqNQRo2JFh8XSiBN0pZzemAmUh3WR910s";
+      // 從環境變數讀取 Google Maps API Key
+      const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 
+                      process.env.VUE_APP_GOOGLE_MAPS_API_KEY || 
+                      "AIzaSyCqNQRo2JFh8XSiBN0pZzemAmUh3WR910s"; // fallback key
 
       // 從收藏頁面傳來的篩選數據
       const favoriteIdsToShow = ref([]);
